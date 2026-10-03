@@ -29,14 +29,22 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const target = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin)
+  let target = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin)
+  // A reminder only ever opens the app itself
+  if (target.origin !== self.location.origin) {
+    target = new URL('/', self.location.origin)
+  }
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     for (const client of windows) {
       if (new URL(client.url).origin === target.origin && 'focus' in client) {
         await client.focus()
-        if ('navigate' in client) {
+        try {
+          // Refused for a window this worker doesn't control yet (opened
+          // before it installed); the focused app is still the right place
           await client.navigate(target.href)
+        } catch {
+          // stay on the focused window as it is
         }
         return
       }
