@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * The profile photo: the avatar with a camera badge that picks a new one,
+ * and whatever the page puts beside it (the name and email) with a quiet
+ * "Remove photo" under it.
+ */
+defineSlots<{ default?: () => unknown }>()
+
 const api = useApi()
 const toast = useToast()
 const { user, displayName, avatarUrl, initials } = useAuth()
@@ -70,12 +77,12 @@ async function removeAvatar() {
 
 <template>
   <div class="flex items-center gap-4">
-    <div class="relative">
+    <div class="relative shrink-0">
       <UAvatar
         :src="avatarUrl"
         :alt="displayName"
         :text="initials"
-        size="3xl"
+        :ui="{ root: 'size-16 bg-primary/10', fallback: 'text-xl font-semibold text-primary' }"
       />
       <div
         v-if="uploading"
@@ -86,33 +93,36 @@ async function removeAvatar() {
           class="size-5 animate-spin text-primary"
         />
       </div>
+      <UButton
+        icon="i-lucide-camera"
+        size="xs"
+        color="neutral"
+        variant="solid"
+        square
+        class="app-hit absolute -right-1 -bottom-1 rounded-full ring-2 ring-(--ui-bg)"
+        :disabled="uploading"
+        aria-label="Upload a photo — JPG, PNG, WebP or GIF, up to 5 MB"
+        @click="input?.click()"
+      />
     </div>
 
-    <div class="flex flex-col gap-2">
-      <div class="flex flex-wrap gap-2">
-        <UButton
-          label="Upload photo"
-          icon="i-lucide-upload"
-          color="neutral"
-          variant="outline"
-          size="sm"
-          :disabled="uploading"
-          @click="input?.click()"
-        />
-        <UButton
-          v-if="user?.avatar_url"
-          label="Remove"
-          icon="i-lucide-trash-2"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          :disabled="uploading"
-          @click="removeAvatar"
-        />
-      </div>
-
-      <p class="text-xs text-muted">
-        JPG, PNG, WebP or GIF, up to 5 MB. Resized to 512 px.
+    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+      <slot />
+      <UButton
+        v-if="user?.avatar_url"
+        label="Remove photo"
+        color="neutral"
+        variant="link"
+        size="sm"
+        class="self-start px-0"
+        :disabled="uploading"
+        @click="removeAvatar"
+      />
+      <p
+        v-else
+        class="text-caption text-dimmed"
+      >
+        JPG, PNG, WebP or GIF, up to 5 MB.
       </p>
     </div>
 

@@ -2,12 +2,13 @@
 import type { GoalProfile, Targets } from '~/composables/useEating'
 import { targetsOf } from '~/composables/useEating'
 
+const { app } = useAppConfig()
 const colorMode = useColorMode()
 const toast = useToast()
 const api = useApi()
 const { confirm } = useConfirm()
 
-const { user, logout, deleteAccount } = useAuth()
+const { user, displayName, logout, deleteAccount } = useAuth()
 const { settings, loadSettings, saveSettings } = useEating()
 const { putWeight } = useBody()
 
@@ -121,6 +122,8 @@ async function storeCalculated(result: { profile: GoalProfile, targets: Targets 
 
 const password = reactive({ current: '', next: '' })
 const savingPassword = ref(false)
+/** The form opens from its row — two password fields are a lot to show by default */
+const passwordOpen = ref(false)
 
 async function changePassword() {
   if (password.next.length < 8) {
@@ -147,6 +150,13 @@ const MODES = [
   { value: 'dark', label: 'Dark', icon: 'i-lucide-moon' },
   { value: 'system', label: 'System', icon: 'i-lucide-monitor' }
 ]
+
+const theme = computed({
+  get: () => colorMode.preference,
+  set: (value: string) => {
+    colorMode.preference = value
+  }
+})
 
 /* --- Your data ------------------------------------------------------------ */
 
@@ -195,141 +205,138 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <AppPage title="Settings">
+  <AppPage
+    title="Settings"
+    eyebrow="Account and preferences"
+  >
     <DemoBanner />
 
     <!-- Profile -->
-    <section class="app-card px-4">
-      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
-        <UIcon
-          name="i-lucide-user"
-          class="size-4 text-muted"
-        />
-        Profile
-      </h2>
-
-      <SettingsRow title="Photo">
-        <AvatarUpload />
-      </SettingsRow>
-
-      <SettingsRow title="Name">
-        <div class="flex w-full items-start gap-2">
+    <ShellCard flush>
+      <div class="px-4 py-4">
+        <AvatarUpload>
+          <span class="truncate text-headline font-semibold text-highlighted">{{ displayName }}</span>
+          <span class="truncate text-sm text-muted">{{ user?.email }}</span>
+        </AvatarUpload>
+      </div>
+      <form
+        class="flex items-end gap-2 px-4 py-4"
+        @submit.prevent="profileChanged && saveProfile()"
+      >
+        <UFormField
+          label="Name"
+          class="min-w-0 flex-1"
+        >
           <UInput
             v-model="profile.full_name"
             placeholder="Your name"
-            class="flex-1"
-            @keyup.enter="profileChanged && saveProfile()"
+            autocomplete="name"
+            class="w-full"
           />
-          <UButton
-            label="Save"
-            :loading="savingProfile"
-            :disabled="!profileChanged"
-            @click="saveProfile"
-          />
-        </div>
-      </SettingsRow>
-
-      <SettingsRow
-        title="Email"
-        description="Used to sign in."
-      >
-        <UInput
-          :model-value="user?.email"
-          disabled
-          class="w-full"
+        </UFormField>
+        <UButton
+          type="submit"
+          label="Save"
+          variant="soft"
+          :loading="savingProfile"
+          :disabled="!profileChanged"
         />
-      </SettingsRow>
-    </section>
+      </form>
+    </ShellCard>
 
     <!-- Daily targets -->
-    <section class="app-card flex flex-col gap-3 px-4 py-4">
-      <div>
-        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
-          <UIcon
-            name="i-lucide-target"
-            class="size-4 text-muted"
-          />
-          Daily targets
-        </h2>
-        <p class="mt-0.5 text-sm text-muted">
-          What a day should come to. Leave one empty and the diary simply counts it.
-        </p>
-      </div>
-      <TargetsFields v-model="targets" />
-      <div class="flex items-center gap-2">
-        <UButton
-          :label="settings?.profile ? 'Recalculate' : 'Work them out for me'"
-          icon="i-lucide-calculator"
-          color="neutral"
-          variant="subtle"
-          @click="calculatorOpen = true"
-        />
-        <UButton
-          label="Save targets"
-          class="ml-auto"
-          :loading="savingTargets"
-          :disabled="!targetsChanged"
-          @click="storeTargets"
-        />
-      </div>
-    </section>
+    <ShellSection
+      title="Daily targets"
+      description="What a day should come to. Leave one empty and the diary simply counts it."
+      class="mt-3"
+    >
+      <ShellCard>
+        <div class="flex flex-col gap-4 pt-2">
+          <TargetsFields v-model="targets" />
+          <div class="flex items-center gap-2 border-t border-default pt-4">
+            <UButton
+              :label="settings?.profile ? 'Recalculate' : 'Work them out'"
+              icon="i-lucide-calculator"
+              color="neutral"
+              variant="soft"
+              @click="calculatorOpen = true"
+            />
+            <UButton
+              label="Save targets"
+              class="ml-auto"
+              :loading="savingTargets"
+              :disabled="!targetsChanged"
+              @click="storeTargets"
+            />
+          </div>
+        </div>
+      </ShellCard>
+    </ShellSection>
 
     <!-- Water -->
-    <section class="app-card flex flex-col gap-3 px-4 py-4">
-      <div>
-        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
-          <UIcon
-            name="i-lucide-glass-water"
-            class="size-4 text-muted"
+    <ShellSection
+      title="Water"
+      description="A daily goal, and the glass one tap of “+” adds."
+      class="mt-3"
+    >
+      <ShellCard>
+        <form
+          class="flex flex-col gap-4 pt-2"
+          @submit.prevent="waterChanged && storeWater()"
+        >
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField label="Daily goal">
+              <UInput
+                v-model.number="water.goal"
+                type="number"
+                inputmode="numeric"
+                step="50"
+                class="w-full"
+                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+              >
+                <template #trailing>
+                  <span class="text-sm text-dimmed">ml</span>
+                </template>
+              </UInput>
+            </UFormField>
+            <UFormField label="One glass">
+              <UInput
+                v-model.number="water.glass"
+                type="number"
+                inputmode="numeric"
+                step="10"
+                class="w-full"
+                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+              >
+                <template #trailing>
+                  <span class="text-sm text-dimmed">ml</span>
+                </template>
+              </UInput>
+            </UFormField>
+          </div>
+          <UButton
+            type="submit"
+            label="Save water goal"
+            class="self-end"
+            :loading="savingWater"
+            :disabled="!waterChanged"
           />
-          Water
-        </h2>
-        <p class="mt-0.5 text-sm text-muted">
-          A daily goal, and the glass one tap of “+” adds.
-        </p>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <UFormField label="Daily goal">
-          <UInput
-            v-model.number="water.goal"
-            type="number"
-            inputmode="numeric"
-            step="50"
-            class="w-full"
-            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-          >
-            <template #trailing>
-              <span class="text-xs text-dimmed">ml</span>
-            </template>
-          </UInput>
-        </UFormField>
-        <UFormField label="Glass">
-          <UInput
-            v-model.number="water.glass"
-            type="number"
-            inputmode="numeric"
-            step="10"
-            class="w-full"
-            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-          >
-            <template #trailing>
-              <span class="text-xs text-dimmed">ml</span>
-            </template>
-          </UInput>
-        </UFormField>
-      </div>
-      <UButton
-        label="Save water goal"
-        class="self-end"
-        :loading="savingWater"
-        :disabled="!waterChanged"
-        @click="storeWater"
-      />
-    </section>
+        </form>
+      </ShellCard>
+    </ShellSection>
 
-    <ReminderSettings />
+    <ShellSection
+      title="Reminders"
+      description="A nudge at meal times, for water, and a summary of the day."
+      class="mt-3"
+    >
+      <ReminderSettings />
+    </ShellSection>
 
-    <InstallPrompt variant="settings" />
+    <InstallPrompt
+      variant="settings"
+      class="mt-3"
+    />
 
     <UDrawer
       v-model:open="calculatorOpen"
@@ -348,80 +355,79 @@ async function confirmDelete() {
     </UDrawer>
 
     <!-- Appearance -->
-    <section class="app-card px-4">
-      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
-        <UIcon
-          name="i-lucide-palette"
-          class="size-4 text-muted"
-        />
-        Appearance
-      </h2>
-
-      <SettingsRow
-        title="Theme"
-        description="Follow the phone, or pick one."
-      >
-        <div class="grid w-full grid-cols-3 gap-1 rounded-xl bg-elevated p-1">
-          <UButton
-            v-for="mode in MODES"
-            :key="mode.value"
-            :icon="mode.icon"
-            :label="mode.label"
-            size="sm"
-            class="justify-center rounded-lg"
-            :color="colorMode.preference === mode.value ? 'primary' : 'neutral'"
-            :variant="colorMode.preference === mode.value ? 'solid' : 'ghost'"
-            :aria-pressed="colorMode.preference === mode.value"
-            @click="colorMode.preference = mode.value"
+    <ShellSection
+      title="Appearance"
+      class="mt-3"
+    >
+      <ShellCard flush>
+        <div class="flex flex-col gap-3 px-4 py-3.5">
+          <span class="flex items-center gap-3">
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-elevated text-toned">
+              <UIcon
+                name="i-lucide-palette"
+                class="size-5"
+              />
+            </span>
+            <span class="flex min-w-0 flex-col">
+              <span class="text-body font-semibold text-highlighted">Theme</span>
+              <span class="text-xs text-muted">Follow the phone, or pick one.</span>
+            </span>
+          </span>
+          <ShellSegmented
+            v-model="theme"
+            label="Theme"
+            :options="MODES"
           />
         </div>
-      </SettingsRow>
-    </section>
+      </ShellCard>
+    </ShellSection>
 
     <!-- Your data -->
-    <section class="app-card px-4">
-      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
-        <UIcon
-          name="i-lucide-hard-drive-download"
-          class="size-4 text-muted"
-        />
-        Your data
-      </h2>
-
-      <SettingsRow
-        title="The diary"
-        description="A period day by day — a PDF to print, or a CSV for a spreadsheet."
-      >
-        <UButton
-          label="Export the diary…"
+    <ShellSection
+      title="Your data"
+      class="mt-3"
+    >
+      <ShellCard flush>
+        <ShellListRow
           icon="i-lucide-file-down"
-          color="neutral"
-          variant="outline"
+          tone="neutral"
+          title="Export the diary"
+          subtitle="A period day by day — a PDF to print, or a CSV for a spreadsheet."
           @click="exportOpen = true"
         />
-      </SettingsRow>
-
-      <SettingsRow
-        title="Everything"
-        description="Meals, foods, recipes, water, weight, targets and reminders in one JSON file."
-      >
-        <div class="flex w-full flex-col items-start gap-2">
-          <USwitch
-            v-model="withRecordings"
-            label="Include voice recordings"
-            description="Makes the file much larger"
-          />
-          <UButton
-            label="Export all my data"
-            icon="i-lucide-download"
-            color="neutral"
-            variant="outline"
-            :loading="exportingAll"
-            @click="exportEverything"
-          />
-        </div>
-      </SettingsRow>
-    </section>
+        <ShellListRow
+          icon="i-lucide-hard-drive-download"
+          tone="neutral"
+          title="Download everything"
+          subtitle="Meals, foods, recipes, water, weight, targets and reminders in one JSON file."
+          :chevron="false"
+          :disabled="exportingAll"
+          @click="exportEverything"
+        >
+          <template #trailing>
+            <UIcon
+              :name="exportingAll ? 'i-lucide-loader-circle' : 'i-lucide-download'"
+              class="size-5 text-muted"
+              :class="exportingAll && 'animate-spin'"
+            />
+          </template>
+        </ShellListRow>
+        <ShellListRow
+          plain
+          icon="i-lucide-audio-lines"
+          tone="neutral"
+          title="Include voice recordings"
+          subtitle="In the download — makes the file much larger."
+        >
+          <template #trailing>
+            <USwitch
+              v-model="withRecordings"
+              aria-label="Include voice recordings in the download"
+            />
+          </template>
+        </ShellListRow>
+      </ShellCard>
+    </ShellSection>
 
     <ExportSheet
       v-model:open="exportOpen"
@@ -429,72 +435,81 @@ async function confirmDelete() {
     />
 
     <!-- Account -->
-    <section class="app-card px-4">
-      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
-        <UIcon
-          name="i-lucide-shield"
-          class="size-4 text-muted"
-        />
-        Account
-      </h2>
+    <ShellSection
+      title="Account"
+      class="mt-3"
+    >
+      <ShellCard flush>
+        <template v-if="user?.has_password">
+          <ShellListRow
+            icon="i-lucide-key-round"
+            tone="neutral"
+            title="Change password"
+            subtitle="Changing it signs you out everywhere."
+            :chevron="false"
+            :aria-expanded="passwordOpen"
+            @click="passwordOpen = !passwordOpen"
+          >
+            <template #trailing>
+              <UIcon
+                name="i-lucide-chevron-down"
+                class="size-4 text-dimmed transition-transform duration-200 ease-soft motion-reduce:transition-none"
+                :class="passwordOpen && 'rotate-180'"
+              />
+            </template>
+          </ShellListRow>
+          <form
+            v-if="passwordOpen"
+            class="flex flex-col gap-3 bg-elevated/40 px-4 py-4"
+            @submit.prevent="changePassword"
+          >
+            <UInput
+              v-model="password.current"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Current password"
+              aria-label="Current password"
+              class="w-full"
+            />
+            <UInput
+              v-model="password.next"
+              type="password"
+              autocomplete="new-password"
+              placeholder="New password — at least 8 characters"
+              aria-label="New password"
+              class="w-full"
+            />
+            <UButton
+              type="submit"
+              label="Change password"
+              class="self-end"
+              :loading="savingPassword"
+              :disabled="!password.current || !password.next"
+            />
+          </form>
+        </template>
 
-      <SettingsRow
-        v-if="user?.has_password"
-        title="Password"
-        description="Changing it signs you out everywhere."
-      >
-        <form
-          class="flex w-full flex-col gap-2"
-          @submit.prevent="changePassword"
-        >
-          <UInput
-            v-model="password.current"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Current password"
-            class="w-full"
-          />
-          <UInput
-            v-model="password.next"
-            type="password"
-            autocomplete="new-password"
-            placeholder="New password — at least 8 characters"
-            class="w-full"
-          />
-          <UButton
-            type="submit"
-            label="Change password"
-            color="neutral"
-            variant="outline"
-            class="self-end"
-            :loading="savingPassword"
-            :disabled="!password.current || !password.next"
-          />
-        </form>
-      </SettingsRow>
-
-      <SettingsRow title="Sign out">
-        <UButton
-          label="Sign out"
+        <ShellListRow
           icon="i-lucide-log-out"
-          color="neutral"
-          variant="outline"
+          tone="neutral"
+          title="Sign out"
+          :chevron="false"
           @click="logout"
         />
-      </SettingsRow>
 
-      <SettingsRow
-        title="Delete account"
-        description="Removes your diary, foods, recipes, water, weight and reminders for good. Export your data first if you want a copy."
-      >
-        <UButton
-          label="Delete account"
+        <ShellListRow
           icon="i-lucide-trash-2"
-          color="error"
-          variant="soft"
+          tone="error"
+          title="Delete account"
+          subtitle="Everything in it, for good — export first if you want a copy."
+          :chevron="false"
           @click="confirmDelete"
         />
-      </SettingsRow>
-    </section>
+      </ShellCard>
+    </ShellSection>
+
+    <p class="pt-3 text-center text-caption text-dimmed">
+      {{ app.name }} · {{ app.tagline }}
+    </p>
   </AppPage>
 </template>

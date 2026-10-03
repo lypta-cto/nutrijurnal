@@ -36,7 +36,7 @@ defineSlots<{
         </h2>
         <p
           v-if="description"
-          class="truncate text-xs text-muted"
+          class="mt-0.5 text-xs text-pretty text-muted"
         >
           {{ description }}
         </p>

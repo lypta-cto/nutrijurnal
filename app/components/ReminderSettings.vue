@@ -190,104 +190,98 @@ const status = computed<{ title: string, description: string, icon: string, colo
 </script>
 
 <template>
-  <section class="app-card flex flex-col gap-3 px-4 py-4">
-    <div class="flex items-start gap-2">
-      <div class="min-w-0 flex-1">
-        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+  <ShellCard
+    flush
+    aria-label="Reminders"
+  >
+    <!-- This device first: what stands in the way, or the switch -->
+    <div class="px-4 py-3.5">
+      <ShellSkeleton
+        v-if="push.state.value === 'checking'"
+        variant="text"
+        :count="2"
+      />
+      <UAlert
+        v-else-if="status"
+        :title="status.title"
+        :description="status.description"
+        :icon="status.icon"
+        :color="status.color"
+        variant="soft"
+      />
+      <div
+        v-else-if="push.state.value === 'off'"
+        class="flex items-center gap-3"
+      >
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-elevated text-toned">
           <UIcon
-            name="i-lucide-bell"
-            class="size-4 text-muted"
+            name="i-lucide-bell-off"
+            class="size-5"
           />
-          Reminders
-        </h2>
-        <p class="mt-0.5 text-sm text-muted">
-          A nudge at meal times, for water, and a summary of the day.
-        </p>
+        </span>
+        <span class="min-w-0 flex-1 text-sm text-default">Notifications are off on this device.</span>
+        <UButton
+          label="Turn on"
+          icon="i-lucide-bell-ring"
+          size="sm"
+          class="app-hit"
+          :loading="push.busy.value"
+          @click="turnOn"
+        />
+      </div>
+      <div
+        v-else
+        class="flex flex-wrap items-center gap-x-3 gap-y-2"
+      >
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <UIcon
+            name="i-lucide-bell-ring"
+            class="size-5"
+          />
+        </span>
+        <span class="min-w-0 flex-1 text-sm font-semibold text-highlighted">On for this device</span>
+        <span class="flex gap-1">
+          <UButton
+            label="Test"
+            icon="i-lucide-send"
+            size="sm"
+            color="neutral"
+            variant="soft"
+            class="app-hit"
+            :loading="testing"
+            @click="sendTest"
+          />
+          <UButton
+            label="Turn off"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            class="app-hit"
+            :loading="push.busy.value"
+            @click="turnOff"
+          />
+        </span>
       </div>
     </div>
 
-    <USkeleton
-      v-if="push.state.value === 'checking'"
-      class="h-10 w-full"
-    />
-    <UAlert
-      v-else-if="status"
-      :title="status.title"
-      :description="status.description"
-      :icon="status.icon"
-      :color="status.color"
-      variant="subtle"
-    />
-    <div
-      v-else-if="push.state.value === 'off'"
-      class="flex flex-col gap-2 rounded-xl bg-elevated/60 p-3"
-    >
-      <p class="text-sm text-default">
-        Notifications are off on this device.
-      </p>
-      <UButton
-        label="Turn on notifications"
-        icon="i-lucide-bell-ring"
-        :loading="push.busy.value"
-        block
-        @click="turnOn"
-      />
-    </div>
-    <div
-      v-else
-      class="flex flex-wrap items-center gap-2 rounded-xl bg-success/10 px-3 py-2"
-    >
-      <UIcon
-        name="i-lucide-bell-ring"
-        class="size-4 text-success"
-      />
-      <span class="min-w-0 flex-1 text-sm text-default">On for this device</span>
-      <UButton
-        label="Send a test"
-        size="xs"
-        color="neutral"
-        variant="subtle"
-        :loading="testing"
-        @click="sendTest"
-      />
-      <UButton
-        label="Turn off"
-        size="xs"
-        color="neutral"
-        variant="ghost"
-        :loading="push.busy.value"
-        @click="turnOff"
-      />
-    </div>
-
-    <div
+    <ShellSkeleton
       v-if="loading"
-      class="flex flex-col gap-2"
-    >
-      <USkeleton
-        v-for="index in 3"
-        :key="index"
-        class="h-12 w-full"
-      />
-    </div>
+      variant="rows"
+      :count="3"
+    />
 
-    <div
+    <ShellEmpty
       v-else-if="!reminders.length"
-      class="flex flex-col items-center gap-2 py-2 text-center"
+      icon="i-lucide-bell-plus"
+      title="No reminders yet"
+      description="Breakfast, lunch, dinner, two for water and an evening summary — change any of them after."
     >
-      <p class="text-sm text-muted">
-        No reminders yet.
-      </p>
       <UButton
         label="Add the usual set"
         icon="i-lucide-sparkles"
-        variant="soft"
         @click="addSuggested"
       />
-      <p class="text-[11px] text-dimmed">
-        Breakfast, lunch, dinner, two for water and an evening summary — change any of them after.
-      </p>
-    </div>
+    </ShellEmpty>
 
     <TransitionGroup
       v-else
@@ -298,22 +292,26 @@ const status = computed<{ title: string, description: string, icon: string, colo
       <li
         v-for="reminder in ordered"
         :key="reminder.id"
-        class="flex flex-col gap-2 py-2.5"
+        class="flex flex-col gap-2.5 px-4 py-3"
       >
-        <div class="flex items-center gap-2">
-          <UIcon
-            :name="reminderIcon(reminder)"
-            class="size-4 shrink-0"
-            :class="reminder.enabled ? 'text-primary' : 'text-dimmed'"
-          />
+        <div class="flex items-center gap-3">
           <span
-            class="min-w-0 flex-1 truncate text-sm font-medium"
+            class="flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ease-soft"
+            :class="reminder.enabled ? 'bg-primary/10 text-primary' : 'bg-elevated text-dimmed'"
+          >
+            <UIcon
+              :name="reminderIcon(reminder)"
+              class="size-5"
+            />
+          </span>
+          <span
+            class="min-w-0 flex-1 truncate text-body font-semibold"
             :class="reminder.enabled ? 'text-highlighted' : 'text-muted'"
           >{{ reminderLabel(reminder) }}</span>
           <input
             :value="reminder.at.slice(0, 5)"
             type="time"
-            class="rounded-md border border-default bg-default px-2 py-1 text-sm tabular-nums text-default"
+            class="app-field h-10 w-[6.25rem] shrink-0 px-2.5 text-center"
             :aria-label="`Time for the ${reminderLabel(reminder)} reminder`"
             @change="event => setTime(reminder, (event.target as HTMLInputElement).value)"
           >
@@ -322,49 +320,54 @@ const status = computed<{ title: string, description: string, icon: string, colo
             :aria-label="`${reminderLabel(reminder)} reminder on`"
             @update:model-value="value => change(reminder, { enabled: Boolean(value) })"
           />
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <div
+            class="flex gap-1.5"
+            role="group"
+            :aria-label="`Days for the ${reminderLabel(reminder)} reminder`"
+          >
+            <button
+              v-for="(letter, day) in DAYS"
+              :key="day"
+              type="button"
+              class="app-chip size-8 px-0 text-xs"
+              :aria-label="DAY_NAMES[day]"
+              :aria-pressed="reminder.weekdays.includes(day)"
+              @click="toggleDay(reminder, day)"
+            >
+              {{ letter }}
+            </button>
+          </div>
           <UButton
             icon="i-lucide-trash-2"
-            size="xs"
+            size="sm"
             color="neutral"
             variant="ghost"
             square
+            class="app-hit text-dimmed"
             :aria-label="`Remove the ${reminderLabel(reminder)} reminder`"
             @click="drop(reminder)"
           />
         </div>
-        <div
-          class="flex gap-1 pl-6"
-          role="group"
-          :aria-label="`Days for the ${reminderLabel(reminder)} reminder`"
-        >
-          <button
-            v-for="(letter, day) in DAYS"
-            :key="day"
-            type="button"
-            class="flex size-7 items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
-            :class="reminder.weekdays.includes(day) ? 'bg-primary/15 text-primary' : 'bg-elevated text-dimmed'"
-            :aria-label="DAY_NAMES[day]"
-            :aria-pressed="reminder.weekdays.includes(day)"
-            @click="toggleDay(reminder, day)"
-          >
-            {{ letter }}
-          </button>
-        </div>
       </li>
     </TransitionGroup>
 
-    <UDropdownMenu
+    <template
       v-if="!loading && reminders.length"
-      :items="addItems"
-      :content="{ align: 'start' }"
+      #footer
     >
-      <UButton
-        label="Add a reminder"
-        icon="i-lucide-plus"
-        color="neutral"
-        variant="subtle"
-        class="self-start"
-      />
-    </UDropdownMenu>
-  </section>
+      <UDropdownMenu
+        :items="addItems"
+        :content="{ align: 'start' }"
+      >
+        <UButton
+          label="Add a reminder"
+          icon="i-lucide-plus"
+          variant="ghost"
+          class="-ml-2"
+        />
+      </UDropdownMenu>
+    </template>
+  </ShellCard>
 </template>

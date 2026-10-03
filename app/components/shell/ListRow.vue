@@ -23,7 +23,8 @@ const props = withDefaults(defineProps<{
   title: string
   subtitle?: string
   icon?: string
-  /** The icon tile's colour — a macro's own, or the brand's */
+  /** The icon tile's colour — a macro's own, or the brand's; `error` also
+   *  turns the title red, for the one row that destroys something */
   tone?: Tone
   to?: string
   /** A plain row, not a button — for rows that carry their own control */
@@ -90,11 +91,14 @@ const interactive = computed(() => !props.plain)
     </slot>
 
     <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-      <span class="truncate text-body font-semibold text-highlighted">{{ title }}</span>
+      <span
+        class="truncate text-body font-semibold"
+        :class="tone === 'error' ? 'text-error' : 'text-highlighted'"
+      >{{ title }}</span>
       <slot name="subtitle">
         <span
           v-if="subtitle"
-          class="truncate text-xs text-muted"
+          class="line-clamp-2 text-xs text-muted"
         >{{ subtitle }}</span>
       </slot>
     </span>
