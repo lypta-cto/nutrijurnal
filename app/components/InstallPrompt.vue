@@ -68,13 +68,15 @@ function snooze() {
   >
     <div class="flex flex-col gap-3">
       <div class="flex items-start gap-3">
-        <!-- The icon as the home screen will show it -->
-        <span class="flex size-11 shrink-0 items-center justify-center rounded-tile bg-(--ui-color-primary-600) text-white">
-          <ShellLogoMark
-            tone="mono"
-            class="size-7"
-          />
-        </span>
+        <!-- The icon exactly as the home screen will show it: the PWA's own
+             file, with iOS's corner and a hairline so cream doesn't melt into white -->
+        <img
+          src="/icons/apple-touch-icon.png"
+          alt=""
+          width="44"
+          height="44"
+          class="size-11 shrink-0 rounded-[0.625rem] shadow-[0_0_0_var(--app-hairline)_var(--app-separator)]"
+        >
         <div class="min-w-0 flex-1">
           <p class="text-headline text-highlighted">
             Put Nutrijurnal on your home screen

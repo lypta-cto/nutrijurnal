@@ -836,7 +836,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                     :content="{ align: 'end' }"
                   >
                     <UButton
-                      icon="i-lucide-ellipsis-vertical"
+                      icon="i-lucide-ellipsis"
                       size="sm"
                       color="neutral"
                       variant="ghost"
@@ -930,7 +930,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                         v-model="addText[meal.id]"
                         icon="i-lucide-plus"
                         class="min-w-0 flex-1"
-                        placeholder="Add an item — “30 g almonds”"
+                        placeholder="Add “30 g almonds”"
                         :disabled="addingTo === meal.id"
                       />
                       <UButton
