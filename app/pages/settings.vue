@@ -148,12 +148,37 @@ const MODES = [
   { value: 'system', label: 'System', icon: 'i-lucide-monitor' }
 ]
 
+/* --- Your data ------------------------------------------------------------ */
+
+const exportOpen = ref(false)
+const withRecordings = ref(false)
+const exportingAll = ref(false)
+
+/** Everything in one JSON file, saved straight to the device */
+async function exportEverything() {
+  exportingAll.value = true
+  try {
+    const document = await api.get<object>('/auth/me/export', { query: { recordings: withRecordings.value || undefined } })
+    const url = URL.createObjectURL(new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' }))
+    const link = window.document.createElement('a')
+    link.href = url
+    link.download = `Nutrijurnal_export_${localIsoDay()}.json`
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    toast.add({ title: 'Your data is downloading', icon: 'i-lucide-download', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    exportingAll.value = false
+  }
+}
+
 /* --- Leaving ------------------------------------------------------------- */
 
 async function confirmDelete() {
   const sure = await confirm({
     title: 'Delete your account?',
-    description: 'Your diary, recipes, foods and voice notes are deleted for good. This cannot be undone.',
+    description: 'Your diary, recipes, foods, voice notes, water, weight and reminders are deleted for good. This cannot be undone.',
     confirmLabel: 'Delete everything',
     color: 'error'
   })
@@ -353,6 +378,56 @@ async function confirmDelete() {
       </SettingsRow>
     </section>
 
+    <!-- Your data -->
+    <section class="app-card px-4">
+      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
+        <UIcon
+          name="i-lucide-hard-drive-download"
+          class="size-4 text-muted"
+        />
+        Your data
+      </h2>
+
+      <SettingsRow
+        title="The diary"
+        description="A period day by day — a PDF to print, or a CSV for a spreadsheet."
+      >
+        <UButton
+          label="Export the diary…"
+          icon="i-lucide-file-down"
+          color="neutral"
+          variant="outline"
+          @click="exportOpen = true"
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        title="Everything"
+        description="Meals, foods, recipes, water, weight, targets and reminders in one JSON file."
+      >
+        <div class="flex w-full flex-col items-start gap-2">
+          <USwitch
+            v-model="withRecordings"
+            label="Include voice recordings"
+            description="Makes the file much larger"
+          />
+          <UButton
+            label="Export all my data"
+            icon="i-lucide-download"
+            color="neutral"
+            variant="outline"
+            :loading="exportingAll"
+            @click="exportEverything"
+          />
+        </div>
+      </SettingsRow>
+    </section>
+
+    <ExportSheet
+      v-model:open="exportOpen"
+      :day="localIsoDay()"
+    />
+
     <!-- Account -->
     <section class="app-card px-4">
       <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
@@ -410,7 +485,7 @@ async function confirmDelete() {
 
       <SettingsRow
         title="Delete account"
-        description="Removes your diary and everything you added. The shared foods stay."
+        description="Removes your diary, foods, recipes, water, weight and reminders for good. Export your data first if you want a copy."
       >
         <UButton
           label="Delete account"
