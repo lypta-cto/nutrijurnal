@@ -15,6 +15,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { exportFile } = useEating()
 const toast = useToast()
+const saveFile = useSaveFile()
 
 function fail(error: unknown) {
   toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
@@ -102,12 +103,7 @@ async function download(format: 'pdf' | 'csv') {
   exporting.value = true
   try {
     const blob = await exportFile(range.value.from, range.value.to, format)
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `nutrijurnal_${range.value.from}_${range.value.to}.${format}`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    await saveFile(blob, `nutrijurnal_${range.value.from}_${range.value.to}.${format}`)
     open.value = false
   } catch (error) {
     fail(error)

@@ -183,19 +183,17 @@ const theme = computed({
 const exportOpen = ref(false)
 const withRecordings = ref(false)
 const exportingAll = ref(false)
+const saveFile = useSaveFile()
 
 /** Everything in one JSON file, saved straight to the device */
 async function exportEverything() {
   exportingAll.value = true
   try {
     const document = await api.get<object>('/auth/me/export', { query: { recordings: withRecordings.value || undefined } })
-    const url = URL.createObjectURL(new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' }))
-    const link = window.document.createElement('a')
-    link.href = url
-    link.download = `Nutrijurnal_export_${localIsoDay()}.json`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 30_000)
-    toast.add({ title: 'Your data is downloading', icon: 'i-lucide-download', color: 'success' })
+    const file = new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' })
+    if (await saveFile(file, `Nutrijurnal_export_${localIsoDay()}.json`) === 'downloaded') {
+      toast.add({ title: 'Your data is downloading', icon: 'i-lucide-download', color: 'success' })
+    }
   } catch (error) {
     fail(error)
   } finally {
