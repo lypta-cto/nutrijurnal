@@ -73,6 +73,24 @@ describe('the decimal field', () => {
     expect((input.element as HTMLInputElement).value).toBe('0')
   })
 
+  it('keeps the comma it was typed with once the field is left', async () => {
+    const { input, value } = await field(null)
+
+    await input.setValue('72,4')
+    await input.trigger('blur')
+    expect((input.element as HTMLInputElement).value).toBe('72,4')
+    expect(value.value).toBe(72.4)
+
+    await input.setValue(',5')
+    await input.trigger('blur')
+    expect((input.element as HTMLInputElement).value).toBe('0,5')
+
+    await input.setValue(' 1 500 ')
+    await input.trigger('blur')
+    expect((input.element as HTMLInputElement).value).toBe('1500')
+    expect(value.value).toBe(1500)
+  })
+
   it('reads an emptied field as nothing, not as zero', async () => {
     const { input, value } = await field(100)
 

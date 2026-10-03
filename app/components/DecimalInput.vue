@@ -36,9 +36,15 @@ function onInput(value: string | number | null | undefined) {
   model.value = parseDecimal(text.value)
 }
 
-/** "72," reads as 72 once the field is left */
+/**
+ * Once the field is left, "72," reads as 72 and ",5" as 0,5 — but "72,4"
+ * stays as typed: the comma is how this person writes a decimal, and
+ * swapping it for a point would say the field read it differently.
+ */
 function tidy() {
-  text.value = shown(model.value)
+  text.value = parseDecimal(text.value) === null
+    ? shown(model.value)
+    : text.value.replace(/\s+/g, '').replace(/^[.,]/, '0$&').replace(/[.,]$/, '')
 }
 </script>
 
