@@ -27,6 +27,52 @@ interface AuthResponse {
 }
 
 /**
+ * What one person's session leaves in memory: the diary, the settings, the
+ * reminder state. Another person signing in on the same tab must start from
+ * nothing — never from the last person's day while their own is loading.
+ */
+const PERSONAL_STATE = [
+  'eating-settings',
+  'eating-day-view',
+  'eating-day-failed',
+  'eating-week',
+  'push-state',
+  'quick-add-open',
+  'quick-add-kind'
+]
+
+/** Whose answers the service worker's API cache holds — kept across reloads */
+const CACHE_OWNER_KEY = 'nutrijurnal-cache-owner'
+
+/**
+ * The service worker keeps the diary's last answers for reading offline
+ * (nuxt.config.ts → pwa.workbox.runtimeCaching). They are one person's; the
+ * next person on this browser must never be served them.
+ */
+async function forgetOfflineDiary() {
+  try {
+    await window.caches?.delete('nutrijurnal-api')
+  } catch {
+    // No Cache Storage here (an old browser, a locked-down profile) — nothing kept
+  }
+}
+
+/** A session that ended without "Sign out" (expired, revoked, a demo that
+ *  was deleted) leaves its cache behind; the next person to sign in on this
+ *  browser clears it before reading anything. */
+function claimOfflineDiary(userId: string) {
+  try {
+    if (localStorage.getItem(CACHE_OWNER_KEY) === userId) {
+      return
+    }
+    localStorage.setItem(CACHE_OWNER_KEY, userId)
+  } catch {
+    // Storage refused: clear every time rather than risk serving someone else's
+  }
+  void forgetOfflineDiary()
+}
+
+/**
  * Low-level session state.
  *
  * Split out from `useAuth` so `useApi` can read the token and trigger a refresh
@@ -47,7 +93,18 @@ export function useAuthState() {
   // Parallel 401s should share one refresh, not fire several
   const inFlight = useState<Promise<boolean> | null>('auth-refreshing', () => null)
 
+  // Whose diary is in memory now — kept when a session merely ends, so the
+  // same person signing back in keeps their screen
+  const owner = useState<string | null>('auth-owner', () => null)
+
   function setSession(response: AuthResponse) {
+    if (owner.value !== null && owner.value !== response.user.id) {
+      clearNuxtState(PERSONAL_STATE, { reset: true })
+    }
+    if (owner.value !== response.user.id && import.meta.client) {
+      claimOfflineDiary(response.user.id)
+    }
+    owner.value = response.user.id
     accessToken.value = response.access_token
     user.value = response.user
   }
@@ -85,19 +142,6 @@ export function useAuthState() {
   }
 
   return { accessToken, user, ready, setSession, clearSession, refresh }
-}
-
-/**
- * The service worker keeps the diary's last answers for reading offline
- * (nuxt.config.ts → pwa.workbox.runtimeCaching). They are one person's; the
- * next person on this browser must never be served them.
- */
-async function forgetOfflineDiary() {
-  try {
-    await window.caches?.delete('nutrijurnal-api')
-  } catch {
-    // No Cache Storage here (an old browser, a locked-down profile) — nothing kept
-  }
 }
 
 export function useAuth() {

@@ -20,9 +20,19 @@ export interface ApiOptions {
  * The retry is deliberately once-only: if refreshing also fails the session is
  * genuinely gone, and looping would hammer the API.
  */
+// Where a 401 means the credentials sent were wrong, not that a session ran
+// out — refreshing would only hide "Incorrect email or password"
+const EXCHANGES = /\/auth\/(?:refresh|login|register|demo)$/
+
+/** Pages that need no session — a 401 met there is not a session ending */
+const OPEN_PAGES = ['/login', '/register', '/auth/callback']
+
 export function useApi() {
   const { apiBase } = useRuntimeConfig().public
   const { accessToken, refresh, clearSession } = useAuthState()
+  // Taken now, while the component that asked is being set up: the 401 below
+  // arrives later, outside any setup, where the router can't be looked up
+  const router = useRouter()
 
   /**
    * Same call as `request`, but hands back the whole response — use it when the
@@ -48,12 +58,18 @@ export function useApi() {
       const status = (error as { response?: { status?: number } })?.response?.status
 
       // Never refresh in response to a failing refresh — that's how you loop
-      if (status !== 401 || path.includes('/auth/refresh')) {
+      if (status !== 401 || EXCHANGES.test(path)) {
         throw error
       }
 
       if (!(await refresh())) {
         clearSession()
+        // The session is over (expired, revoked, a demo that was deleted):
+        // every further tap would fail the same way, so sign in again here
+        const here = router.currentRoute.value
+        if (!OPEN_PAGES.includes(here.path)) {
+          void router.replace({ path: '/login', query: { redirect: here.fullPath } })
+        }
         throw error
       }
 
