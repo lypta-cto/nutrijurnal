@@ -21,12 +21,10 @@ from PIL import Image, ImageDraw
 
 PUBLIC = Path(__file__).resolve().parent.parent / "public"
 
-# The brand scale from app/assets/css/main.css (basil)
-BASIL_200 = "#bcefc7"
-BASIL_500 = "#3eb268"
-BASIL_600 = "#307e4b"
-BASIL_700 = "#25673e"
-CREAM = "#fbfaf7"
+# The accent from app/assets/css/main.css (basil): one colour, no gradient
+BASIL_500 = "#2fb463"
+BASIL_600 = "#1d7f43"
+WHITE = "#ffffff"
 
 # Drawn on a 48-unit grid and scaled to each target size
 GRID = 48
@@ -36,10 +34,10 @@ STROKE = 6.5
 # The day so far: from the top, clockwise, three quarters of the way round
 ARC_FROM = -90.0
 ARC_SWEEP = 270.0
-# The rest of the ring is still there, only quieter: cream on the green tile
+# The rest of the ring is still there, only quieter: white on the green tile
 # needs more of it than green on white does
-TRACK_OPACITY = 0.38
-TRACK_OPACITY_ON_LIGHT = 0.25
+TRACK_OPACITY = 0.32
+TRACK_OPACITY_ON_LIGHT = 0.2
 LEAF_BASE = (25.0, 11.5)
 LEAF_TIP = (37.5, 5.0)
 # How far each side of the leaf swells from its midrib — one side fuller
@@ -155,8 +153,8 @@ def mark_svg(ring: str, leaf: str, track_opacity: float) -> str:
 
 
 def write_svgs():
-    # The mark alone, in the brand greens, for light backgrounds
-    mark = mark_svg(BASIL_600, BASIL_500, TRACK_OPACITY_ON_LIGHT)
+    # The mark alone, in the accent, for light backgrounds
+    mark = mark_svg(BASIL_600, BASIL_600, TRACK_OPACITY_ON_LIGHT)
     (PUBLIC / "logo.svg").write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {GRID} {GRID}">{mark}</svg>\n'
     )
@@ -164,11 +162,8 @@ def write_svgs():
     # The browser tab: the app icon's tile, so it holds up at 16 px on any tab colour
     (PUBLIC / "favicon.svg").write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {GRID} {GRID}">'
-        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        f'<stop offset="0" stop-color="{BASIL_500}"/><stop offset="1" stop-color="{BASIL_700}"/>'
-        "</linearGradient></defs>"
-        f'<rect width="{GRID}" height="{GRID}" rx="11" fill="url(#g)"/>'
-        f'<g transform="translate(4.8 4.8) scale(0.8)">{mark_svg(CREAM, BASIL_200, TRACK_OPACITY)}</g>'
+        f'<rect width="{GRID}" height="{GRID}" rx="11" fill="{BASIL_500}"/>'
+        f'<g transform="translate(4.8 4.8) scale(0.8)">{mark_svg(WHITE, WHITE, TRACK_OPACITY)}</g>'
         "</svg>\n"
     )
 
@@ -177,23 +172,16 @@ def hex_rgb(value: str) -> tuple[int, int, int]:
     return tuple(int(value[i : i + 2], 16) for i in (1, 3, 5))
 
 
-def gradient_tile(size: int) -> Image.Image:
-    """The diagonal basil gradient every icon sits on"""
-    start, end = hex_rgb(BASIL_500), hex_rgb(BASIL_700)
-    small = 64
-    tile = Image.new("RGB", (small, small))
-    for y in range(small):
-        for x in range(small):
-            t = (x + y) / (2 * (small - 1))
-            tile.putpixel((x, y), tuple(round(a + (b - a) * t) for a, b in zip(start, end, strict=True)))
-    return tile.resize((size, size), Image.BICUBIC)
+def flat_tile(size: int) -> Image.Image:
+    """The flat accent every icon sits on"""
+    return Image.new("RGB", (size, size), hex_rgb(BASIL_500))
 
 
 def icon(size: int, mark_share: float, rounded: bool) -> Image.Image:
     """A tile with the mark centred; `mark_share` is the grid's width over the tile's"""
     big = size * SUPERSAMPLE
     canvas = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    tile = gradient_tile(big).convert("RGBA")
+    tile = flat_tile(big).convert("RGBA")
     if rounded:
         mask = Image.new("L", (big, big), 0)
         ImageDraw.Draw(mask).rounded_rectangle([0, 0, big - 1, big - 1], radius=round(big * 0.225), fill=255)
@@ -210,12 +198,12 @@ def icon(size: int, mark_share: float, rounded: bool) -> Image.Image:
     track_draw = ImageDraw.Draw(track)
     track_draw.polygon(outer, fill=round(255 * TRACK_OPACITY))
     track_draw.polygon(inner, fill=0)
-    cream = Image.new("RGBA", (big, big), hex_rgb(CREAM) + (255,))
-    canvas.paste(cream, (0, 0), track)
+    white = Image.new("RGBA", (big, big), hex_rgb(WHITE) + (255,))
+    canvas.paste(white, (0, 0), track)
 
     draw = ImageDraw.Draw(canvas)
-    draw.polygon(arc_polygon(scale, offset), fill=CREAM)
-    draw.polygon(leaf_polygon(scale, offset), fill=BASIL_200)
+    draw.polygon(arc_polygon(scale, offset), fill=WHITE)
+    draw.polygon(leaf_polygon(scale, offset), fill=WHITE)
     return canvas.resize((size, size), Image.LANCZOS)
 
 
