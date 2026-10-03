@@ -598,46 +598,53 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
           </div>
         </div>
 
-        <!-- Onto a day — right where the eye is when the button is pressed -->
+        <!-- Onto a day — right where the eye is when the button is pressed.
+             The meal form's "when", the same way: the label left, a grey
+             pill to tap on the right, the amount against its unit -->
         <div
           v-if="planning"
-          class="app-card grid grid-cols-2 gap-3 p-4"
+          class="flex flex-col gap-1.5"
         >
-          <span class="col-span-2 text-headline text-highlighted">Put it on a day</span>
-          <UFormField
-            label="Day"
-            :error="planError ?? false"
+          <h3 class="app-group-title px-4">
+            Put it on a day
+          </h3>
+          <div :class="GROUP">
+            <label class="flex min-h-11 items-center gap-3 py-1.5 pr-3 pl-4">
+              <span class="min-w-0 flex-1 text-body text-default">Day</span>
+              <input
+                v-model="plan.day"
+                type="date"
+                :max="today"
+                class="app-field h-9 w-auto shrink-0 px-3"
+                aria-label="Day"
+                :aria-invalid="Boolean(planError)"
+              >
+            </label>
+            <label class="flex min-h-11 items-center gap-3 py-1.5 pr-3 pl-4">
+              <span class="min-w-0 flex-1 text-body text-default">Time <span class="text-footnote text-muted">optional</span></span>
+              <input
+                v-model="plan.at"
+                type="time"
+                class="app-field h-9 w-auto shrink-0 px-3"
+                aria-label="Time"
+              >
+            </label>
+            <ShellFieldRow :label="full.serving_unit === 'piece' ? 'Pieces' : 'Servings'">
+              <DecimalInput
+                v-model="plan.servings"
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+              />
+            </ShellFieldRow>
+          </div>
+          <p
+            v-if="planError"
+            class="px-4 text-footnote text-error"
+            role="alert"
           >
-            <input
-              v-model="plan.day"
-              type="date"
-              :max="today"
-              class="app-field"
-              aria-label="Day"
-            >
-          </UFormField>
-          <UFormField
-            label="Time"
-            hint="optional"
-          >
-            <input
-              v-model="plan.at"
-              type="time"
-              class="app-field"
-              aria-label="Time"
-            >
-          </UFormField>
-          <UFormField
-            :label="full.serving_unit === 'piece' ? 'Pieces' : 'Servings'"
-            class="col-span-2"
-          >
-            <DecimalInput
-              v-model="plan.servings"
-              class="w-28"
-              :ui="AMOUNT_UI"
-            />
-          </UFormField>
-          <div class="col-span-2 flex gap-2">
+            {{ planError }}
+          </p>
+          <div class="flex gap-2 pt-1.5">
             <UButton
               label="Cancel"
               color="neutral"

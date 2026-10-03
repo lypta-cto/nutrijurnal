@@ -1024,43 +1024,45 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
         </div>
       </template>
 
-      <template v-else>
-        <div class="app-card flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4">
-          <UIcon
-            name="i-lucide-book-open"
-            class="size-5.5 shrink-0 text-muted"
-          />
-          <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span class="truncate text-body text-highlighted">{{ picked.title }}</span>
-            <span class="text-footnote text-muted tabular-nums">makes {{ servingsLabel(picked) }}</span>
-          </span>
-          <UButton
-            icon="i-lucide-x"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            square
-            class="app-hit"
-            aria-label="Pick another recipe"
-            @click="clearRecipe"
-          />
-        </div>
-        <div class="grid grid-cols-[7rem_minmax(0,1fr)] items-end gap-3">
-          <UFormField
+      <!-- The recipe and how much of it, as one group with the note as its
+           footer — the label column no longer squeezes "of 4" beside it -->
+      <div v-else>
+        <div :class="GROUP">
+          <div class="flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4">
+            <UIcon
+              name="i-lucide-book-open"
+              class="size-5.5 shrink-0 text-muted"
+            />
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="truncate text-body text-highlighted">{{ picked.title }}</span>
+              <span class="text-footnote text-muted tabular-nums">makes {{ servingsLabel(picked) }}</span>
+            </span>
+            <UButton
+              icon="i-lucide-x"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              square
+              class="app-hit"
+              aria-label="Pick another recipe"
+              @click="clearRecipe"
+            />
+          </div>
+          <ShellFieldRow
             :label="picked.serving_unit === 'piece' ? 'Pieces eaten' : 'Servings eaten'"
             :hint="`of ${picked.servings}`"
           >
             <DecimalInput
               v-model="servings"
-              class="w-full"
-              :ui="AMOUNT_UI"
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
             />
-          </UFormField>
-          <p class="pb-1 text-footnote text-muted">
-            Corrections below go onto this meal only — the recipe stays as it is.
-          </p>
+          </ShellFieldRow>
         </div>
-      </template>
+        <p class="px-4 pt-1.5 text-footnote text-muted">
+          Corrections below go onto this meal only — the recipe stays as it is.
+        </p>
+      </div>
     </div>
 
     <!-- SCAN -->
