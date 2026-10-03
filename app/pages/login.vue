@@ -38,6 +38,7 @@ const GOOGLE_ERRORS: Record<string, string> = {
   google_denied: 'Google sign-in was cancelled or failed — try again.',
   google_no_email: 'Google returned no email for that account.',
   google_unverified: 'That Google account\'s email is not verified.',
+  google_not_allowed: 'This Google account hasn\'t been given access to Nutrijurnal. Sign in with your email and password instead.',
   account_disabled: 'This account is disabled.'
 }
 
