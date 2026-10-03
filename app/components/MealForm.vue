@@ -1,0 +1,1388 @@
+<script setup lang="ts">
+import type { Food, Macros, Meal, MealItemPayload, MealTab, Recipe, ScanResult, Unit } from '~/composables/useEating'
+import {
+  DRAFT_COLUMNS,
+  DRAFT_MACRO_COLUMNS,
+  UNIT_ITEMS,
+  amountLabel,
+  formatGrams,
+  formatKcal,
+  formatMacro,
+  gramsFor,
+  macrosFromFood,
+  macrosOf,
+  scaleMacros,
+  servingsLabel,
+  unitLabel,
+  unitsOf
+} from '~/composables/useEating'
+
+/**
+ * A meal onto a day, written the way it actually happened — five ways in,
+ * one list out:
+ *
+ * - **Search**: find a food in the pantry, say how much.
+ * - **Type**: write the plate as a sentence, the server resolves it.
+ * - **Recipe**: pick one of your own, set the servings, correct what you
+ *   really put in before it is saved.
+ * - **Scan**: a photo of the barcode, then the amount.
+ * - **Kcal**: just the numbers, for a plate nobody can weigh.
+ *
+ * Whatever the way, the items land in the same editable list, so nothing is
+ * saved before it reads right.
+ */
+const props = withDefaults(defineProps<{
+  /** The day the diary is showing — what a new meal starts on */
+  day: string
+  /** Set to fill in or edit a meal already in the diary */
+  meal?: Meal | null
+  /** The tab a new meal opens on */
+  start?: MealTab
+}>(), {
+  meal: null,
+  start: 'search'
+})
+
+const emit = defineEmits<{ saved: [Meal] }>()
+const open = defineModel<boolean>('open', { default: false })
+
+const {
+  addMeal, addItem, updateItem, removeItem, updateMeal,
+  parseText, mealFromRecipe, loadRecipes, scanFood, searchFoods
+} = useEating()
+
+/** Filling in a meal that was only written down, rather than adding one */
+const filling = computed(() => props.meal ?? null)
+const toast = useToast()
+
+const TABS: { value: MealTab, label: string, icon: string }[] = [
+  { value: 'search', label: 'Search', icon: 'i-lucide-search' },
+  { value: 'type', label: 'Type', icon: 'i-lucide-pencil-line' },
+  { value: 'recipe', label: 'Recipe', icon: 'i-lucide-book-open' },
+  { value: 'scan', label: 'Scan', icon: 'i-lucide-barcode' },
+  { value: 'kcal', label: 'Kcal', icon: 'i-lucide-flame' }
+]
+
+const tab = ref<MealTab>(props.start)
+const saving = ref(false)
+
+const form = reactive({
+  day: props.day,
+  at: '',
+  title: '',
+  note: ''
+})
+
+/** What a meal gets called: by the hour, or simply by its number for
+ * anyone who eats to a plan rather than to a clock */
+const MEAL_TITLES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Meal 1', 'Meal 2', 'Meal 3']
+
+function titleForNow(): string {
+  const hour = new Date().getHours()
+  if (hour < 11) return 'Breakfast'
+  if (hour < 16) return 'Lunch'
+  if (hour < 21) return 'Dinner'
+  return 'Snack'
+}
+
+function fail(error: unknown) {
+  toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
+}
+
+// --- The list every tab feeds -------------------------------------------------
+
+interface Draft {
+  key: string
+  food_id: string | null
+  label: string
+  quantity: number
+  unit: Unit
+  grams: number | null
+  /** What the amount was worth when it was resolved — scaled as it changes */
+  base: { quantity: number, unit: Unit, macros: Macros, grams: number } | null
+  /** Numbers for one serving of a plate with no food behind it */
+  direct: Macros | null
+}
+
+const items = ref<Draft[]>([])
+const unresolved = ref<string[]>([])
+let nextKey = 0
+
+function draftKey(): string {
+  nextKey += 1
+  return `draft-${nextKey}`
+}
+
+/** An item's macros follow its amount — as long as the unit is the resolved one */
+function macrosOfDraft(draft: Draft): Macros | null {
+  if (!draft.base || draft.base.quantity <= 0 || draft.base.unit !== draft.unit) {
+    return null
+  }
+  return scaleMacros(draft.base.macros, draft.quantity / draft.base.quantity)
+}
+
+function gramsOfDraft(draft: Draft): number | null {
+  if (!draft.base || draft.base.quantity <= 0 || draft.base.unit !== draft.unit) {
+    return draft.grams
+  }
+  return draft.base.grams * (draft.quantity / draft.base.quantity)
+}
+
+const known = computed(() => items.value.map(macrosOfDraft).filter((entry): entry is Macros => entry !== null))
+const draftTotals = computed<Macros>(() => macrosOf(known.value))
+const unpriced = computed(() => items.value.length - known.value.length)
+
+function removeDraft(key: string) {
+  items.value = items.value.filter(entry => entry.key !== key)
+}
+
+function addFoodDraft(food: Food, quantity: number, unit: Unit) {
+  const grams = gramsFor(food, quantity, unit)
+  const macros = grams === null ? null : macrosFromFood(food, grams)
+  items.value = [...items.value, {
+    key: draftKey(),
+    food_id: food.id,
+    label: food.brand ? `${food.name} · ${food.brand}` : food.name,
+    quantity,
+    unit,
+    grams,
+    base: macros && grams !== null ? { quantity, unit, macros, grams } : null,
+    direct: null
+  }]
+  if (!form.title.trim()) {
+    form.title = titleForNow()
+  }
+}
+
+/** The amount a food opens on: 100 of its base unit, or one of its portions */
+function startingAmount(food: Food): { quantity: number, unit: Unit } {
+  const unit = unitsOf(food)[0] ?? food.base_unit
+  return { quantity: unit === 'g' || unit === 'ml' ? 100 : 1, unit }
+}
+
+// --- A food picked (searched or scanned), waiting for its amount ------------------
+
+const pending = ref<Food | null>(null)
+const pendingQuantity = ref(100)
+const pendingUnit = ref<Unit>('g')
+
+function choose(food: Food) {
+  pending.value = food
+  const start = startingAmount(food)
+  pendingQuantity.value = start.quantity
+  pendingUnit.value = start.unit
+}
+
+const pendingUnits = computed(() =>
+  pending.value ? unitsOf(pending.value).map(unit => ({ value: unit, label: unitLabel(unit) })) : UNIT_ITEMS
+)
+
+const pendingMacros = computed<Macros | null>(() => {
+  const food = pending.value
+  if (!food) {
+    return null
+  }
+  const grams = gramsFor(food, Number(pendingQuantity.value) || 0, pendingUnit.value)
+  return grams === null ? null : macrosFromFood(food, grams)
+})
+
+function addPending() {
+  const food = pending.value
+  if (!food) {
+    return
+  }
+  addFoodDraft(food, Number(pendingQuantity.value) || 0, pendingUnit.value)
+  pending.value = null
+  scan.value = null
+}
+
+// --- Search: the pantry -------------------------------------------------------------
+
+const searchQuery = ref('')
+const results = ref<Food[]>([])
+const searching = ref(false)
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+async function runSearch() {
+  const q = searchQuery.value.trim()
+  if (!q) {
+    results.value = []
+    return
+  }
+  searching.value = true
+  try {
+    results.value = await searchFoods(q, 20)
+  } catch {
+    results.value = []
+  } finally {
+    searching.value = false
+  }
+}
+
+watch(searchQuery, () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  searchTimer = setTimeout(() => void runSearch(), 250)
+})
+
+// --- Type: the plate as a sentence ---------------------------------------------------
+
+const quickText = ref('')
+const parsing = ref(false)
+
+async function parseQuick() {
+  const text = quickText.value.trim()
+  if (!text || parsing.value) {
+    return
+  }
+  parsing.value = true
+  try {
+    const result = await parseText(text)
+    items.value = [
+      ...items.value,
+      ...result.items.map(entry => ({
+        key: draftKey(),
+        food_id: entry.food_id,
+        label: entry.label,
+        quantity: entry.quantity,
+        unit: entry.unit,
+        grams: entry.grams,
+        base: {
+          quantity: entry.quantity,
+          unit: entry.unit,
+          grams: entry.grams,
+          macros: { kcal: entry.kcal, protein: entry.protein, carbs: entry.carbs, fat: entry.fat }
+        },
+        direct: null
+      }))
+    ]
+    unresolved.value = [...unresolved.value, ...result.unknown]
+    quickText.value = ''
+    if (!form.title.trim()) {
+      form.title = titleForNow()
+    }
+  } catch (error) {
+    fail(error)
+  } finally {
+    parsing.value = false
+  }
+}
+
+/** Nothing was recognised in it — keep the words, the numbers stay empty */
+function keepAsWritten(chunk: string) {
+  items.value = [...items.value, {
+    key: draftKey(),
+    food_id: null,
+    label: chunk,
+    quantity: 1,
+    unit: 'piece',
+    grams: null,
+    base: null,
+    direct: null
+  }]
+  unresolved.value = unresolved.value.filter(entry => entry !== chunk)
+}
+
+// --- Kcal: just the numbers ------------------------------------------------------------
+
+const direct = reactive({
+  label: '',
+  kcal: undefined as number | undefined,
+  protein: undefined as number | undefined,
+  carbs: undefined as number | undefined,
+  fat: undefined as number | undefined
+})
+
+const DIRECT_FIELDS: { key: 'kcal' | 'protein' | 'carbs' | 'fat', label: string, dot: string }[] = [
+  { key: 'kcal', label: 'kcal', dot: 'bg-emerald-500' },
+  { key: 'protein', label: 'Protein g', dot: 'bg-sky-500' },
+  { key: 'carbs', label: 'Carbs g', dot: 'bg-violet-500' },
+  { key: 'fat', label: 'Fat g', dot: 'bg-amber-500' }
+]
+
+function addDirect() {
+  const kcal = Number(direct.kcal) || 0
+  if (kcal <= 0) {
+    return
+  }
+  const macros: Macros = {
+    kcal,
+    protein: Number(direct.protein) || 0,
+    carbs: Number(direct.carbs) || 0,
+    fat: Number(direct.fat) || 0
+  }
+  items.value = [...items.value, {
+    key: draftKey(),
+    food_id: null,
+    label: direct.label.trim() || 'Quick add',
+    quantity: 1,
+    unit: 'serving',
+    grams: null,
+    base: { quantity: 1, unit: 'serving', macros, grams: 100 },
+    direct: macros
+  }]
+  Object.assign(direct, { label: '', kcal: undefined, protein: undefined, carbs: undefined, fat: undefined })
+  if (!form.title.trim()) {
+    form.title = titleForNow()
+  }
+}
+
+// --- A food that doesn't exist yet -------------------------------------------------
+
+const foodFormOpen = ref(false)
+const foodDraftName = ref('')
+const foodBarcode = ref<string | null>(null)
+
+function createFoodFor(name: string) {
+  foodDraftName.value = name
+  foodBarcode.value = null
+  foodFormOpen.value = true
+}
+
+function onFoodSaved(food: Food) {
+  unresolved.value = unresolved.value.filter(entry => entry !== foodDraftName.value)
+  foodDraftName.value = ''
+  foodBarcode.value = null
+  // A new food still has to be measured — the amount panel asks how much
+  choose(food)
+}
+
+// --- Recipe: your own, scaled -------------------------------------------------------
+
+const recipeQuery = ref('')
+const recipes = ref<Recipe[]>([])
+const recipesLoading = ref(false)
+const picked = ref<Recipe | null>(null)
+const servings = ref(1)
+
+let recipeTimer: ReturnType<typeof setTimeout> | null = null
+
+async function searchRecipes() {
+  recipesLoading.value = true
+  try {
+    recipes.value = await loadRecipes({ q: recipeQuery.value })
+  } catch {
+    recipes.value = []
+  } finally {
+    recipesLoading.value = false
+  }
+}
+
+watch(recipeQuery, () => {
+  if (recipeTimer) {
+    clearTimeout(recipeTimer)
+  }
+  recipeTimer = setTimeout(() => void searchRecipes(), 250)
+})
+
+watch(tab, (value) => {
+  if (value === 'recipe' && !recipes.value.length && !recipesLoading.value) {
+    void searchRecipes()
+  }
+}, { immediate: true })
+
+interface RecipeDraft {
+  key: string
+  food_id: string | null
+  label: string
+  quantity: number
+  unit: Unit
+  grams: number
+  optional: boolean
+}
+
+const recipeItems = ref<RecipeDraft[]>([])
+
+/** How much of the recipe is being eaten — its items follow */
+const factor = computed(() => {
+  const base = picked.value?.servings ?? 1
+  return base > 0 ? servings.value / base : 1
+})
+
+function pickRecipe(recipe: Recipe) {
+  picked.value = recipe
+  servings.value = 1
+  recipeItems.value = (recipe.items ?? []).map(item => ({
+    key: draftKey(),
+    food_id: item.food_id,
+    label: item.label,
+    quantity: item.quantity,
+    unit: item.unit,
+    grams: item.grams,
+    optional: item.optional
+  }))
+  if (!form.title.trim()) {
+    form.title = recipe.title
+  }
+}
+
+/** The list as it will be saved: the recipe's amounts times the servings */
+const scaledRecipeItems = computed(() =>
+  recipeItems.value.map(item => ({
+    ...item,
+    quantity: Number((item.quantity * factor.value).toFixed(3)),
+    grams: item.grams * factor.value
+  }))
+)
+
+/** A recipe known only by its stated numbers still adds up to them */
+const recipeTotals = computed<Macros | null>(() => {
+  const recipe = picked.value
+  if (!recipe) {
+    return null
+  }
+  const source = !recipe.items.length && recipe.stated ? recipe.stated : recipe
+  return scaleMacros({ kcal: source.kcal, protein: source.protein, carbs: source.carbs, fat: source.fat }, factor.value)
+})
+
+function dropRecipeItem(key: string) {
+  recipeItems.value = recipeItems.value.filter(entry => entry.key !== key)
+}
+
+function clearRecipe() {
+  picked.value = null
+  recipeItems.value = []
+}
+
+// --- Scan: the barcode ---------------------------------------------------------------
+
+const photoInput = ref<HTMLInputElement | null>(null)
+const scanning = ref(false)
+const scan = ref<ScanResult | null>(null)
+
+async function onPhoto(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) {
+    return
+  }
+  scanning.value = true
+  scan.value = null
+  pending.value = null
+  try {
+    const result = await scanFood(file)
+    scan.value = result
+    if (result.food) {
+      choose(result.food)
+    }
+  } catch (error) {
+    fail(error)
+  } finally {
+    scanning.value = false
+  }
+}
+
+function createScannedFood() {
+  foodDraftName.value = ''
+  foodBarcode.value = scan.value?.barcode ?? null
+  foodFormOpen.value = true
+}
+
+// --- Saving -------------------------------------------------------------------------
+
+function reset() {
+  const meal = props.meal
+  items.value = []
+  unresolved.value = []
+  pending.value = null
+  scan.value = null
+  searchQuery.value = ''
+  results.value = []
+  recipeQuery.value = ''
+  picked.value = null
+  recipeItems.value = []
+  servings.value = 1
+  Object.assign(direct, { label: '', kcal: undefined, protein: undefined, carbs: undefined, fat: undefined })
+  if (meal) {
+    Object.assign(form, {
+      day: meal.day,
+      at: meal.at ?? '',
+      title: meal.title,
+      note: meal.note ?? ''
+    })
+    // A meal written down in words opens with those words ready to be read;
+    // one that already counts opens on the pantry
+    quickText.value = meal.items.length ? '' : (meal.note ?? '')
+    tab.value = meal.items.length ? 'search' : 'type'
+    return
+  }
+  Object.assign(form, { day: props.day, at: '', title: '', note: '' })
+  quickText.value = ''
+  tab.value = props.start
+}
+
+watch(open, (isOpen) => {
+  if (isOpen) {
+    reset()
+  }
+}, { immediate: true })
+
+watch(() => props.day, (value) => {
+  if (!open.value) {
+    form.day = value
+  }
+})
+
+const fromRecipe = computed(() => tab.value === 'recipe' && picked.value !== null)
+
+// --- One drafted list, whichever way the food got here ---------------------------
+
+/**
+ * Every tab ends at the same table. The rows still point at their own source
+ * object — editing a cell writes straight back into `items` or `recipeItems`
+ * — so this is a view over them, never a copy.
+ */
+interface DraftedRow {
+  key: string
+  entry: Draft | RecipeDraft
+  macros: Macros | null
+  grams: number | null
+  /** What a serving change actually puts on the plate, when it differs */
+  scaled: { quantity: number, unit: Unit, grams: number } | null
+  optional: boolean
+  /** Counted in servings of its own numbers — the unit can't be changed */
+  direct: boolean
+}
+
+const drafted = computed<DraftedRow[]>(() => {
+  if (fromRecipe.value) {
+    return recipeItems.value.map((entry, index) => {
+      const scaled = scaledRecipeItems.value[index]
+      return {
+        key: entry.key,
+        entry,
+        macros: null,
+        grams: scaled?.grams ?? entry.grams,
+        // The inputs hold the recipe's own amounts; this says what is eaten
+        scaled: scaled && Math.abs(factor.value - 1) > 0.001
+          ? { quantity: scaled.quantity, unit: scaled.unit, grams: scaled.grams }
+          : null,
+        optional: entry.optional,
+        direct: false
+      }
+    })
+  }
+  return items.value.map(entry => ({
+    key: entry.key,
+    entry,
+    macros: macrosOfDraft(entry),
+    grams: entry.direct ? null : gramsOfDraft(entry),
+    scaled: null,
+    optional: false,
+    direct: entry.direct !== null
+  }))
+})
+
+/** What the whole table comes to — the recipe scales, the plate adds up */
+const draftedTotals = computed<Macros | null>(() =>
+  fromRecipe.value ? recipeTotals.value : (items.value.length ? draftTotals.value : null))
+
+function removeRow(row: DraftedRow) {
+  if (fromRecipe.value) {
+    dropRecipeItem(row.key)
+    return
+  }
+  removeDraft(row.key)
+}
+
+/** Words alone are enough: a meal can be written down now and counted later */
+const noteOnly = computed(
+  () => !fromRecipe.value && !items.value.length && quickText.value.trim().length > 0
+)
+
+const canSave = computed(() =>
+  fromRecipe.value
+    // A recipe known only by its numbers has no rows and is still a plate
+    ? recipeItems.value.length > 0 || Boolean(picked.value?.stated)
+    // Editing an existing meal: its day, time, name and note are enough to save
+    : items.value.length > 0 || noteOnly.value || filling.value !== null
+)
+
+function payloadItems(): MealItemPayload[] {
+  return items.value.map(entry => ({
+    food_id: entry.food_id,
+    label: entry.label.trim() || 'Item',
+    quantity: entry.quantity,
+    unit: entry.unit,
+    ...(entry.direct ? { macros: entry.direct } : {})
+  }))
+}
+
+/**
+ * A recipe is copied by the server and then corrected: whatever was changed
+ * in the preview is applied to the copy item by item. Matching on the label
+ * rather than the position keeps it right when a row was removed.
+ */
+async function applyRecipeEdits(meal: Meal): Promise<Meal> {
+  if (!recipeItems.value.length) {
+    return meal
+  }
+  let current = meal
+  const remaining = [...meal.items]
+  for (const entry of scaledRecipeItems.value) {
+    const index = remaining.findIndex(item => item.label.trim().toLowerCase() === entry.label.trim().toLowerCase())
+    if (index === -1) {
+      current = await addItem(current.id, {
+        food_id: entry.food_id,
+        label: entry.label,
+        quantity: entry.quantity,
+        unit: entry.unit
+      })
+      continue
+    }
+    const [item] = remaining.splice(index, 1)
+    if (!item) {
+      continue
+    }
+    const moved = Math.abs(item.quantity - entry.quantity) > 0.001 || item.unit !== entry.unit
+    if (moved) {
+      current = await updateItem(current.id, item.id, { quantity: entry.quantity, unit: entry.unit })
+    }
+  }
+  for (const leftover of remaining) {
+    current = await removeItem(current.id, leftover.id)
+  }
+  return current
+}
+
+async function save() {
+  if (!canSave.value || saving.value) {
+    return
+  }
+  saving.value = true
+  try {
+    let meal: Meal
+    if (fromRecipe.value && picked.value) {
+      meal = await mealFromRecipe({
+        recipe_id: picked.value.id,
+        day: form.day,
+        at: form.at || null,
+        servings: servings.value
+      })
+      meal = await applyRecipeEdits(meal)
+      const title = form.title.trim()
+      if (title && title !== meal.title) {
+        meal = await updateMeal(meal.id, { title })
+      }
+      if (form.note.trim()) {
+        meal = await updateMeal(meal.id, { note: form.note.trim() })
+      }
+    } else if (filling.value) {
+      // The meal is already in the diary; this adds the numbers to it
+      meal = filling.value
+      for (const item of payloadItems()) {
+        meal = await addItem(meal.id, item)
+      }
+      const title = form.title.trim() || meal.title
+      const note = form.note.trim() || null
+      const at = form.at || null
+      // The day is on the form too: editing is also how a meal moves
+      if (title !== meal.title || note !== meal.note || at !== meal.at || form.day !== meal.day) {
+        meal = await updateMeal(meal.id, { title, note, at, day: form.day })
+      }
+    } else {
+      // Nothing recognised and nothing typed into the rows: keep the words
+      // as the note, so the plate is written down and can be counted later
+      const written = quickText.value.trim()
+      meal = await addMeal({
+        day: form.day,
+        at: form.at || null,
+        title: form.title.trim() || titleForNow(),
+        note: [form.note.trim(), noteOnly.value ? written : ''].filter(Boolean).join(' · ') || null,
+        items: payloadItems()
+      })
+    }
+    emit('saved', meal)
+    open.value = false
+    toast.add({
+      title: filling.value
+        ? (filling.value.items.length ? `${meal.title} saved` : `${meal.title} counted`)
+        : noteOnly.value
+          ? `${meal.title} written down — numbers whenever you like`
+          : `${meal.title} written down`,
+      icon: 'i-lucide-utensils',
+      color: 'success'
+    })
+  } catch (error) {
+    fail(error)
+  } finally {
+    saving.value = false
+  }
+}
+
+const NATIVE_INPUT = 'w-full rounded-md border border-default bg-default px-2 py-1.5 text-sm text-default focus:outline-primary'
+
+/** The amount cell reads like a ledger number, not like a form field */
+const AMOUNT_UI = { base: 'tabular-nums px-1.5 text-right' }
+const UNIT_UI = { base: 'px-1.5' }
+</script>
+
+<template>
+  <FormSlideover
+    v-model:open="open"
+    :title="!filling ? 'New meal' : filling.items.length ? 'Edit the meal' : 'Fill in the meal'"
+    :description="!filling
+      ? 'Find it, type it, cook it from a recipe, scan it — or just the kcal.'
+      : filling.items.length
+        ? 'Its day, time and name — and anything else that went on the plate.'
+        : 'It is already in the diary — these are the numbers for it.'"
+    :loading="saving"
+    :disabled="!canSave"
+    @submit="save"
+  >
+    <!-- When, and what it is called -->
+    <div class="grid grid-cols-2 gap-3">
+      <UFormField label="Day">
+        <input
+          v-model="form.day"
+          type="date"
+          :class="NATIVE_INPUT"
+          aria-label="Day"
+        >
+      </UFormField>
+      <UFormField
+        label="Time"
+        hint="optional"
+      >
+        <input
+          v-model="form.at"
+          type="time"
+          :class="NATIVE_INPUT"
+          aria-label="Time"
+        >
+      </UFormField>
+      <UFormField
+        label="Meal"
+        class="col-span-2"
+      >
+        <UInput
+          v-model="form.title"
+          :placeholder="titleForNow()"
+          class="w-full"
+        />
+      </UFormField>
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        v-for="preset in MEAL_TITLES"
+        :key="preset"
+        type="button"
+        class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+        :class="form.title === preset
+          ? 'border-primary bg-primary/10 text-highlighted'
+          : 'border-default text-muted hover:text-default'"
+        @click="form.title = preset"
+      >
+        {{ preset }}
+      </button>
+    </div>
+
+    <!-- Five ways in -->
+    <div class="grid grid-cols-5 gap-0.5 rounded-lg bg-elevated/70 p-0.5">
+      <button
+        v-for="entry in TABS"
+        :key="entry.value"
+        type="button"
+        class="flex flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[11px] font-medium transition-colors"
+        :class="tab === entry.value ? 'bg-default text-highlighted shadow-sm' : 'text-muted hover:text-default'"
+        :aria-pressed="tab === entry.value"
+        @click="tab = entry.value"
+      >
+        <UIcon
+          :name="entry.icon"
+          class="size-4"
+        />
+        {{ entry.label }}
+      </button>
+    </div>
+
+    <!-- SEARCH -->
+    <div
+      v-if="tab === 'search'"
+      class="flex flex-col gap-2"
+    >
+      <UInput
+        v-model="searchQuery"
+        icon="i-lucide-search"
+        placeholder="Search foods — egg, oats, banana…"
+        class="w-full"
+        :loading="searching"
+        autofocus
+      />
+      <div
+        v-if="results.length && !pending"
+        class="flex max-h-72 flex-col divide-y divide-default overflow-y-auto rounded-lg border border-default"
+      >
+        <button
+          v-for="food in results"
+          :key="food.id"
+          type="button"
+          class="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-elevated/60"
+          @click="choose(food)"
+        >
+          <span class="flex min-w-0 flex-1 flex-col">
+            <span class="flex min-w-0 items-baseline gap-2">
+              <span class="truncate text-sm font-medium text-highlighted">{{ food.name }}</span>
+              <span
+                v-if="food.mine"
+                class="shrink-0 rounded-md bg-elevated px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-dimmed"
+              >Mine</span>
+            </span>
+            <span
+              v-if="food.brand"
+              class="truncate text-xs text-muted"
+            >{{ food.brand }}</span>
+          </span>
+          <span class="shrink-0 text-right text-xs tabular-nums text-muted">
+            <span class="font-medium text-highlighted">{{ formatKcal(food.kcal) }}</span> kcal
+            <span class="block text-[10px] text-dimmed">per 100 {{ food.base_unit }}</span>
+          </span>
+        </button>
+      </div>
+      <div
+        v-else-if="searchQuery.trim() && !searching && !pending"
+        class="flex flex-wrap items-center gap-2 rounded-lg bg-elevated/50 px-3 py-2 text-sm"
+      >
+        <span class="min-w-0 flex-1 text-muted">Not in the pantry yet.</span>
+        <UButton
+          label="New food"
+          icon="i-lucide-plus"
+          size="xs"
+          variant="soft"
+          @click="createFoodFor(searchQuery.trim())"
+        />
+      </div>
+    </div>
+
+    <!-- TYPE -->
+    <div
+      v-else-if="tab === 'type'"
+      class="flex flex-col gap-2"
+    >
+      <UTextarea
+        v-model="quickText"
+        :rows="2"
+        autoresize
+        placeholder="50g oats, 1 scoop whey, 1 banana"
+        class="w-full"
+        :disabled="parsing"
+        @keydown.enter.exact.prevent="parseQuick"
+      />
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted">
+          Read finds the foods in the line — they land below, editable.
+          <template v-if="!filling">Or save it as written and count it later.</template>
+        </span>
+        <UButton
+          label="Read"
+          icon="i-lucide-wand-sparkles"
+          size="sm"
+          variant="soft"
+          class="ml-auto shrink-0"
+          :loading="parsing"
+          :disabled="!quickText.trim()"
+          @click="parseQuick"
+        />
+      </div>
+
+      <!-- What it could not place -->
+      <div
+        v-if="unresolved.length"
+        class="flex flex-col gap-1.5 rounded-lg bg-amber-400/10 px-3 py-2"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-warning">Not recognised</span>
+        <div
+          v-for="chunk in unresolved"
+          :key="chunk"
+          class="flex flex-wrap items-center gap-2 text-sm"
+        >
+          <span class="min-w-0 flex-1 truncate text-default">{{ chunk }}</span>
+          <UButton
+            label="Keep as written"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            @click="keepAsWritten(chunk)"
+          />
+          <UButton
+            label="New food"
+            icon="i-lucide-plus"
+            size="xs"
+            variant="soft"
+            @click="createFoodFor(chunk)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- RECIPE -->
+    <div
+      v-else-if="tab === 'recipe'"
+      class="flex flex-col gap-2"
+    >
+      <template v-if="!picked">
+        <UInput
+          v-model="recipeQuery"
+          icon="i-lucide-search"
+          placeholder="Search your recipes…"
+          class="w-full"
+        />
+        <p
+          v-if="recipesLoading"
+          class="text-xs text-muted"
+        >
+          Looking…
+        </p>
+        <p
+          v-else-if="!recipes.length"
+          class="text-xs text-muted"
+        >
+          {{ recipeQuery ? 'Nothing found.' : 'No recipes yet — write your first one in the Library.' }}
+        </p>
+        <div
+          v-else
+          class="flex max-h-64 flex-col divide-y divide-default overflow-y-auto rounded-lg border border-default"
+        >
+          <button
+            v-for="recipe in recipes"
+            :key="recipe.id"
+            type="button"
+            class="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-elevated/60"
+            @click="pickRecipe(recipe)"
+          >
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate text-sm font-medium text-highlighted">{{ recipe.title }}</span>
+              <span class="truncate text-[11px] text-muted">
+                <template v-if="recipe.subtitle">{{ recipe.subtitle }} · </template>{{ servingsLabel(recipe) }}
+              </span>
+            </span>
+            <span class="w-14 shrink-0 text-right text-xs font-medium tabular-nums text-highlighted">
+              {{ formatKcal(!recipe.items.length && recipe.stated ? recipe.stated.kcal : recipe.kcal) }}
+            </span>
+          </button>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-elevated/50 px-3 py-2">
+          <UIcon
+            name="i-lucide-book-open"
+            class="size-4 shrink-0 text-muted"
+          />
+          <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ picked.title }}</span>
+          <span class="shrink-0 text-[11px] tabular-nums text-dimmed">makes {{ servingsLabel(picked) }}</span>
+          <UButton
+            icon="i-lucide-x"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            square
+            aria-label="Pick another recipe"
+            @click="clearRecipe"
+          />
+        </div>
+        <div class="flex flex-wrap items-end gap-3">
+          <UFormField
+            :label="picked.serving_unit === 'piece' ? 'Pieces eaten' : 'Servings eaten'"
+            :hint="`of ${picked.servings}`"
+          >
+            <UInput
+              v-model.number="servings"
+              type="number"
+              inputmode="decimal"
+              min="0.25"
+              step="0.25"
+              class="w-28"
+              :ui="AMOUNT_UI"
+            />
+          </UFormField>
+          <p class="pb-1 text-[11px] text-muted">
+            Corrections below go onto this meal only — the recipe stays as it is.
+          </p>
+        </div>
+      </template>
+    </div>
+
+    <!-- SCAN -->
+    <div
+      v-else-if="tab === 'scan'"
+      class="flex flex-col gap-2"
+    >
+      <input
+        ref="photoInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="hidden"
+        @change="onPhoto"
+      >
+      <button
+        type="button"
+        class="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accented bg-elevated/40 px-4 py-6 text-center transition-colors hover:border-primary hover:bg-primary/5 disabled:opacity-60"
+        :disabled="scanning"
+        @click="photoInput?.click()"
+      >
+        <UIcon
+          :name="scanning ? 'i-lucide-loader-circle' : 'i-lucide-barcode'"
+          class="size-8 text-primary"
+          :class="scanning && 'animate-spin'"
+        />
+        <span class="text-sm font-semibold text-highlighted">
+          {{ scanning ? 'Reading the barcode…' : 'Photograph the barcode' }}
+        </span>
+        <span class="text-xs text-muted">Get close enough that the bars fill the frame</span>
+      </button>
+
+      <!-- No food behind the barcode: say so, and offer to add it once -->
+      <div
+        v-if="scan && !scan.food"
+        class="flex flex-col gap-2 rounded-lg bg-amber-400/10 p-3"
+      >
+        <p class="flex items-start gap-1.5 text-sm text-default">
+          <UIcon
+            name="i-lucide-circle-help"
+            class="mt-0.5 size-4 shrink-0 text-warning"
+          />
+          <span class="min-w-0">{{ scan.message ?? 'No food behind that barcode yet.' }}</span>
+        </p>
+        <p
+          v-if="scan.barcode"
+          class="flex items-center gap-1.5 text-xs text-muted"
+        >
+          <UIcon
+            name="i-lucide-barcode"
+            class="size-3.5"
+          />
+          <span class="tabular-nums">{{ scan.barcode }}</span>
+        </p>
+        <UButton
+          v-if="scan.barcode"
+          label="Add it from the label"
+          icon="i-lucide-plus"
+          size="xs"
+          variant="soft"
+          class="self-start"
+          @click="createScannedFood"
+        />
+      </div>
+    </div>
+
+    <!-- KCAL -->
+    <div
+      v-else
+      class="flex flex-col gap-3"
+    >
+      <UFormField label="What was it?">
+        <UInput
+          v-model="direct.label"
+          placeholder="Slice of cake at the office"
+          class="w-full"
+        />
+      </UFormField>
+      <div class="grid grid-cols-4 gap-2">
+        <UFormField
+          v-for="field in DIRECT_FIELDS"
+          :key="field.key"
+        >
+          <template #label>
+            <span class="flex items-center gap-1 text-xs">
+              <span
+                class="size-2 rounded-full"
+                :class="field.dot"
+              />
+              {{ field.label }}
+            </span>
+          </template>
+          <UInput
+            v-model.number="direct[field.key]"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="1"
+            placeholder="—"
+            class="w-full"
+            :ui="AMOUNT_UI"
+          />
+        </UFormField>
+      </div>
+      <UButton
+        label="Add"
+        icon="i-lucide-plus"
+        size="sm"
+        class="self-end"
+        :disabled="!direct.kcal || direct.kcal <= 0"
+        @click="addDirect"
+      />
+    </div>
+
+    <!-- A food picked from the pantry or off a barcode, waiting for its amount -->
+    <div
+      v-if="pending && (tab === 'search' || tab === 'scan')"
+      class="flex flex-col gap-2 rounded-lg bg-elevated/50 p-3 ring-1 ring-success/30 ring-inset"
+    >
+      <div class="flex items-center gap-2">
+        <UIcon
+          name="i-lucide-badge-check"
+          class="size-4 shrink-0 text-success"
+        />
+        <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ pending.name }}</span>
+        <span
+          v-if="pending.brand"
+          class="shrink-0 truncate text-xs text-muted"
+        >{{ pending.brand }}</span>
+        <UButton
+          icon="i-lucide-x"
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          square
+          aria-label="Pick another food"
+          @click="pending = null"
+        />
+      </div>
+
+      <div class="flex items-baseline gap-2 text-[11px]">
+        <span class="text-dimmed">per 100 {{ pending.base_unit }}</span>
+        <span
+          class="ml-auto"
+          :class="DRAFT_MACRO_COLUMNS"
+        >
+          <span class="text-sky-500">{{ formatMacro(pending.protein) }}</span>
+          <span class="text-violet-500">{{ formatMacro(pending.carbs) }}</span>
+          <span class="text-amber-500">{{ formatMacro(pending.fat) }}</span>
+          <span class="text-muted">{{ formatKcal(pending.kcal) }}</span>
+        </span>
+      </div>
+
+      <div class="flex items-end gap-2">
+        <UFormField label="How much">
+          <UInput
+            v-model.number="pendingQuantity"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="1"
+            class="w-24"
+            :ui="AMOUNT_UI"
+          />
+        </UFormField>
+        <USelect
+          v-model="pendingUnit"
+          :items="pendingUnits"
+          value-key="value"
+          class="w-28"
+          aria-label="Unit"
+        />
+        <UButton
+          label="Add"
+          icon="i-lucide-plus"
+          class="ml-auto"
+          @click="addPending"
+        />
+      </div>
+
+      <div
+        v-if="pendingMacros"
+        class="flex items-baseline gap-2 border-t border-default pt-2 text-[11px]"
+      >
+        <span class="font-medium text-default">on the plate</span>
+        <span
+          class="ml-auto"
+          :class="DRAFT_MACRO_COLUMNS"
+        >
+          <span class="text-sky-500">{{ formatMacro(pendingMacros.protein) }}</span>
+          <span class="text-violet-500">{{ formatMacro(pendingMacros.carbs) }}</span>
+          <span class="text-amber-500">{{ formatMacro(pendingMacros.fat) }}</span>
+          <span class="font-semibold text-emerald-500">{{ formatKcal(pendingMacros.kcal) }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- The plate, as it will be saved. Every tab lands here, on one grid:
+         amount, unit and name on the line, the macros right under them in
+         fixed columns so the whole table reads down. -->
+    <div
+      v-if="fromRecipe || tab !== 'recipe' || drafted.length"
+      class="flex flex-col overflow-hidden rounded-lg border border-default"
+    >
+      <div class="flex items-center gap-2 bg-elevated/50 px-3 py-1.5">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-dimmed">On the plate</span>
+        <span class="rounded-full bg-elevated px-2 py-0.5 text-[11px] font-semibold tabular-nums text-default">{{ drafted.length }}</span>
+        <span
+          class="ml-auto text-[10px] font-semibold uppercase tracking-wide text-dimmed"
+          :class="DRAFT_MACRO_COLUMNS"
+        >
+          <span>P</span>
+          <span>C</span>
+          <span>F</span>
+          <span>kcal</span>
+        </span>
+      </div>
+
+      <p
+        v-if="!drafted.length"
+        class="px-3 py-3 text-xs text-muted"
+      >
+        {{ fromRecipe ? 'This recipe is counted by its stated numbers.' : 'Nothing on it yet.' }}
+      </p>
+
+      <div
+        v-for="row in drafted"
+        :key="row.key"
+        class="border-t border-default px-3 py-1.5"
+        :class="DRAFT_COLUMNS"
+      >
+        <UInput
+          v-model.number="row.entry.quantity"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          step="0.1"
+          size="xs"
+          class="w-full"
+          :ui="AMOUNT_UI"
+          :aria-label="`Amount of ${row.entry.label}`"
+        />
+        <span
+          v-if="row.direct"
+          class="px-1.5 text-xs text-muted"
+        >{{ unitLabel('serving', row.entry.quantity) }}</span>
+        <USelect
+          v-else
+          v-model="row.entry.unit"
+          :items="UNIT_ITEMS"
+          value-key="value"
+          size="xs"
+          class="w-full"
+          :ui="UNIT_UI"
+          :aria-label="`Unit for ${row.entry.label}`"
+        />
+        <UInput
+          v-model="row.entry.label"
+          size="xs"
+          variant="none"
+          placeholder="Name"
+          class="w-full"
+          :ui="{ root: 'w-full', base: 'px-0 text-sm text-highlighted' }"
+          :aria-label="`Name of ${row.entry.label}`"
+        />
+        <UButton
+          icon="i-lucide-x"
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          square
+          class="text-dimmed hover:text-error"
+          :aria-label="`Remove ${row.entry.label}`"
+          @click="removeRow(row)"
+        />
+
+        <!-- The numbers for this line, under it and right-aligned -->
+        <span class="col-span-4 flex items-baseline gap-2 text-[11px]">
+          <span class="min-w-0 flex-1 truncate text-dimmed">
+            <template v-if="row.scaled">→ {{ amountLabel(row.scaled.quantity, row.scaled.unit) }} · {{ formatGrams(row.scaled.grams) }}</template>
+            <template v-else-if="row.direct">typed in</template>
+            <template v-else-if="row.grams !== null">{{ formatGrams(row.grams) }}</template>
+            <template v-else>no weight</template>
+            <template v-if="row.optional"> · optional</template>
+          </span>
+          <span
+            class="ml-auto"
+            :class="DRAFT_MACRO_COLUMNS"
+          >
+            <template v-if="row.macros">
+              <span class="text-sky-500">{{ formatMacro(row.macros.protein) }}</span>
+              <span class="text-violet-500">{{ formatMacro(row.macros.carbs) }}</span>
+              <span class="text-amber-500">{{ formatMacro(row.macros.fat) }}</span>
+              <span class="font-medium text-highlighted">{{ formatKcal(row.macros.kcal) }}</span>
+            </template>
+            <template v-else>
+              <span class="text-dimmed">—</span>
+              <span class="text-dimmed">—</span>
+              <span class="text-dimmed">—</span>
+              <span class="text-dimmed">—</span>
+            </template>
+          </span>
+        </span>
+      </div>
+
+      <!-- What the plate comes to, in the same columns as every line -->
+      <div
+        v-if="draftedTotals"
+        class="flex items-baseline gap-2 border-t border-default bg-elevated/30 px-3 py-1.5 text-[11px]"
+      >
+        <span class="font-medium text-default">
+          {{ fromRecipe ? 'The whole plate' : 'Total' }}
+        </span>
+        <span
+          class="ml-auto"
+          :class="DRAFT_MACRO_COLUMNS"
+        >
+          <span class="text-sky-500">{{ formatMacro(draftedTotals.protein) }}</span>
+          <span class="text-violet-500">{{ formatMacro(draftedTotals.carbs) }}</span>
+          <span class="text-amber-500">{{ formatMacro(draftedTotals.fat) }}</span>
+          <span class="font-semibold text-emerald-500">{{ formatKcal(draftedTotals.kcal) }}</span>
+        </span>
+      </div>
+
+      <p
+        v-if="!fromRecipe && unpriced > 0"
+        class="border-t border-default px-3 py-1.5 text-[11px] text-muted"
+      >
+        {{ unpriced }} {{ unpriced === 1 ? 'item counts' : 'items count' }} for nothing — no food behind {{ unpriced === 1 ? 'it' : 'them' }} yet.
+      </p>
+    </div>
+
+    <UFormField
+      label="Note"
+      hint="optional"
+    >
+      <UTextarea
+        v-model="form.note"
+        :rows="2"
+        placeholder="Ate out, guessed the oil…"
+        class="w-full"
+      />
+    </UFormField>
+
+    <FoodForm
+      v-model:open="foodFormOpen"
+      :barcode="foodBarcode"
+      :name="foodDraftName"
+      @saved="onFoodSaved"
+    />
+
+    <template #footer>
+      <div class="flex w-full items-center gap-2">
+        <span
+          v-if="canSave"
+          class="text-xs tabular-nums text-muted"
+        >
+          <template v-if="draftedTotals">{{ formatKcal(draftedTotals.kcal) }} kcal</template>
+          <template v-else-if="noteOnly">words only — numbers later</template>
+        </span>
+        <div class="ml-auto flex gap-2">
+          <UButton
+            label="Cancel"
+            color="neutral"
+            variant="outline"
+            :disabled="saving"
+            @click="open = false"
+          />
+          <UButton
+            type="submit"
+            form="form-slideover"
+            :label="filling
+              ? (filling.items.length ? 'Save' : 'Count it')
+              : noteOnly ? 'Write it down' : 'Add meal'"
+            :loading="saving"
+            :disabled="!canSave"
+          />
+        </div>
+      </div>
+    </template>
+  </FormSlideover>
+</template>

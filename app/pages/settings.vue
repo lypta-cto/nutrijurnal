@@ -1,0 +1,285 @@
+<script setup lang="ts">
+import type { Targets } from '~/composables/useEating'
+import { targetsOf } from '~/composables/useEating'
+
+const colorMode = useColorMode()
+const toast = useToast()
+const api = useApi()
+const { confirm } = useConfirm()
+
+const { user, logout, deleteAccount } = useAuth()
+const { settings, loadSettings, saveSettings } = useEating()
+
+function fail(error: unknown) {
+  toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
+}
+
+/* --- Profile ------------------------------------------------------------- */
+
+const profile = reactive({ full_name: user.value?.full_name ?? '' })
+const savingProfile = ref(false)
+
+const profileChanged = computed(
+  () => profile.full_name.trim() !== (user.value?.full_name ?? '')
+)
+
+async function saveProfile() {
+  savingProfile.value = true
+  try {
+    user.value = await api.patch('/auth/me', { full_name: profile.full_name.trim() || null })
+    toast.add({ title: 'Profile updated', icon: 'i-lucide-circle-check', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    savingProfile.value = false
+  }
+}
+
+/* --- Daily targets ------------------------------------------------------- */
+
+const targets = ref<Targets>(targetsOf(settings.value))
+const savingTargets = ref(false)
+
+onMounted(async () => {
+  await loadSettings().catch(() => {})
+  targets.value = targetsOf(settings.value)
+})
+
+const targetsChanged = computed(() =>
+  JSON.stringify(targets.value) !== JSON.stringify(targetsOf(settings.value)))
+
+async function storeTargets() {
+  savingTargets.value = true
+  try {
+    await saveSettings({ ...targets.value })
+    targets.value = targetsOf(settings.value)
+    toast.add({ title: 'Targets saved', icon: 'i-lucide-target', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    savingTargets.value = false
+  }
+}
+
+/* --- Password ------------------------------------------------------------ */
+
+const password = reactive({ current: '', next: '' })
+const savingPassword = ref(false)
+
+async function changePassword() {
+  if (password.next.length < 8) {
+    toast.add({ title: 'The new password needs at least 8 characters', icon: 'i-lucide-circle-alert', color: 'error' })
+    return
+  }
+  savingPassword.value = true
+  try {
+    await api.post('/auth/me/password', { current_password: password.current, new_password: password.next })
+    toast.add({ title: 'Password changed — sign in again', icon: 'i-lucide-circle-check', color: 'success' })
+    // The API ended every session, this one included
+    await logout()
+  } catch (error) {
+    fail(error)
+  } finally {
+    savingPassword.value = false
+  }
+}
+
+/* --- Appearance ---------------------------------------------------------- */
+
+const MODES = [
+  { value: 'light', label: 'Light', icon: 'i-lucide-sun' },
+  { value: 'dark', label: 'Dark', icon: 'i-lucide-moon' },
+  { value: 'system', label: 'System', icon: 'i-lucide-monitor' }
+]
+
+/* --- Leaving ------------------------------------------------------------- */
+
+async function confirmDelete() {
+  const sure = await confirm({
+    title: 'Delete your account?',
+    description: 'Your diary, recipes, foods and voice notes are deleted for good. This cannot be undone.',
+    confirmLabel: 'Delete everything',
+    color: 'error'
+  })
+  if (!sure) {
+    return
+  }
+  try {
+    await deleteAccount()
+    toast.add({ title: 'Account deleted', icon: 'i-lucide-circle-check', color: 'success' })
+  } catch (error) {
+    fail(error)
+  }
+}
+</script>
+
+<template>
+  <AppPage title="Settings">
+    <!-- Profile -->
+    <section class="app-card px-4">
+      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
+        <UIcon
+          name="i-lucide-user"
+          class="size-4 text-muted"
+        />
+        Profile
+      </h2>
+
+      <SettingsRow title="Photo">
+        <AvatarUpload />
+      </SettingsRow>
+
+      <SettingsRow title="Name">
+        <div class="flex w-full items-start gap-2">
+          <UInput
+            v-model="profile.full_name"
+            placeholder="Your name"
+            class="flex-1"
+            @keyup.enter="profileChanged && saveProfile()"
+          />
+          <UButton
+            label="Save"
+            :loading="savingProfile"
+            :disabled="!profileChanged"
+            @click="saveProfile"
+          />
+        </div>
+      </SettingsRow>
+
+      <SettingsRow
+        title="Email"
+        description="Used to sign in."
+      >
+        <UInput
+          :model-value="user?.email"
+          disabled
+          class="w-full"
+        />
+      </SettingsRow>
+    </section>
+
+    <!-- Daily targets -->
+    <section class="app-card flex flex-col gap-3 px-4 py-4">
+      <div>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon
+            name="i-lucide-target"
+            class="size-4 text-muted"
+          />
+          Daily targets
+        </h2>
+        <p class="mt-0.5 text-sm text-muted">
+          What a day should come to. Leave one empty and the diary simply counts it.
+        </p>
+      </div>
+      <TargetsFields v-model="targets" />
+      <UButton
+        label="Save targets"
+        class="self-end"
+        :loading="savingTargets"
+        :disabled="!targetsChanged"
+        @click="storeTargets"
+      />
+    </section>
+
+    <!-- Appearance -->
+    <section class="app-card px-4">
+      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
+        <UIcon
+          name="i-lucide-palette"
+          class="size-4 text-muted"
+        />
+        Appearance
+      </h2>
+
+      <SettingsRow
+        title="Theme"
+        description="Follow the phone, or pick one."
+      >
+        <div class="grid w-full grid-cols-3 gap-1 rounded-xl bg-elevated p-1">
+          <UButton
+            v-for="mode in MODES"
+            :key="mode.value"
+            :icon="mode.icon"
+            :label="mode.label"
+            size="sm"
+            class="justify-center rounded-lg"
+            :color="colorMode.preference === mode.value ? 'primary' : 'neutral'"
+            :variant="colorMode.preference === mode.value ? 'solid' : 'ghost'"
+            :aria-pressed="colorMode.preference === mode.value"
+            @click="colorMode.preference = mode.value"
+          />
+        </div>
+      </SettingsRow>
+    </section>
+
+    <!-- Account -->
+    <section class="app-card px-4">
+      <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">
+        <UIcon
+          name="i-lucide-shield"
+          class="size-4 text-muted"
+        />
+        Account
+      </h2>
+
+      <SettingsRow
+        v-if="user?.has_password"
+        title="Password"
+        description="Changing it signs you out everywhere."
+      >
+        <form
+          class="flex w-full flex-col gap-2"
+          @submit.prevent="changePassword"
+        >
+          <UInput
+            v-model="password.current"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Current password"
+            class="w-full"
+          />
+          <UInput
+            v-model="password.next"
+            type="password"
+            autocomplete="new-password"
+            placeholder="New password — at least 8 characters"
+            class="w-full"
+          />
+          <UButton
+            type="submit"
+            label="Change password"
+            color="neutral"
+            variant="outline"
+            class="self-end"
+            :loading="savingPassword"
+            :disabled="!password.current || !password.next"
+          />
+        </form>
+      </SettingsRow>
+
+      <SettingsRow title="Sign out">
+        <UButton
+          label="Sign out"
+          icon="i-lucide-log-out"
+          color="neutral"
+          variant="outline"
+          @click="logout"
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        title="Delete account"
+        description="Removes your diary and everything you added. The shared foods stay."
+      >
+        <UButton
+          label="Delete account"
+          icon="i-lucide-trash-2"
+          color="error"
+          variant="soft"
+          @click="confirmDelete"
+        />
+      </SettingsRow>
+    </section>
+  </AppPage>
+</template>
