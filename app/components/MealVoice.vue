@@ -41,10 +41,29 @@ async function play() {
         playing.value = false
       }
     }
+  } catch (error) {
+    toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
+    loading.value = false
+    return
+  }
+  try {
     await audio.play()
     playing.value = true
   } catch (error) {
-    toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
+    // iOS only lets a tap start sound, and the wait for the download used the
+    // tap up; the audio is ready now, so the next tap plays it at once
+    if ((error as { name?: string })?.name === 'NotAllowedError') {
+      toast.add({ title: 'Ready — tap play again to listen', icon: 'i-lucide-play', color: 'neutral' })
+    } else {
+      // Fetched fine but the device can't decode it — a WebM said on Android
+      // and opened on an older iPhone. Not a connection problem.
+      toast.add({
+        title: 'This recording can’t be played on this device',
+        description: 'It was made on another phone or browser. Try opening the diary there.',
+        icon: 'i-lucide-volume-x',
+        color: 'warning'
+      })
+    }
   } finally {
     loading.value = false
   }

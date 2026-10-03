@@ -1,3 +1,7 @@
+/** No answer came back at all: offline, a dropped connection, the server out
+ *  of reach. Said to the public, so nothing about backends or ports. */
+export const NO_CONNECTION = 'No connection — check your internet and try again.'
+
 /**
  * Turns a failed $fetch into something worth showing a person.
  *
@@ -24,7 +28,7 @@ export function apiErrorMessage(error: unknown, fallback = 'Something went wrong
   const status = (error as { response?: { status?: number } })?.response?.status
 
   if (status === 0 || status === undefined) {
-    return 'Cannot reach the API. Is the backend running?'
+    return NO_CONNECTION
   }
 
   return fallback

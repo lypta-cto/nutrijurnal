@@ -28,9 +28,10 @@ describe('what a failed request says to a person', () => {
     expect(apiErrorMessage(error)).toBe('Field required')
   })
 
-  it('says the API cannot be reached when there was no answer at all', () => {
-    expect(apiErrorMessage(new TypeError('fetch failed'))).toBe('Cannot reach the API. Is the backend running?')
-    expect(apiErrorMessage({ response: { status: 0 } })).toBe('Cannot reach the API. Is the backend running?')
+  it('says there is no connection when there was no answer at all — in words for the public', () => {
+    expect(apiErrorMessage(new TypeError('fetch failed'))).toBe('No connection — check your internet and try again.')
+    expect(apiErrorMessage({ response: { status: 0 } })).toBe(NO_CONNECTION)
+    expect(NO_CONNECTION).not.toMatch(/API|backend|server/i)
   })
 
   it('falls back to the caller’s words for an answer with nothing to say', () => {
