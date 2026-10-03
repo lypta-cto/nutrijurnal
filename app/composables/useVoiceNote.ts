@@ -15,12 +15,44 @@
  * whatever both of them managed.
  */
 
+/** The languages the parser reads amounts and meal words in */
+export const DICTATION_LANGUAGES: { value: string, label: string }[] = [
+  { value: 'sr-RS', label: 'Srpski' },
+  { value: 'en-US', label: 'English' }
+]
+
+const LANGUAGE_KEY = 'nutrijurnal-dictation-language'
+
 /**
- * The language the plate is described in. The pantry's foods are Serbian and
- * the parser reads Serbian amounts ("pola banane", "merica whey"), so that is
- * what the dictation listens for — whatever language the app's own words are.
+ * Which language dictation listens for. The pantry's foods are Serbian and
+ * the parser reads Serbian amounts ("pola banane", "merica whey") as well as
+ * English ones, so the choice is the speaker's: remembered per device, and
+ * guessed from the browser's own language the first time.
  */
-const DICTATION_LANG = 'sr-RS'
+export function useDictationLanguage() {
+  const language = useState<string>('dictation-language', () => {
+    try {
+      const saved = localStorage.getItem(LANGUAGE_KEY)
+      if (saved && DICTATION_LANGUAGES.some(entry => entry.value === saved)) {
+        return saved
+      }
+    } catch {
+      // Storage refused (private mode) — the guess below is good enough
+    }
+    const spoken = navigator.language?.toLowerCase() ?? ''
+    return /^(sr|hr|bs|sh|cnr)\b/.test(spoken) ? 'sr-RS' : 'en-US'
+  })
+
+  watch(language, (value) => {
+    try {
+      localStorage.setItem(LANGUAGE_KEY, value)
+    } catch {
+      // Remembering is a convenience, not a requirement
+    }
+  })
+
+  return language
+}
 
 /** What the browser will actually record in, best first */
 const FORMATS = [
@@ -38,7 +70,7 @@ type Recognition = {
   start: () => void
   stop: () => void
   onresult: ((event: { resultIndex: number, results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null
-  onerror: (() => void) | null
+  onerror: ((event: { error?: string }) => void) | null
   onend: (() => void) | null
 }
 
@@ -67,6 +99,8 @@ export function useVoiceNote() {
   /** Live text while talking — the settled part plus what is still being said */
   const transcript = ref('')
   const error = ref<string | null>(null)
+  /** Why dictation gave up mid-way, when it did — the recording carries on regardless */
+  const dictationFailed = ref<string | null>(null)
 
   const supported = computed(() => import.meta.client && typeof MediaRecorder !== 'undefined')
   const canTranscribe = computed(() => import.meta.client && recogniser() !== null)
@@ -82,13 +116,13 @@ export function useVoiceNote() {
     return FORMATS.find(type => MediaRecorder.isTypeSupported(type)) ?? ''
   }
 
-  function listen() {
+  function listen(language: string) {
     heard = recogniser()
     if (!heard) {
       return
     }
     settled = ''
-    heard.lang = DICTATION_LANG
+    heard.lang = language
     heard.continuous = true
     heard.interimResults = true
     heard.onresult = (event) => {
@@ -104,8 +138,13 @@ export function useVoiceNote() {
       }
       transcript.value = (settled + pending).trim()
     }
-    // A recogniser that gives up is not a failed recording — say nothing
-    heard.onerror = () => {}
+    // A recogniser that gives up is not a failed recording: the audio is
+    // still being kept, so this is only remembered to explain afterwards
+    heard.onerror = (event) => {
+      if (event?.error && event.error !== 'aborted' && event.error !== 'no-speech') {
+        dictationFailed.value = event.error
+      }
+    }
     try {
       heard.start()
     } catch {
@@ -113,8 +152,9 @@ export function useVoiceNote() {
     }
   }
 
-  async function start(): Promise<boolean> {
+  async function start(language = 'sr-RS'): Promise<boolean> {
     error.value = null
+    dictationFailed.value = null
     transcript.value = ''
     seconds.value = 0
 
@@ -146,7 +186,7 @@ export function useVoiceNote() {
       seconds.value = (Date.now() - began) / 1000
     }, 200)
 
-    listen()
+    listen(language)
     return true
   }
 
@@ -209,7 +249,7 @@ export function useVoiceNote() {
 
   onBeforeUnmount(cancel)
 
-  return { supported, canTranscribe, recording, seconds, transcript, error, start, stop, cancel }
+  return { supported, canTranscribe, recording, seconds, transcript, error, dictationFailed, start, stop, cancel }
 }
 
 /** "1:07" — a recording is read in minutes and seconds, never in 67 */

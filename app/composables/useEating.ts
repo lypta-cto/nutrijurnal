@@ -238,6 +238,8 @@ export interface ParseResult {
   items: ParsedItem[]
   /** Chunks the parser could not resolve — shown so they can be fixed by hand */
   unknown: string[]
+  /** The slot the sentence named ("za ručak", "for breakfast"), if it did */
+  slot: Slot | null
 }
 
 /** The ways into a meal, as the meal form's tabs — the quick-add sheet opens on one */
