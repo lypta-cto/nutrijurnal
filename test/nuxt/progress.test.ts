@@ -44,8 +44,12 @@ function answer(body: Progress | (() => never)) {
   return asked
 }
 
+/** Mounted pages keep watching the clock and the "+" until taken down */
+const mounted: { unmount: () => void }[] = []
+
 async function open() {
   const page = await mountSuspended(ProgressPage)
+  mounted.push(page)
   await flushPromises()
   return page
 }
@@ -53,9 +57,12 @@ async function open() {
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 8, 21, 12, 0))
+  // Today is read from the clock afresh, not carried over from a test that moved it
+  clearNuxtState(['today', 'eating-day'])
 })
 
 afterEach(() => {
+  mounted.splice(0).forEach(page => page.unmount())
   vi.useRealTimers()
 })
 
@@ -155,5 +162,28 @@ describe('the Progress page', () => {
 
     expect(page.text()).toContain('Progress didn\'t load')
     expect(page.findAll('button').some(button => button.text().includes('Try again'))).toBe(true)
+  })
+
+  it('reads the period again when a meal is added through the "+"', async () => {
+    const asked = answer(week())
+    await open()
+    expect(asked).toHaveLength(1)
+
+    useQuickAdd().markSaved()
+    await flushPromises()
+
+    expect(asked).toHaveLength(2)
+  })
+
+  it('moves on to the new week when the app is left open past midnight', async () => {
+    vi.setSystemTime(new Date(2026, 8, 21, 23, 50))
+    const asked = answer(week())
+    await open()
+
+    vi.setSystemTime(new Date(2026, 8, 22, 7, 30))
+    followToday()
+    await flushPromises()
+
+    expect(asked.at(-1)).toEqual({ from: '2026-09-16', to: '2026-09-22', today: '2026-09-22' })
   })
 })

@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import type { Food } from '~/composables/useEating'
 import { changedTargets, targetsOf } from '~/composables/useEating'
 import LibraryPage from '~/pages/library.vue'
 
@@ -44,5 +45,55 @@ describe('a Library shelf that could not be read', () => {
     await flushPromises()
 
     expect(page.text()).toContain('Your cookbook starts here')
+  })
+})
+
+function food(id: string, name: string): Food {
+  return {
+    id,
+    name,
+    name_en: null,
+    brand: null,
+    base_unit: 'g',
+    units: {},
+    barcode: null,
+    source: 'seed',
+    mine: false,
+    archived: false,
+    favourite: false,
+    kcal: 100,
+    protein: 10,
+    carbs: 10,
+    fat: 1
+  }
+}
+
+describe('searching the pantry while typing', () => {
+  it('never lets a slow answer to an older word land over the newer one', async () => {
+    registerEndpoint('/api/v1/eating/recipes', () => [])
+    registerEndpoint('/api/v1/eating/foods', async (event) => {
+      const q = new URL(event.path, 'http://test').searchParams.get('q')
+      if (q === 'pil') {
+        // The first word's answer is still on its way when the second is typed
+        await new Promise(resolve => setTimeout(resolve, 400))
+        return [food('chicken', 'Pileći file')]
+      }
+      return q === 'pire' ? [food('mash', 'Pire krompir')] : []
+    })
+    const page = await mountSuspended(LibraryPage)
+    await page.findAll('[role="radio"]').find(option => option.text() === 'Foods')?.trigger('click')
+    await flushPromises()
+    const search = page.find('input[placeholder="Search foods…"]')
+
+    await search.setValue('pil')
+    await new Promise(resolve => setTimeout(resolve, 300))
+    await search.setValue('pire')
+    await vi.waitFor(() => expect(page.text()).toContain('Pire krompir'))
+    // …and once the older answer has arrived too
+    await new Promise(resolve => setTimeout(resolve, 450))
+    await flushPromises()
+
+    expect(page.text()).toContain('Pire krompir')
+    expect(page.text()).not.toContain('Pileći file')
   })
 })
