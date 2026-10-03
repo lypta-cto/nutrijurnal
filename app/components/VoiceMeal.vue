@@ -90,11 +90,21 @@ function typeInstead() {
   stage.value = 'draft'
 }
 
-async function read() {
+/** The read in flight — saving waits for it instead of racing it */
+let inFlight: Promise<void> | null = null
+
+function read(): Promise<void> {
   const text = words.value.trim()
-  if (!text || reading.value) {
-    return
+  if (!text) {
+    return Promise.resolve()
   }
+  inFlight ??= parse(text).finally(() => {
+    inFlight = null
+  })
+  return inFlight
+}
+
+async function parse(text: string) {
   reading.value = true
   try {
     const result = await parseText(text)
@@ -152,6 +162,9 @@ async function save() {
   }
   saving.value = true
   try {
+    // "Done" then "Save" in one breath: the words are still being read, and
+    // the foods in them belong on this meal — not lost to a bare note
+    await inFlight
     const said = words.value.trim()
     const payload: MealItemPayload[] = items.value.map(item => ({
       food_id: item.food_id,

@@ -161,11 +161,21 @@ const pasting = ref(false)
 const pasted = ref('')
 const reading = ref(false)
 
-async function readPasted() {
+/** The pasted list being read — saving waits for its rows instead of racing them */
+let pasteInFlight: Promise<void> | null = null
+
+function readPasted(): Promise<void> {
   const text = pasted.value.trim()
-  if (!text || reading.value) {
-    return
+  if (!text) {
+    return Promise.resolve()
   }
+  pasteInFlight ??= readLines(text).finally(() => {
+    pasteInFlight = null
+  })
+  return pasteInFlight
+}
+
+async function readLines(text: string) {
   reading.value = true
   try {
     const { items, unknown } = await parseText(text)
@@ -405,6 +415,7 @@ async function save() {
     return
   }
   saving.value = true
+  await pasteInFlight
   await settle()
   try {
     const updated = await updateRecipe(recipe.id, {

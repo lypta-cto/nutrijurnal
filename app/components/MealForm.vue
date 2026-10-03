@@ -203,11 +203,17 @@ async function runSearch() {
   }
   searching.value = true
   try {
-    results.value = await searchFoods(q, 20)
+    const found = await searchFoods(q, 20)
+    // Typing on: an older answer must not replace a newer one
+    if (q === searchQuery.value.trim()) {
+      results.value = found
+    }
   } catch {
     results.value = []
   } finally {
-    searching.value = false
+    if (q === searchQuery.value.trim()) {
+      searching.value = false
+    }
   }
 }
 
@@ -222,12 +228,21 @@ watch(searchQuery, () => {
 
 const quickText = ref('')
 const parsing = ref(false)
+/** The sentence being read — saving waits for it instead of racing it */
+let inFlight: Promise<void> | null = null
 
-async function parseQuick() {
+function parseQuick(): Promise<void> {
   const text = quickText.value.trim()
-  if (!text || parsing.value) {
-    return
+  if (!text) {
+    return Promise.resolve()
   }
+  inFlight ??= readSentence(text).finally(() => {
+    inFlight = null
+  })
+  return inFlight
+}
+
+async function readSentence(text: string) {
   parsing.value = true
   try {
     const result = await parseText(text)
@@ -629,6 +644,9 @@ async function save() {
   }
   saving.value = true
   try {
+    // A sentence read and saved in one breath: its foods are still on their
+    // way, and they belong on this meal rather than being kept as a note
+    await inFlight
     let meal: Meal
     if (fromRecipe.value && picked.value) {
       meal = await mealFromRecipe({

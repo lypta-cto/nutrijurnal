@@ -194,6 +194,29 @@ describe('a meal said out loud', () => {
     await vi.waitFor(() => expect(voice.emitted('saved')).toHaveLength(1))
   })
 
+  it('saved while the words are still being read, waits for the foods in them', async () => {
+    const sent = api()
+    // The parser answers slowly, the way a phone on a train does
+    registerEndpoint('/api/v1/eating/parse', {
+      method: 'POST',
+      handler: async () => {
+        await new Promise(resolve => setTimeout(resolve, 60))
+        return PARSED
+      }
+    })
+    const voice = await mountSuspended(VoiceMeal, { props: { day: '2026-09-21', mealSlot: 'snack' } })
+    await button(voice, 'Type it instead').trigger('click')
+    await voice.find('textarea').setValue(SENTENCE)
+    await button(voice, 'Read it again').trigger('click')
+
+    // Tapped before the draft arrived
+    await button(voice, 'Save for later').trigger('click')
+
+    await vi.waitFor(() => expect(sent.meals).toHaveLength(1))
+    expect(sent.meals[0]?.items.map(item => item.label)).toEqual(['Piletina', 'Banana'])
+    expect(sent.meals[0]?.slot).toBe('lunch')
+  })
+
   it('keeps the words for later when nothing in them was recognised', async () => {
     const sent = api({ items: [], unknown: [], slot: null })
     const voice = await typed('ono od juče')
