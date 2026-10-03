@@ -2,89 +2,88 @@
 @import "@nuxt/ui";
 
 /*
- * Design tokens.
- * Swap the brand scale below to re-skin the whole app.
+ * Nutrijurnal's design tokens — the why behind every value is in docs/design.md.
+ * Pages use the semantic names (text-primary, bg-protein, shadow-card, rounded-card),
+ * never a raw palette step, so light and dark stay in step.
  */
+
+/* Static: every step is emitted even when no class uses it, because Nuxt UI
+   points its --ui-color-* variables at these by name (app.config.ts) */
 @theme static {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* @nuxt/fonts reads these two declarations and serves the faces itself */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
 
-  /* Brand — the blue used for active nav, primary buttons, focus rings */
-  --color-brand-50: #eff5ff;
-  --color-brand-100: #dbe8fe;
-  --color-brand-200: #bfd7fe;
-  --color-brand-300: #93bcfd;
-  --color-brand-400: #609afa;
-  --color-brand-500: #2f7bf6;
-  --color-brand-600: #1b6bf2;
-  --color-brand-700: #1655dc;
-  --color-brand-800: #1846b2;
-  --color-brand-900: #1a3f8c;
-  --color-brand-950: #142755;
+  /* Basil — the brand, success and the kcal ring */
+  --color-basil-50: #edfbef;
+  --color-basil-100: #dbf6df;
+  --color-basil-200: #bcefc7;
+  --color-basil-300: #95e1a7;
+  --color-basil-400: #65cc85;
+  --color-basil-500: #3eb268;
+  --color-basil-600: #307e4b;
+  --color-basil-700: #25673e;
+  --color-basil-800: #1c4f2f;
+  --color-basil-900: #173f26;
+  --color-basil-950: #0d2516;
 
-  /* Ink — cool grey used for surfaces, borders and text */
-  --color-ink-50: #f5f6f8;
-  --color-ink-100: #edeff3;
-  --color-ink-200: #e1e4ea;
-  --color-ink-300: #cbd0da;
-  --color-ink-400: #9aa2b1;
-  --color-ink-500: #6c7689;
-  --color-ink-600: #525b6c;
-  --color-ink-700: #414857;
-  --color-ink-800: #2a303b;
-  --color-ink-900: #1a1f27;
-  --color-ink-950: #10141a;
+  /* Oat — warm grey for the canvas, text and hairlines */
+  --color-oat-50: #fbfaf7;
+  --color-oat-100: #f4f2ee;
+  --color-oat-200: #e9e6e0;
+  --color-oat-300: #d7d4ce;
+  --color-oat-400: #a7a49e;
+  --color-oat-500: #706d67;
+  --color-oat-600: #5a5751;
+  --color-oat-700: #46443f;
+  --color-oat-800: #2d2b27;
+  --color-oat-900: #1b1916;
+  --color-oat-950: #0f0e0c;
+
+  /* Clay — warning: over a target, needs a look. Kept well apart from fat's amber */
+  --color-clay-50: #fff1ea;
+  --color-clay-100: #ffe2d4;
+  --color-clay-200: #ffc9af;
+  --color-clay-300: #ffa982;
+  --color-clay-400: #f38651;
+  --color-clay-500: #e56b29;
+  --color-clay-600: #c75306;
+  --color-clay-700: #a14206;
+  --color-clay-800: #7e3307;
+  --color-clay-900: #622b0d;
+  --color-clay-950: #3b1908;
+
+  /* Type scale on top of Tailwind's — see the table in docs/design.md */
+  --text-hero: 2.75rem;
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.035em;
+  --text-hero--font-weight: 700;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.02em;
+  --text-headline: 1.0625rem;
+  --text-headline--line-height: 1.4;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.45;
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.35;
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.3;
+
+  /* Named radii; Nuxt UI's own scale follows --ui-radius below */
+  --radius-card: 1.25rem;
+  --radius-tile: 1rem;
+  --radius-control: 0.875rem;
+  --radius-sheet: 1.75rem;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-rise: app-rise 320ms var(--ease-soft) both;
+  --animate-shimmer: app-shimmer 1.6s ease-in-out infinite;
 }
 
-:root,
-.light {
-  --ui-radius: 0.5rem;
-
-  /* Grey canvas the white cards sit on */
-  --app-canvas: #f1f3f7;
-  --app-card-shadow: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
-}
-
-.dark {
-  /* Cards are lighter than the canvas in dark mode, so --ui-bg is lifted */
-  --ui-bg: #151a22;
-  --app-canvas: #0d1117;
-  --app-card-shadow: none;
-}
-
-/* The canvas every page and the tab bar sit on */
-.app-canvas {
-  background-color: var(--app-canvas);
-}
-
-/* White rounded card matching the reference design */
-.app-card {
-  @apply bg-default rounded-2xl border border-default;
-
-  box-shadow: var(--app-card-shadow);
-  transition: box-shadow 200ms ease, border-color 200ms ease;
-}
-
-/* Square icon button used in page headers */
-.app-icon-btn {
-  @apply size-9 justify-center rounded-xl bg-default border border-default text-toned;
-
-  box-shadow: var(--app-card-shadow);
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
-}
-
-.app-icon-btn:hover {
-  @apply bg-elevated border-accented;
-}
-
-.app-icon-btn:active {
-  transform: scale(0.94);
-}
-
-/*
- * One-shot entrance for page content. A leave transition would blank the panel
- * between routes, so content only animates in — the top bar never flickers.
- */
-@keyframes app-page-in {
+@keyframes app-rise {
   from {
     opacity: 0;
     transform: translateY(8px);
@@ -96,48 +95,328 @@
   }
 }
 
-.app-page-in {
-  animation: app-page-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* Stagger the direct children so cards cascade in rather than arriving as a block */
-.app-page-in > * {
-  animation: app-page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.app-page-in > :nth-child(2) {
-  animation-delay: 40ms;
-}
-
-.app-page-in > :nth-child(3) {
-  animation-delay: 80ms;
-}
-
-.app-page-in > :nth-child(n + 4) {
-  animation-delay: 120ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-card,
-  .app-icon-btn {
-    transition: none;
+@keyframes app-shimmer {
+  from {
+    background-position: 100% 0;
   }
 
-  .app-page-in,
-  .app-page-in > * {
-    animation: none;
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Inline: utilities that resolve per theme, so `bg-protein` or `shadow-card`
+   follow light and dark without a `dark:` twin on every element */
+@theme inline {
+  --color-canvas: var(--app-canvas);
+  --color-kcal: var(--app-kcal);
+  --color-kcal-ink: var(--app-kcal-ink);
+  --color-protein: var(--app-protein);
+  --color-protein-ink: var(--app-protein-ink);
+  --color-carbs: var(--app-carbs);
+  --color-carbs-ink: var(--app-carbs-ink);
+  --color-fat: var(--app-fat);
+  --color-fat-ink: var(--app-fat-ink);
+
+  --shadow-card: var(--app-shadow-card);
+  --shadow-raised: var(--app-shadow-raised);
+  --shadow-overlay: var(--app-shadow-overlay);
+  --shadow-fab: var(--app-shadow-fab);
+}
+
+:root,
+.light {
+  --ui-radius: 0.3125rem;
+
+  /* Coloured text has to read on white: one step darker than Nuxt UI's default */
+  --ui-primary: var(--ui-color-primary-600);
+  --ui-success: var(--ui-color-success-600);
+  --ui-warning: var(--ui-color-warning-600);
+  --ui-error: var(--ui-color-error-600);
+  /* Teal only reaches 4.5:1 on white at 700 */
+  --ui-info: var(--ui-color-info-700);
+
+  --ui-bg: #fff;
+  --ui-bg-muted: var(--ui-color-neutral-50);
+  --ui-bg-elevated: var(--ui-color-neutral-100);
+  --ui-bg-accented: var(--ui-color-neutral-200);
+  --ui-border: var(--ui-color-neutral-200);
+  --ui-border-muted: var(--ui-color-neutral-200);
+  --ui-border-accented: var(--ui-color-neutral-300);
+  --ui-text-highlighted: var(--ui-color-neutral-900);
+
+  --app-canvas: #f8f5f1;
+  /* The light that falls on the top of every screen */
+  --app-wash-leaf: rgb(188 239 199 / 55%);
+  --app-wash-sun: rgb(255 201 175 / 40%);
+
+  --app-kcal: var(--color-basil-500);
+  --app-kcal-ink: var(--color-basil-600);
+  --app-protein: #0ea5e9;
+  --app-protein-ink: #0370ab;
+  --app-carbs: #8b5cf6;
+  --app-carbs-ink: #7c3aed;
+  --app-fat: #f59e0b;
+  --app-fat-ink: #b45309;
+
+  /* Warm-tinted shadows: grey ones look dirty on the cream canvas */
+  --app-shadow-card: 0 1px 2px rgb(45 38 25 / 4%), 0 2px 8px -2px rgb(45 38 25 / 6%);
+  --app-shadow-raised: 0 2px 6px -1px rgb(45 38 25 / 6%), 0 12px 32px -8px rgb(45 38 25 / 16%);
+  --app-shadow-overlay: 0 24px 64px -12px rgb(45 38 25 / 28%);
+  --app-shadow-fab: 0 8px 20px -6px rgb(48 126 75 / 55%), 0 2px 4px rgb(45 38 25 / 10%);
+
+  /* The phone's chrome */
+  --app-column: 34rem;
+  --app-tabbar-height: 4rem;
+  /* From the screen's bottom edge to the bar: clear of the home indicator, never flush */
+  --app-tabbar-offset: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.25rem));
+  /* All the room the bar takes, raised "+" and breathing space included */
+  --app-tabbar-space: calc(var(--app-tabbar-height) + var(--app-tabbar-offset) + 1.5rem);
+}
+
+.dark {
+  --ui-primary: var(--ui-color-primary-400);
+  --ui-success: var(--ui-color-success-400);
+  --ui-warning: var(--ui-color-warning-400);
+  --ui-error: var(--ui-color-error-400);
+  --ui-info: var(--ui-color-info-400);
+
+  /* Surfaces get lighter as they come forward — dark mode has no shadows to lean on */
+  --ui-bg: var(--ui-color-neutral-900);
+  --ui-bg-muted: #201f1b;
+  --ui-bg-elevated: #24231f;
+  --ui-bg-accented: #302e29;
+  --ui-border: #292724;
+  --ui-border-muted: #292724;
+  --ui-border-accented: #373531;
+  --ui-text-highlighted: #f7f5f1;
+
+  --app-canvas: var(--color-oat-950);
+  --app-wash-leaf: rgb(37 103 62 / 30%);
+  --app-wash-sun: rgb(161 66 6 / 14%);
+
+  --app-kcal: var(--color-basil-400);
+  --app-kcal-ink: var(--color-basil-400);
+  --app-protein: #38bdf8;
+  --app-protein-ink: #38bdf8;
+  --app-carbs: #a78bfa;
+  --app-carbs-ink: #a78bfa;
+  --app-fat: #fbbf24;
+  --app-fat-ink: #fbbf24;
+
+  --app-shadow-card: none;
+  --app-shadow-raised: 0 12px 32px -8px rgb(0 0 0 / 60%);
+  --app-shadow-overlay: 0 24px 64px -12px rgb(0 0 0 / 70%);
+  --app-shadow-fab: 0 8px 22px -6px rgb(62 178 104 / 45%), 0 2px 4px rgb(0 0 0 / 40%);
+}
+
+@layer base {
+  html {
+    background-color: var(--app-canvas);
+    /* A focused field scrolls clear of the sticky app bar and the tab bar */
+    scroll-padding-top: calc(env(safe-area-inset-top) + 7rem);
+    scroll-padding-bottom: var(--app-tabbar-space);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--app-canvas);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* No double-tap zoom on anything a thumb presses twice quickly */
+  a,
+  button,
+  input,
+  label,
+  select,
+  textarea,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--ui-primary) 22%, transparent);
   }
 }
 
 /*
- * The phone's own edges. With `viewport-fit=cover` the page runs under the
- * notch and the home indicator, so anything pinned to an edge pads itself by
- * the inset the device reports (zero on a desktop browser).
+ * iOS zooms the page into any field set below 16 px and leaves it zoomed.
+ * Unlayered on purpose, so it wins over the text-xs/text-sm a dense row asks for.
  */
-.app-safe-top {
-  padding-top: env(safe-area-inset-top);
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  select,
+  textarea {
+    font-size: max(1rem, 1em);
+  }
 }
 
-.app-safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+@layer components {
+  /* The page and the app bar at rest */
+  .app-canvas {
+    background-color: var(--app-canvas);
+  }
+
+  /* The light at the top of a screen — a fixed layer under the content */
+  .app-wash {
+    background:
+      radial-gradient(70% 55% at 15% 0%, var(--app-wash-leaf), transparent 70%),
+      radial-gradient(55% 45% at 95% 0%, var(--app-wash-sun), transparent 70%);
+  }
+
+  /* A white card on the cream canvas */
+  .app-card {
+    background-color: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--app-shadow-card);
+    transition: box-shadow 200ms var(--ease-soft), border-color 200ms var(--ease-soft);
+  }
+
+  /* Chrome that floats over scrolling content: the app bar once scrolled, the tab bar */
+  .app-glass {
+    background-color: color-mix(in oklab, var(--ui-bg) 78%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
+  }
+
+  .app-glass-canvas {
+    background-color: color-mix(in oklab, var(--app-canvas) 80%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
+  }
+
+  /* A round 44 px icon button for headers — a thumb-sized target */
+  .app-icon-btn {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-default text-toned ring-1 ring-default;
+
+    box-shadow: var(--app-shadow-card);
+    transition: background-color 150ms var(--ease-soft), transform 120ms var(--ease-soft);
+  }
+
+  .app-icon-btn:hover {
+    @apply bg-elevated;
+  }
+
+  .app-icon-btn:active {
+    transform: scale(0.94);
+  }
+
+  /* Press feedback for anything tappable that isn't a Nuxt UI button */
+  .app-press {
+    transition: transform 120ms var(--ease-soft), background-color 150ms var(--ease-soft);
+  }
+
+  .app-press:active {
+    transform: scale(0.97);
+  }
+
+  /* A small control keeps its looks but gets a full 44 px hit area */
+  .app-hit {
+    position: relative;
+  }
+
+  .app-hit::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 2.75rem);
+    height: max(100%, 2.75rem);
+    transform: translate(-50%, -50%);
+  }
+
+  /* A horizontal strip (days, chips) that scrolls by thumb and snaps */
+  .app-scroll-x {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+  }
+
+  .app-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-scroll-x > * {
+    scroll-snap-align: start;
+  }
+
+  /* Small caps-style label above a title: the date, a section's kind */
+  .app-eyebrow {
+    font-size: var(--text-caption);
+    line-height: var(--text-caption--line-height);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-muted);
+  }
+
+  /* Placeholder fill for skeletons: a slow sweep of light, not a blink */
+  .app-shimmer {
+    background-image: linear-gradient(90deg, var(--ui-bg-elevated) 25%, var(--ui-bg-accented) 50%, var(--ui-bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /*
+   * One-shot entrance for page content. A leave transition would blank the
+   * column between routes, so content only animates in — the bars never flicker.
+   */
+  .app-page-in {
+    animation: var(--animate-rise);
+  }
+
+  /* Children cascade in rather than arriving as one block */
+  .app-page-in > * {
+    animation: app-rise 360ms var(--ease-soft) both;
+  }
+
+  .app-page-in > :nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  .app-page-in > :nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  .app-page-in > :nth-child(n + 4) {
+    animation-delay: 120ms;
+  }
+
+  /*
+   * The phone's own edges. With `viewport-fit=cover` the page runs under the
+   * notch and the home indicator, so anything pinned to an edge pads itself by
+   * the inset the device reports (zero on a desktop browser).
+   */
+  .app-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .app-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-card,
+  .app-icon-btn,
+  .app-press {
+    transition: none;
+  }
+
+  .app-page-in,
+  .app-page-in > *,
+  .app-shimmer {
+    animation: none;
+  }
+
+  .app-press:active,
+  .app-icon-btn:active {
+    transform: none;
+  }
 }
