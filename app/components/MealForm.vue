@@ -582,12 +582,13 @@ const noteOnly = computed(
 )
 
 const canSave = computed(() =>
-  fromRecipe.value
+  // A date field cleared on a phone holds "" — a meal always needs its day
+  Boolean(form.day) && (fromRecipe.value
     // A recipe known only by its numbers has no rows and is still a plate —
     // but some of it has to have been eaten
     ? (servings.value ?? 0) > 0 && (recipeItems.value.length > 0 || Boolean(picked.value?.stated))
     // Editing an existing meal: its day, time, name and note are enough to save
-    : items.value.length > 0 || noteOnly.value || filling.value !== null
+    : items.value.length > 0 || noteOnly.value || filling.value !== null)
 )
 
 function payloadItems(): MealItemPayload[] {

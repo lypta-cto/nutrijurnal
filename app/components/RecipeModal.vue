@@ -469,7 +469,8 @@ function startPlanning() {
 
 async function addToDiary() {
   const recipe = full.value
-  if (!recipe || adding.value) {
+  // A date field cleared on a phone holds ""
+  if (!recipe || adding.value || !plan.day) {
     return
   }
   adding.value = true
@@ -642,6 +643,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
               icon="i-lucide-check"
               class="flex-1 justify-center"
               :loading="adding"
+              :disabled="!plan.day"
               @click="addToDiary"
             />
           </div>

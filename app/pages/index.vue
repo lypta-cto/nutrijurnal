@@ -392,7 +392,8 @@ function askMove(meal: Meal) {
 
 async function doMove() {
   const meal = moving.value
-  if (!meal || moveDay.value === meal.day) {
+  // A cleared date field on a phone holds "": nowhere to move it to
+  if (!meal || !moveDay.value || moveDay.value === meal.day) {
     moveOpen.value = false
     return
   }
