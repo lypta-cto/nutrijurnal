@@ -245,7 +245,7 @@ const dictationNote = computed(() => {
             class="size-9"
           />
         </button>
-        <p class="max-w-xs text-subheadline text-muted">
+        <p class="max-w-xs text-subheadline text-balance text-muted">
           <template v-if="!supported">
             This browser can't record audio. Type what you ate instead.
           </template>

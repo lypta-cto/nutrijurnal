@@ -224,7 +224,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
         v-model="typed"
         inputmode="numeric"
         autocomplete="off"
-        placeholder="Or type the digits under the bars"
+        placeholder="Or type the barcode digits"
         class="min-w-0 flex-1"
         :ui="{ base: 'tabular-nums' }"
         aria-label="Barcode digits"

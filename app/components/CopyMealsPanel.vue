@@ -188,7 +188,7 @@ async function copy() {
             v-for="meal in group.meals"
             :key="meal.id"
             class="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors duration-120 ease-soft active:bg-accented motion-reduce:transition-none"
-            :style="{ '--app-divide-inset': '2.75rem' }"
+            :style="{ '--app-divide-inset': '3.125rem' }"
           >
             <UCheckbox
               :model-value="chosen.has(meal.id)"

@@ -636,6 +636,14 @@
   }
 
   @supports (animation-timeline: scroll()) {
+    /* At rest there is nothing under the bars — and a sheet too short to
+       scroll has an inactive timeline, which leaves the base style showing.
+       So the base is no glass at all, and only scrolling brings it in */
+    .app-sheet-header,
+    .app-sheet-footer {
+      background-color: transparent;
+    }
+
     .app-sheet-header {
       animation: app-edge-top linear both;
       animation-timeline: scroll(nearest block);

@@ -441,11 +441,17 @@ function onSaved(meal: Meal) {
   quickAdd.close()
 }
 
+// The title already says "Say what you ate"; a panel one level down has no
+// slot to pick, so the line under the title only names the day there
 const description = computed(() => {
   if (panel.value === 'voice') {
-    return 'Say what you ate — it is read into a meal you check before saving.'
+    return 'It is read into a meal you check before saving.'
   }
-  return `${dayLabel(day.value, today.value)} · ${session.value ? `${formatKcal(session.value.meal.kcal)} kcal added so far` : 'pick a slot, then the food'}`
+  const when = dayLabel(day.value, today.value)
+  if (session.value) {
+    return `${when} · ${formatKcal(session.value.meal.kcal)} kcal added so far`
+  }
+  return panel.value === 'list' ? `${when} · pick a slot, then the food` : when
 })
 </script>
 
