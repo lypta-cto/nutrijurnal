@@ -766,7 +766,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         :key="entry.value"
         type="button"
         class="flex min-w-0 flex-col items-center gap-0.5 rounded-xl py-2 text-caption font-semibold outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
-        :class="tab === entry.value ? 'bg-default text-highlighted shadow-card ring-1 ring-default' : 'text-muted active:bg-default/60'"
+        :class="tab === entry.value ? 'bg-default text-highlighted shadow-card ring-1 ring-default dark:bg-accented' : 'text-muted active:bg-default/60'"
         :aria-pressed="tab === entry.value"
         @click="tab = entry.value"
       >
