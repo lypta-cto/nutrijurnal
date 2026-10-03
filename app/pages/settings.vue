@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Targets } from '~/composables/useEating'
+import type { GoalProfile, Targets } from '~/composables/useEating'
 import { targetsOf } from '~/composables/useEating'
 
 const colorMode = useColorMode()
@@ -58,6 +58,25 @@ async function storeTargets() {
     fail(error)
   } finally {
     savingTargets.value = false
+  }
+}
+
+/* --- The goal calculator ------------------------------------------------- */
+
+const calculatorOpen = ref(false)
+const savingCalculated = ref(false)
+
+async function storeCalculated(result: { profile: GoalProfile, targets: Targets }) {
+  savingCalculated.value = true
+  try {
+    await saveSettings({ ...result.targets, profile: result.profile })
+    targets.value = targetsOf(settings.value)
+    calculatorOpen.value = false
+    toast.add({ title: 'New targets saved', icon: 'i-lucide-target', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    savingCalculated.value = false
   }
 }
 
@@ -173,14 +192,39 @@ async function confirmDelete() {
         </p>
       </div>
       <TargetsFields v-model="targets" />
-      <UButton
-        label="Save targets"
-        class="self-end"
-        :loading="savingTargets"
-        :disabled="!targetsChanged"
-        @click="storeTargets"
-      />
+      <div class="flex items-center gap-2">
+        <UButton
+          :label="settings?.profile ? 'Recalculate' : 'Work them out for me'"
+          icon="i-lucide-calculator"
+          color="neutral"
+          variant="subtle"
+          @click="calculatorOpen = true"
+        />
+        <UButton
+          label="Save targets"
+          class="ml-auto"
+          :loading="savingTargets"
+          :disabled="!targetsChanged"
+          @click="storeTargets"
+        />
+      </div>
     </section>
+
+    <UDrawer
+      v-model:open="calculatorOpen"
+      title="Goal calculator"
+      description="Your body, your week, your goal — and the day it comes to."
+      :ui="{ content: 'mx-auto w-full max-w-[34rem]', body: 'app-safe-bottom' }"
+    >
+      <template #body>
+        <GoalWizard
+          v-if="calculatorOpen"
+          :initial="settings?.profile ?? null"
+          :saving="savingCalculated"
+          @finish="storeCalculated"
+        />
+      </template>
+    </UDrawer>
 
     <!-- Appearance -->
     <section class="app-card px-4">

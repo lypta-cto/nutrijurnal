@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { Targets } from '~/composables/useEating'
+import type { GoalProfile, Targets } from '~/composables/useEating'
 import { targetsOf } from '~/composables/useEating'
 
 /**
- * The first-run questions: what a day should come to. Answered or skipped,
- * it is asked once — the account is marked onboarded either way, and the
- * targets can be changed any time from Settings.
+ * The first-run questions: a short goal calculator that ends in the day's
+ * targets. Answered, typed by hand or skipped, it is asked once — the
+ * account is marked onboarded either way, and the same calculator waits in
+ * Settings.
  */
 definePageMeta({ layout: 'auth' })
 
@@ -15,24 +16,31 @@ const toast = useToast()
 const { user } = useAuth()
 const { settings, loadSettings, saveSettings } = useEating()
 
+/** The calculator, or the four numbers typed straight in */
+const mode = ref<'calculator' | 'manual'>('calculator')
 const targets = ref<Targets>(targetsOf(null))
 const saving = ref(false)
+const loaded = ref(false)
 
 onMounted(async () => {
   await loadSettings().catch(() => {})
   targets.value = targetsOf(settings.value)
+  loaded.value = true
 })
 
-async function finish(withTargets: boolean) {
+async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
   if (saving.value) {
     return
   }
   saving.value = true
   try {
-    const saved = await saveSettings(withTargets ? { ...targets.value, onboarded: true } : { onboarded: true })
+    const saved = await saveSettings({ ...patch.targets, profile: patch.profile, onboarded: true })
     // The middleware reads this off the session; no need to fetch /auth/me again
     if (user.value) {
       user.value = { ...user.value, onboarded_at: saved.onboarded_at }
+    }
+    if (patch.targets?.target_kcal) {
+      toast.add({ title: 'Targets saved — welcome in', icon: 'i-lucide-target', color: 'success' })
     }
     await navigateTo('/', { replace: true })
   } catch (error) {
@@ -47,31 +55,59 @@ async function finish(withTargets: boolean) {
   <div class="flex flex-col gap-6">
     <div>
       <h1 class="text-2xl font-semibold text-highlighted">
-        What should a day come to?
+        Let's set your day
       </h1>
       <p class="mt-1 text-sm text-muted">
-        Your daily targets turn the diary's numbers into a score. Not sure yet?
-        Set just the kcal, split it into macros, or skip and decide later.
+        A few questions give you a daily kcal and macro target, so every meal you log has
+        something to count towards.
       </p>
     </div>
 
-    <TargetsFields v-model="targets" />
+    <template v-if="loaded">
+      <GoalWizard
+        v-if="mode === 'calculator'"
+        :initial="settings?.profile ?? null"
+        finish-label="Save and start"
+        :saving="saving"
+        @finish="finish"
+      />
 
-    <div class="flex flex-col gap-2">
+      <div
+        v-else
+        class="flex flex-col gap-4"
+      >
+        <TargetsFields v-model="targets" />
+        <UButton
+          label="Save and start"
+          size="lg"
+          block
+          :loading="saving"
+          @click="finish({ targets })"
+        />
+      </div>
+    </template>
+    <USkeleton
+      v-else
+      class="h-64 w-full"
+    />
+
+    <div class="flex flex-col items-center gap-1">
       <UButton
-        label="Save and start"
-        size="lg"
-        block
-        :loading="saving"
-        @click="finish(true)"
+        :label="mode === 'calculator' ? 'I know my numbers' : 'Work them out for me'"
+        :icon="mode === 'calculator' ? 'i-lucide-pencil-line' : 'i-lucide-calculator'"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        :disabled="saving"
+        @click="mode = mode === 'calculator' ? 'manual' : 'calculator'"
       />
       <UButton
         label="Skip for now"
         color="neutral"
-        variant="ghost"
-        block
+        variant="link"
+        size="sm"
         :disabled="saving"
-        @click="finish(false)"
+        @click="finish({})"
       />
     </div>
   </div>

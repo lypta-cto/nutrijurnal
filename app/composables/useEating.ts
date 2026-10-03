@@ -87,6 +87,8 @@ export interface DayTotals extends Macros {
 export interface EatingSettings extends Targets {
   /** When the first-run questions were answered or skipped */
   onboarded_at: string | null
+  /** The calculator's answers, once they were given */
+  profile: GoalProfile | null
   /** The shared pantry plus your own foods */
   foods: number
   recipes: number
@@ -103,6 +105,55 @@ export interface Targets {
 export interface SettingsPatch extends Partial<Targets> {
   /** Marks the first-run questions as done; never unset */
   onboarded?: boolean
+  /** The answers the targets were worked out from, kept whole */
+  profile?: GoalProfile
+}
+
+export type Sex = 'female' | 'male' | 'other'
+export type Activity = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+export type Goal = 'lose' | 'maintain' | 'gain'
+
+/** What the goal calculator asks */
+export interface GoalProfile {
+  sex: Sex
+  birth_year: number
+  height_cm: number
+  weight_kg: number
+  activity: Activity
+  goal: Goal
+  /** Kilograms a week; ignored while maintaining */
+  pace: number
+  /** Null takes the goal's own default */
+  protein_per_kg: number | null
+  fat_percent: number
+}
+
+/** What the calculator answers — an estimate to adjust, never a prescription */
+export interface GoalEstimate {
+  age: number
+  /** Burned at rest */
+  bmr: number
+  /** Burned on an ordinary day of this activity */
+  maintenance: number
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  /** Negative is a deficit */
+  daily_change: number
+  protein_per_kg: number
+  fat_percent: number
+  /** The goal asked for less than the safe minimum and was raised to it */
+  floored: boolean
+}
+
+export function targetsFromEstimate(estimate: GoalEstimate): Targets {
+  return {
+    target_kcal: estimate.kcal,
+    target_protein: estimate.protein,
+    target_carbs: estimate.carbs,
+    target_fat: estimate.fat
+  }
 }
 
 /** A sensible starting split of a kcal target: 30 % protein, 40 % carbs,
@@ -537,6 +588,11 @@ export function useEating() {
     return settings.value
   }
 
+  /** What a day should come to for these answers — nothing is saved */
+  async function estimateGoals(profile: GoalProfile) {
+    return api.post<GoalEstimate>('/eating/goals/estimate', { ...profile })
+  }
+
   // --- Days -----------------------------------------------------------------
 
   async function loadDay(which = day.value) {
@@ -742,6 +798,7 @@ export function useEating() {
     loading,
     loadSettings,
     saveSettings,
+    estimateGoals,
     loadDay,
     loadRange,
     loadWeek,
