@@ -296,7 +296,7 @@ const status = computed<{ title: string, description: string, icon: string, colo
         <div class="flex items-center gap-3">
           <span
             class="flex w-6 shrink-0 justify-center transition-colors duration-200 ease-soft motion-reduce:transition-none"
-            :class="reminder.enabled ? 'text-primary' : 'text-dimmed'"
+            :class="reminder.enabled ? 'text-muted' : 'text-dimmed'"
           >
             <UIcon
               :name="reminderIcon(reminder)"
@@ -330,7 +330,7 @@ const status = computed<{ title: string, description: string, icon: string, colo
               v-for="(letter, day) in DAYS"
               :key="day"
               type="button"
-              class="app-chip size-8 px-0 text-footnote"
+              class="app-chip app-chip-quiet size-8 px-0 text-footnote"
               :aria-label="DAY_NAMES[day]"
               :aria-pressed="reminder.weekdays.includes(day)"
               @click="toggleDay(reminder, day)"

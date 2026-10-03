@@ -501,6 +501,13 @@
     @apply cursor-not-allowed opacity-75;
   }
 
+  /* Chrome keeps a wide gap before its clock and calendar glyphs, which
+     clips "08:30" in a compact time field; Safari draws none */
+  .app-field::-webkit-calendar-picker-indicator {
+    margin-inline-start: 0.25rem;
+    padding: 0;
+  }
+
   /*
    * A chip: one choice among a few, or a shortcut (an amount, a period, a
    * weekday). Chosen when `aria-pressed` or `aria-checked` says so, so the
@@ -530,6 +537,20 @@
 
   .app-chip:disabled {
     @apply pointer-events-none opacity-50;
+  }
+
+  /*
+   * A quiet chip, for choices repeated down a list (a reminder's weekdays):
+   * seven accent discs on every row would turn the list green. The chosen
+   * ones are a grey fill with the strong text, the rest plain dimmed letters.
+   */
+  .app-chip-quiet {
+    @apply bg-transparent font-semibold text-dimmed;
+  }
+
+  .app-chip-quiet[aria-pressed="true"],
+  .app-chip-quiet[aria-checked="true"] {
+    @apply bg-elevated text-highlighted;
   }
 
   /* Press feedback for anything tappable that isn't a Nuxt UI button or a row */
