@@ -242,14 +242,15 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
 <template>
   <AppPage
     title="Library"
-    eyebrow="Your foods and recipes"
+    eyebrow=""
   >
     <template #actions>
       <UButton
-        :label="tab === 'recipes' ? 'Recipe' : 'Food'"
         icon="i-lucide-plus"
-        size="sm"
-        class="app-hit"
+        variant="ghost"
+        square
+        :aria-label="tab === 'recipes' ? 'New recipe' : 'New food'"
+        :ui="{ leadingIcon: 'size-6' }"
         @click="addNew"
       />
     </template>
@@ -268,7 +269,6 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
           icon="i-lucide-search"
           placeholder="Search your recipes…"
           class="w-full"
-          :ui="{ base: 'bg-default' }"
         />
         <div
           v-else
@@ -279,7 +279,6 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
             icon="i-lucide-search"
             placeholder="Search foods…"
             class="min-w-0 flex-1"
-            :ui="{ base: 'bg-default' }"
           />
           <button
             type="button"
@@ -298,169 +297,181 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
     </template>
 
     <!-- RECIPES -->
-    <ShellCard
+    <ShellSection
       v-if="tab === 'recipes'"
-      flush
-      title="Recipes"
-      icon="i-lucide-book-open"
-      :count="recipes.length || null"
-      hint="the whole dish"
-      :loading="recipesLoading"
-      :is-empty="!recipes.length || recipesFailed"
+      :title="recipes.length ? `${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'}` : 'Recipes'"
     >
-      <template #empty>
-        <ShellEmpty
-          v-if="recipesFailed"
-          compact
-          icon="i-lucide-wifi-off"
-          title="Your recipes didn't load"
-          description="Nothing is lost — check the connection and try again."
-        >
-          <UButton
-            label="Try again"
-            size="sm"
-            variant="soft"
-            :loading="recipesLoading"
-            @click="fetchRecipes"
-          />
-        </ShellEmpty>
-        <ShellEmpty
-          v-else-if="recipeQuery"
-          compact
-          icon="i-lucide-search-x"
-          title="No recipe by that name"
-          description="Try another word from it."
-        />
-        <ShellEmpty
-          v-else
-          icon="i-lucide-chef-hat"
-          title="Your cookbook starts here"
-          description="A name is enough — or paste a dish with its numbers, and it can go on any day."
-        >
-          <UButton
-            label="New recipe"
-            icon="i-lucide-plus"
-            @click="newOpen = true"
-          />
-        </ShellEmpty>
-      </template>
-
-      <button
-        v-for="recipe in recipes"
-        :key="recipe.id"
-        type="button"
-        class="flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
-        @click="show(recipe)"
+      <template
+        v-if="recipes.length && !recipesFailed"
+        #actions
       >
-        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="line-clamp-2 text-body font-semibold break-words text-highlighted">{{ recipe.title }}</span>
-          <span class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span class="text-caption text-muted tabular-nums">
-              <template v-if="recipe.minutes">{{ recipe.minutes }} min · </template>{{ servingsLabel(recipe) }}
-            </span>
-            <ShellMacroLine
-              v-if="recipe.items.length"
-              :macros="recipe"
-              :kcal="false"
+        <span class="app-group-title">kcal · the whole dish</span>
+      </template>
+      <ShellCard
+        flush
+        :loading="recipesLoading"
+        :is-empty="!recipes.length || recipesFailed"
+      >
+        <template #empty>
+          <ShellEmpty
+            v-if="recipesFailed"
+            compact
+            icon="i-lucide-wifi-off"
+            title="Your recipes didn't load"
+            description="Nothing is lost — check the connection and try again."
+          >
+            <UButton
+              label="Try again"
+              size="sm"
+              variant="soft"
+              :loading="recipesLoading"
+              @click="fetchRecipes"
             />
-            <span
-              v-else-if="recipe.stated"
-              class="rounded-full bg-elevated px-1.5 text-micro font-semibold tracking-wide text-muted uppercase"
-            >as stated</span>
-            <span
-              v-if="statedGap(recipe) && recipe.stated"
-              class="rounded-full bg-warning/12 px-1.5 text-caption font-semibold text-warning tabular-nums"
-            >stated {{ formatKcal(recipe.stated.kcal) }}</span>
-          </span>
-        </span>
-        <span class="flex w-16 shrink-0 flex-col items-end leading-tight tabular-nums">
-          <span class="text-body font-semibold text-highlighted">{{ formatKcal(kcalOf(recipe)) }}</span>
-          <span
-            v-if="recipe.servings > 1 && perServing(recipe) && recipe.items.length"
-            class="text-caption text-muted"
-          >{{ formatKcal(perServing(recipe)!.kcal) }} each</span>
-          <span
+          </ShellEmpty>
+          <ShellEmpty
+            v-else-if="recipeQuery"
+            compact
+            icon="i-lucide-search-x"
+            title="No recipe by that name"
+            description="Try another word from it."
+          />
+          <ShellEmpty
             v-else
-            class="text-caption text-muted"
-          >kcal</span>
-        </span>
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="size-4 shrink-0 text-dimmed"
-        />
-      </button>
-    </ShellCard>
+            icon="i-lucide-chef-hat"
+            title="Your cookbook starts here"
+            description="A name is enough — or paste a dish with its numbers, and it can go on any day."
+          >
+            <UButton
+              label="New recipe"
+              icon="i-lucide-plus"
+              @click="newOpen = true"
+            />
+          </ShellEmpty>
+        </template>
+
+        <button
+          v-for="recipe in recipes"
+          :key="recipe.id"
+          type="button"
+          class="flex min-h-14 w-full items-center gap-3 py-2.5 pr-3 pl-4 text-left outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
+          @click="show(recipe)"
+        >
+          <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="line-clamp-2 text-body break-words text-highlighted">{{ recipe.title }}</span>
+            <span class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="text-footnote text-muted tabular-nums">
+                <template v-if="recipe.minutes">{{ recipe.minutes }} min · </template>{{ servingsLabel(recipe) }}
+              </span>
+              <ShellMacroLine
+                v-if="recipe.items.length"
+                :macros="recipe"
+                :kcal="false"
+              />
+              <span
+                v-else-if="recipe.stated"
+                class="text-footnote text-muted"
+              >as stated</span>
+              <span
+                v-if="statedGap(recipe) && recipe.stated"
+                class="text-footnote font-medium text-warning tabular-nums"
+              >stated {{ formatKcal(recipe.stated.kcal) }}</span>
+            </span>
+          </span>
+          <span class="flex w-16 shrink-0 flex-col items-end leading-tight tabular-nums">
+            <span class="text-body font-medium text-highlighted">{{ formatKcal(kcalOf(recipe)) }}</span>
+            <span
+              v-if="recipe.servings > 1 && perServing(recipe) && recipe.items.length"
+              class="text-caption2 text-muted"
+            >{{ formatKcal(perServing(recipe)!.kcal) }} each</span>
+            <span
+              v-else
+              class="text-caption2 text-muted"
+            >kcal</span>
+          </span>
+          <UIcon
+            name="i-lucide-chevron-right"
+            class="size-4.5 shrink-0 text-dimmed"
+          />
+        </button>
+      </ShellCard>
+    </ShellSection>
 
     <!-- FOODS -->
-    <ShellCard
+    <ShellSection
       v-else
-      flush
-      title="Foods"
-      icon="i-lucide-apple"
-      :count="foods.length || null"
-      hint="per 100 g or ml"
-      :loading="foodsLoading"
-      :is-empty="!foods.length || foodsFailed"
+      :title="foods.length ? `${foods.length} ${foods.length === 1 ? 'food' : 'foods'}` : 'Foods'"
     >
-      <template #empty>
-        <ShellEmpty
-          v-if="foodsFailed"
-          compact
-          icon="i-lucide-wifi-off"
-          title="The foods didn't load"
-          description="Nothing is lost — check the connection and try again."
-        >
-          <UButton
-            label="Try again"
-            size="sm"
-            variant="soft"
-            :loading="foodsLoading"
-            @click="fetchFoods"
-          />
-        </ShellEmpty>
-        <ShellEmpty
-          v-else-if="onlyMine"
-          icon="i-lucide-scan-barcode"
-          title="None of your own yet"
-          description="Scan a packet from the + button, or add a food by hand — it is yours from then on."
-        >
-          <UButton
-            label="Add food"
-            icon="i-lucide-plus"
-            @click="openFood(null)"
-          />
-        </ShellEmpty>
-        <ShellEmpty
-          v-else
-          compact
-          icon="i-lucide-search-x"
-          title="No foods match"
-          description="Add it once and it is yours."
-        >
-          <UButton
-            label="Add"
-            icon="i-lucide-plus"
-            size="sm"
-            variant="soft"
-            @click="openFood(null)"
-          />
-        </ShellEmpty>
-      </template>
-
-      <TransitionGroup
-        tag="div"
-        name="list"
-        class="flex flex-col divide-y divide-default"
+      <template
+        v-if="foods.length && !foodsFailed"
+        #actions
       >
-        <FoodRow
-          v-for="food in foods"
-          :key="food.id"
-          :food="food"
-          @pick="openFood"
-          @star="toggleStar"
-        />
-      </TransitionGroup>
-    </ShellCard>
+        <span class="app-group-title">kcal · per 100 g or ml</span>
+      </template>
+      <ShellCard
+        flush
+        :loading="foodsLoading"
+        :is-empty="!foods.length || foodsFailed"
+      >
+        <template #empty>
+          <ShellEmpty
+            v-if="foodsFailed"
+            compact
+            icon="i-lucide-wifi-off"
+            title="The foods didn't load"
+            description="Nothing is lost — check the connection and try again."
+          >
+            <UButton
+              label="Try again"
+              size="sm"
+              variant="soft"
+              :loading="foodsLoading"
+              @click="fetchFoods"
+            />
+          </ShellEmpty>
+          <ShellEmpty
+            v-else-if="onlyMine"
+            icon="i-lucide-scan-barcode"
+            title="None of your own yet"
+            description="Scan a packet from the + button, or add a food by hand — it is yours from then on."
+          >
+            <UButton
+              label="Add food"
+              icon="i-lucide-plus"
+              @click="openFood(null)"
+            />
+          </ShellEmpty>
+          <ShellEmpty
+            v-else
+            compact
+            icon="i-lucide-search-x"
+            title="No foods match"
+            description="Add it once and it is yours."
+          >
+            <UButton
+              label="Add"
+              icon="i-lucide-plus"
+              size="sm"
+              variant="soft"
+              @click="openFood(null)"
+            />
+          </ShellEmpty>
+        </template>
+
+        <TransitionGroup
+          tag="div"
+          name="list"
+          class="app-divide flex flex-col"
+        >
+          <FoodRow
+            v-for="food in foods"
+            :key="food.id"
+            :food="food"
+            @pick="openFood"
+            @star="toggleStar"
+          />
+        </TransitionGroup>
+      </ShellCard>
+    </ShellSection>
 
     <!-- A recipe of one's own: a name, or a dish copied off a label -->
     <UDrawer
@@ -480,7 +491,7 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
           @keydown.meta.enter.prevent="create"
           @keydown.ctrl.enter.prevent="create"
         />
-        <ul class="mt-3 flex flex-col gap-1.5 text-xs text-muted">
+        <ul class="mt-3 flex flex-col gap-1.5 px-1 text-footnote text-muted">
           <li class="flex gap-2">
             <span class="mt-1.5 size-1 shrink-0 rounded-full bg-(--ui-text-dimmed)" />
             The first line is the name.
