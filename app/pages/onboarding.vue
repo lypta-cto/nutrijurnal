@@ -14,6 +14,12 @@ useHead({ title: 'Your daily targets' })
 
 const toast = useToast()
 const { user } = useAuth()
+
+/** "Welcome, Ana" — the first name is enough on a first meeting */
+const greeting = computed(() => {
+  const first = (user.value?.full_name ?? '').trim().split(/\s+/)[0]
+  return first ? `Welcome, ${first}` : 'Welcome'
+})
 const { settings, loadSettings, saveSettings } = useEating()
 const { putWeight } = useBody()
 
@@ -57,12 +63,15 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <div>
-      <h1 class="text-2xl font-semibold text-highlighted">
+  <div class="flex flex-col gap-7">
+    <div class="flex flex-col gap-1.5">
+      <p class="app-eyebrow">
+        {{ greeting }}
+      </p>
+      <h1 class="font-display text-title font-semibold text-highlighted">
         Let's set your day
       </h1>
-      <p class="mt-1 text-sm text-muted">
+      <p class="text-sm text-muted">
         A few questions give you a daily kcal and macro target, so every meal you log has
         something to count towards.
       </p>
@@ -83,6 +92,8 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
       >
         <TargetsFields v-model="targets" />
         <UButton
+          icon="i-lucide-arrow-right"
+          trailing
           label="Save and start"
           size="lg"
           block
@@ -91,10 +102,19 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
         />
       </div>
     </template>
-    <USkeleton
+    <div
       v-else
-      class="h-64 w-full"
-    />
+      class="flex flex-col gap-4"
+    >
+      <ShellSkeleton
+        variant="text"
+        :count="2"
+      />
+      <ShellSkeleton
+        variant="tiles"
+        :count="3"
+      />
+    </div>
 
     <div class="flex flex-col items-center gap-1">
       <UButton
@@ -102,7 +122,6 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
         :icon="mode === 'calculator' ? 'i-lucide-pencil-line' : 'i-lucide-calculator'"
         color="neutral"
         variant="ghost"
-        size="sm"
         :disabled="saving"
         @click="mode = mode === 'calculator' ? 'manual' : 'calculator'"
       />

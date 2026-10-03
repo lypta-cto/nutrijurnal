@@ -96,7 +96,6 @@ async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
     title="Start your food diary"
     description="You're signed in straight away."
     :submit="{ label: 'Create account', size: 'lg', block: true }"
-    :ui="{ title: 'text-2xl', description: 'text-sm' }"
     @submit="onSubmit"
   >
     <template #validation>

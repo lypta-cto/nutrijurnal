@@ -256,339 +256,373 @@ const fatSlider = computed({
   }
 })
 
-const CHOICE = 'flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors'
-const CHOSEN = 'border-primary bg-primary/10'
-const UNCHOSEN = 'border-default bg-default active:bg-elevated'
+/** A tile among a few to choose from — the chosen one picked out in the brand */
+const CHOICE = 'app-press flex w-full items-center gap-3 rounded-tile border px-3.5 py-3 text-left outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary'
+const CHOSEN = 'border-primary/50 bg-primary/8'
+const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
 </script>
 
 <template>
-  <div class="flex flex-col gap-5">
+  <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-2">
-      <UProgress
-        :model-value="stepIndex + 1"
-        :max="STEPS.length"
-        size="xs"
-        aria-label="Progress through the questions"
-      />
-      <span class="text-xs font-medium text-muted">Step {{ stepIndex + 1 }} of {{ STEPS.length }}</span>
+      <!-- Where in the questions: one dot per step, the current one drawn out -->
+      <div
+        class="flex items-center gap-1.5"
+        role="progressbar"
+        :aria-valuenow="stepIndex + 1"
+        aria-valuemin="1"
+        :aria-valuemax="STEPS.length"
+        :aria-label="`Step ${stepIndex + 1} of ${STEPS.length}`"
+      >
+        <span
+          v-for="(entry, index) in STEPS"
+          :key="entry.value"
+          class="h-1.5 rounded-full transition-[width,background-color] duration-300 ease-soft motion-reduce:transition-none"
+          :class="index === stepIndex ? 'w-6 bg-primary' : index < stepIndex ? 'w-1.5 bg-primary/60' : 'w-1.5 bg-accented'"
+        />
+        <span class="ml-1.5 text-caption font-semibold text-muted tabular-nums">{{ stepIndex + 1 }} of {{ STEPS.length }}</span>
+      </div>
       <h2 class="text-xl font-semibold text-highlighted">
         {{ current.title }}
       </h2>
-      <p class="text-sm text-muted">
+      <p class="-mt-1 text-sm text-muted">
         {{ current.hint }}
       </p>
     </div>
 
-    <!-- 1 · The body -->
-    <div
-      v-if="step === 'body'"
-      class="flex flex-col gap-4"
+    <Transition
+      name="panel"
+      mode="out-in"
     >
-      <UFormField
-        label="Sex"
-        hint="for the formula"
-      >
-        <div class="grid grid-cols-3 gap-1 rounded-xl bg-elevated p-1">
-          <UButton
-            v-for="option in SEXES"
-            :key="option.value"
-            :label="option.label"
-            size="sm"
-            class="justify-center rounded-lg"
-            :color="form.sex === option.value ? 'primary' : 'neutral'"
-            :variant="form.sex === option.value ? 'solid' : 'ghost'"
-            :aria-pressed="form.sex === option.value"
-            @click="form.sex = option.value"
-          />
-        </div>
-      </UFormField>
-
-      <UFormField
-        label="Year of birth"
-        :error="bodyProblems.birth_year"
-      >
-        <UInput
-          v-model.number="form.birth_year"
-          type="number"
-          inputmode="numeric"
-          :min="1900"
-          :max="YOUNGEST"
-          placeholder="1990"
-          class="w-full"
-          :ui="{ base: 'tabular-nums' }"
-        />
-      </UFormField>
-
-      <div class="grid grid-cols-2 gap-3">
-        <UFormField
-          label="Height"
-          :error="bodyProblems.height_cm"
-        >
-          <UInput
-            v-model.number="form.height_cm"
-            type="number"
-            inputmode="decimal"
-            placeholder="170"
-            class="w-full"
-            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-          >
-            <template #trailing>
-              <span class="text-xs text-dimmed">cm</span>
-            </template>
-          </UInput>
-        </UFormField>
-        <UFormField
-          label="Weight"
-          :error="bodyProblems.weight_kg"
-        >
-          <UInput
-            v-model.number="form.weight_kg"
-            type="number"
-            inputmode="decimal"
-            step="0.1"
-            placeholder="70"
-            class="w-full"
-            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-          >
-            <template #trailing>
-              <span class="text-xs text-dimmed">kg</span>
-            </template>
-          </UInput>
-        </UFormField>
-      </div>
-    </div>
-
-    <!-- 2 · How it moves -->
-    <ul
-      v-else-if="step === 'activity'"
-      class="flex flex-col gap-2"
-      role="radiogroup"
-      aria-label="Activity level"
-    >
-      <li
-        v-for="option in ACTIVITIES"
-        :key="option.value"
-      >
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="form.activity === option.value"
-          :class="[CHOICE, form.activity === option.value ? CHOSEN : UNCHOSEN]"
-          @click="form.activity = option.value"
-        >
-          <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-elevated text-primary">
-            <UIcon
-              :name="option.icon"
-              class="size-5"
-            />
-          </span>
-          <span class="flex min-w-0 flex-col">
-            <span class="text-sm font-medium text-highlighted">{{ option.label }}</span>
-            <span class="text-xs text-muted">{{ option.hint }}</span>
-          </span>
-          <UIcon
-            v-if="form.activity === option.value"
-            name="i-lucide-circle-check"
-            class="ml-auto size-5 shrink-0 text-primary"
-          />
-        </button>
-      </li>
-    </ul>
-
-    <!-- 3 · The goal, and how fast -->
-    <div
-      v-else-if="step === 'goal'"
-      class="flex flex-col gap-4"
-    >
+      <!-- 1 · The body -->
       <div
-        class="grid grid-cols-3 gap-2"
-        role="radiogroup"
-        aria-label="Goal"
+        v-if="step === 'body'"
+        key="body"
+        class="flex flex-col gap-4"
       >
-        <button
-          v-for="option in GOALS"
-          :key="option.value"
-          type="button"
-          role="radio"
-          :aria-checked="form.goal === option.value"
-          class="flex flex-col items-center gap-2 rounded-xl border px-2 py-4 text-center transition-colors"
-          :class="form.goal === option.value ? CHOSEN : UNCHOSEN"
-          @click="pickGoal(option.value)"
+        <UFormField
+          label="Sex"
+          hint="for the formula"
         >
-          <UIcon
-            :name="option.icon"
-            class="size-6 text-primary"
+          <div
+            class="flex flex-wrap gap-2"
+            role="radiogroup"
+            aria-label="Sex"
+          >
+            <button
+              v-for="option in SEXES"
+              :key="option.value"
+              type="button"
+              role="radio"
+              class="app-chip h-11 px-4"
+              :aria-checked="form.sex === option.value"
+              @click="form.sex = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </UFormField>
+
+        <UFormField
+          label="Year of birth"
+          :error="bodyProblems.birth_year"
+        >
+          <UInput
+            v-model.number="form.birth_year"
+            type="number"
+            inputmode="numeric"
+            :min="1900"
+            :max="YOUNGEST"
+            placeholder="1990"
+            class="w-full"
+            :ui="{ base: 'tabular-nums' }"
           />
-          <span class="text-xs font-medium text-highlighted">{{ option.label }}</span>
-        </button>
+        </UFormField>
+
+        <div class="grid grid-cols-2 gap-3">
+          <UFormField
+            label="Height"
+            :error="bodyProblems.height_cm"
+          >
+            <UInput
+              v-model.number="form.height_cm"
+              type="number"
+              inputmode="decimal"
+              placeholder="170"
+              class="w-full"
+              :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+            >
+              <template #trailing>
+                <span class="text-sm text-dimmed">cm</span>
+              </template>
+            </UInput>
+          </UFormField>
+          <UFormField
+            label="Weight"
+            :error="bodyProblems.weight_kg"
+          >
+            <UInput
+              v-model.number="form.weight_kg"
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              placeholder="70"
+              class="w-full"
+              :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+            >
+              <template #trailing>
+                <span class="text-sm text-dimmed">kg</span>
+              </template>
+            </UInput>
+          </UFormField>
+        </div>
       </div>
 
-      <UFormField
-        v-if="form.goal && PACES[form.goal].length"
-        label="How fast, per week"
-        :hint="paceKcal(form.pace)"
+      <!-- 2 · How it moves -->
+      <ul
+        v-else-if="step === 'activity'"
+        key="activity"
+        class="flex flex-col gap-2"
+        role="radiogroup"
+        aria-label="Activity level"
+      >
+        <li
+          v-for="option in ACTIVITIES"
+          :key="option.value"
+        >
+          <button
+            type="button"
+            role="radio"
+            :aria-checked="form.activity === option.value"
+            :class="[CHOICE, form.activity === option.value ? CHOSEN : UNCHOSEN]"
+            @click="form.activity = option.value"
+          >
+            <span
+              class="flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ease-soft"
+              :class="form.activity === option.value ? 'bg-primary text-white dark:text-oat-950' : 'bg-primary/10 text-primary'"
+            >
+              <UIcon
+                :name="option.icon"
+                class="size-5"
+              />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="text-body font-semibold text-highlighted">{{ option.label }}</span>
+              <span class="text-xs text-muted">{{ option.hint }}</span>
+            </span>
+            <UIcon
+              :name="form.activity === option.value ? 'i-lucide-circle-check' : 'i-lucide-circle'"
+              class="size-5 shrink-0"
+              :class="form.activity === option.value ? 'text-primary' : 'text-dimmed'"
+            />
+          </button>
+        </li>
+      </ul>
+
+      <!-- 3 · The goal, and how fast -->
+      <div
+        v-else-if="step === 'goal'"
+        key="goal"
+        class="flex flex-col gap-4"
       >
         <div
-          class="grid gap-1 rounded-xl bg-elevated p-1"
-          :class="PACES[form.goal].length === 4 ? 'grid-cols-4' : 'grid-cols-2'"
+          class="grid grid-cols-3 gap-2"
+          role="radiogroup"
+          aria-label="Goal"
         >
-          <UButton
-            v-for="option in PACES[form.goal]"
+          <button
+            v-for="option in GOALS"
             :key="option.value"
-            :label="option.label"
-            size="sm"
-            class="justify-center rounded-lg tabular-nums"
-            :color="form.pace === option.value ? 'primary' : 'neutral'"
-            :variant="form.pace === option.value ? 'solid' : 'ghost'"
-            :aria-pressed="form.pace === option.value"
-            @click="form.pace = option.value"
-          />
+            type="button"
+            role="radio"
+            :aria-checked="form.goal === option.value"
+            class="app-press flex flex-col items-center gap-2.5 rounded-tile border px-2 py-4 text-center outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
+            :class="form.goal === option.value ? CHOSEN : UNCHOSEN"
+            @click="pickGoal(option.value)"
+          >
+            <span
+              class="flex size-11 items-center justify-center rounded-full transition-colors duration-200 ease-soft"
+              :class="form.goal === option.value ? 'bg-primary text-white dark:text-oat-950' : 'bg-primary/10 text-primary'"
+            >
+              <UIcon
+                :name="option.icon"
+                class="size-6"
+              />
+            </span>
+            <span class="text-sm font-semibold text-highlighted">{{ option.label }}</span>
+          </button>
         </div>
-      </UFormField>
-      <p
-        v-if="form.goal === 'lose' && form.pace >= 1"
-        class="text-xs text-muted"
-      >
-        A kilo a week is a lot for most people — 0.5 kg is easier to keep up.
-      </p>
-    </div>
 
-    <!-- 4 · The plan -->
-    <div
-      v-else
-      class="flex flex-col gap-4"
-    >
-      <UAlert
-        v-if="estimateError"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-circle-alert"
-        :title="estimateError"
-      />
-
-      <div
-        v-if="!estimate"
-        class="flex flex-col gap-2"
-      >
-        <USkeleton class="h-10 w-40" />
-        <USkeleton class="h-4 w-64" />
-        <USkeleton class="h-16 w-full" />
+        <UFormField
+          v-if="form.goal && PACES[form.goal].length"
+          label="How fast, per week"
+          :hint="paceKcal(form.pace)"
+        >
+          <ShellSegmented
+            v-model="form.pace"
+            label="How fast, per week"
+            :options="PACES[form.goal]"
+          />
+        </UFormField>
+        <p
+          v-if="form.goal === 'lose' && form.pace >= 1"
+          class="flex items-start gap-2 rounded-tile bg-warning/10 px-3.5 py-3 text-sm text-default"
+        >
+          <UIcon
+            name="i-lucide-info"
+            class="mt-0.5 size-4 shrink-0 text-warning"
+          />
+          A kilo a week is a lot for most people — 0.5 kg is easier to keep up.
+        </p>
       </div>
 
-      <template v-else>
-        <div class="flex flex-col gap-1">
-          <span class="flex items-baseline gap-2">
-            <span
-              class="text-4xl font-semibold tabular-nums text-highlighted transition-opacity"
-              :class="estimating && 'opacity-60'"
-            >{{ formatKcal(targets.target_kcal ?? estimate.kcal) }}</span>
-            <span class="text-sm text-muted">kcal a day</span>
-          </span>
-          <span class="text-xs text-muted">
-            About {{ formatKcal(estimate.bmr) }} at rest · {{ formatKcal(estimate.maintenance) }} on a usual day<template v-if="estimate.daily_change"> · {{ estimate.daily_change > 0 ? '+' : '−' }}{{ formatKcal(Math.abs(estimate.daily_change)) }} for your goal</template>
-          </span>
-        </div>
-
+      <!-- 4 · The plan -->
+      <div
+        v-else
+        key="plan"
+        class="flex flex-col gap-4"
+      >
         <UAlert
-          v-if="estimate.floored"
-          color="warning"
+          v-if="estimateError"
+          color="error"
           variant="subtle"
-          icon="i-lucide-shield-alert"
-          title="Raised to a safe minimum"
-          :description="`Your goal asked for less than ${formatKcal(estimate.kcal)} kcal. Going lower is best done with a professional.`"
+          icon="i-lucide-circle-alert"
+          :title="estimateError"
         />
 
-        <div class="grid grid-cols-3 gap-2">
-          <div
-            v-for="row in macroRows"
-            :key="row.key"
-            class="flex flex-col gap-0.5 rounded-xl bg-elevated/60 px-3 py-2"
-          >
-            <span class="flex items-center gap-1.5 text-xs font-medium text-default">
-              <span
-                class="size-2 rounded-full"
-                :class="row.dot"
-              />
-              {{ row.label }}
-            </span>
-            <span class="text-lg font-semibold tabular-nums text-highlighted">{{ row.grams }} g</span>
-            <span class="text-[11px] tabular-nums text-dimmed">{{ row.share }}% of kcal</span>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-4 rounded-xl border border-default p-3">
-          <UFormField
-            label="Protein"
-            :hint="`${proteinSlider.toFixed(1)} g per kg`"
-          >
-            <USlider
-              v-model="proteinSlider"
-              :min="1.2"
-              :max="2.6"
-              :step="0.1"
-              :disabled="customised"
-              aria-label="Protein per kilogram of bodyweight"
-            />
-          </UFormField>
-          <UFormField
-            label="Fat"
-            :hint="`${fatSlider}% of kcal`"
-          >
-            <USlider
-              v-model="fatSlider"
-              :min="20"
-              :max="40"
-              :step="5"
-              :disabled="customised"
-              aria-label="Fat as a share of the day's energy"
-            />
-          </UFormField>
-          <p class="text-[11px] text-muted">
-            Carbs fill whatever is left.
-          </p>
-        </div>
-
-        <div class="flex flex-col gap-3">
-          <UButton
-            :label="fineTune ? 'Hide the exact numbers' : 'Type the exact numbers'"
-            :icon="fineTune ? 'i-lucide-chevron-up' : 'i-lucide-pencil-line'"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            class="self-start"
-            @click="fineTune = !fineTune"
+        <div
+          v-if="!estimate"
+          class="flex flex-col gap-3"
+        >
+          <span class="app-shimmer h-12 w-48 rounded-xl" />
+          <ShellSkeleton
+            variant="text"
+            :count="2"
           />
-          <template v-if="fineTune">
-            <TargetsFields
-              v-model="targets"
-              @update:model-value="onTargetsTyped"
-            />
-            <UButton
-              v-if="customised"
-              label="Back to the estimate"
-              icon="i-lucide-rotate-ccw"
-              size="xs"
-              color="neutral"
-              variant="subtle"
-              class="self-start"
-              @click="resetToEstimate"
-            />
-          </template>
+          <ShellSkeleton
+            variant="tiles"
+            :count="3"
+          />
         </div>
 
-        <p class="text-[11px] text-dimmed">
-          Estimated with the Mifflin–St Jeor formula. It is a starting point, not medical advice —
-          see how your weight moves over a few weeks and adjust.
-        </p>
-      </template>
-    </div>
+        <template v-else>
+          <!-- The answer, big: the day it all comes to -->
+          <div class="flex flex-col gap-1.5 rounded-card bg-linear-to-br from-primary-50 via-default to-default p-4 ring-1 ring-primary-100 dark:from-primary-950/60 dark:ring-primary-900/60">
+            <span class="app-eyebrow">Your day</span>
+            <span class="flex items-baseline gap-2">
+              <span
+                class="text-hero text-highlighted tabular-nums transition-opacity duration-200 ease-soft"
+                :class="estimating && 'opacity-60'"
+              >{{ formatKcal(targets.target_kcal ?? estimate.kcal) }}</span>
+              <span class="text-sm font-semibold text-muted">kcal</span>
+            </span>
+            <span class="text-xs text-muted tabular-nums">
+              About {{ formatKcal(estimate.bmr) }} at rest · {{ formatKcal(estimate.maintenance) }} on a usual day<template v-if="estimate.daily_change">
+                · {{ estimate.daily_change > 0 ? '+' : '−' }}{{ formatKcal(Math.abs(estimate.daily_change)) }} for your goal
+              </template>
+            </span>
+          </div>
+
+          <UAlert
+            v-if="estimate.floored"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-shield-alert"
+            title="Raised to a safe minimum"
+            :description="`Your goal asked for less than ${formatKcal(estimate.kcal)} kcal. Going lower is best done with a professional.`"
+          />
+
+          <div class="grid grid-cols-3 gap-2">
+            <ShellStatTile
+              v-for="row in macroRows"
+              :key="row.key"
+              :label="row.label"
+              :macro="row.key"
+              :value="row.grams"
+              unit="g"
+              :hint="`${row.share}% of kcal`"
+              tone="well"
+            />
+          </div>
+
+          <div class="flex flex-col gap-4 rounded-tile border border-default p-4">
+            <UFormField
+              label="Protein"
+              :hint="`${proteinSlider.toFixed(1)} g per kg`"
+              :ui="{ hint: 'tabular-nums' }"
+            >
+              <USlider
+                v-model="proteinSlider"
+                :min="1.2"
+                :max="2.6"
+                :step="0.1"
+                :disabled="customised"
+                class="py-2"
+                aria-label="Protein per kilogram of bodyweight"
+              />
+            </UFormField>
+            <UFormField
+              label="Fat"
+              :hint="`${fatSlider}% of kcal`"
+              :ui="{ hint: 'tabular-nums' }"
+            >
+              <USlider
+                v-model="fatSlider"
+                :min="20"
+                :max="40"
+                :step="5"
+                :disabled="customised"
+                class="py-2"
+                aria-label="Fat as a share of the day's energy"
+              />
+            </UFormField>
+            <p class="text-caption text-muted">
+              Carbs fill whatever is left.
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <UButton
+              :label="fineTune ? 'Hide the exact numbers' : 'Type the exact numbers'"
+              :icon="fineTune ? 'i-lucide-chevron-up' : 'i-lucide-pencil-line'"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              class="self-start"
+              @click="fineTune = !fineTune"
+            />
+            <template v-if="fineTune">
+              <TargetsFields
+                v-model="targets"
+                @update:model-value="onTargetsTyped"
+              />
+              <UButton
+                v-if="customised"
+                label="Back to the estimate"
+                icon="i-lucide-rotate-ccw"
+                size="sm"
+                color="neutral"
+                variant="soft"
+                class="self-start"
+                @click="resetToEstimate"
+              />
+            </template>
+          </div>
+
+          <p class="text-caption text-dimmed">
+            Estimated with the Mifflin–St Jeor formula. It is a starting point, not medical advice —
+            see how your weight moves over a few weeks and adjust.
+          </p>
+        </template>
+      </div>
+    </Transition>
 
     <div class="flex items-center gap-2">
       <UButton
         v-if="stepIndex > 0"
         icon="i-lucide-arrow-left"
         color="neutral"
-        variant="ghost"
+        variant="soft"
         size="lg"
         square
         aria-label="Back"

@@ -21,7 +21,7 @@ const isDark = computed({
     />
 
     <template #fallback>
-      <div class="app-icon-btn size-9" />
+      <div class="app-icon-btn" />
     </template>
   </ClientOnly>
 </template>

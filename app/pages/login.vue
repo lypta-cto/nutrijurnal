@@ -119,7 +119,6 @@ async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
       title="Welcome back"
       description="Sign in to your food diary."
       :submit="{ label: 'Sign in', size: 'lg', block: true }"
-      :ui="{ title: 'text-2xl', description: 'text-sm' }"
       @submit="onSubmit"
     >
       <template #validation>
@@ -143,23 +142,36 @@ async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
       </template>
     </UAuthForm>
 
-    <div class="mt-6 flex flex-col items-center gap-2 border-t border-default pt-6 text-center">
-      <p class="text-sm text-muted">
-        Just looking? See a diary with two weeks already in it.
-      </p>
+    <!-- The whole app without signing up -->
+    <div class="mt-8 flex flex-col gap-3 rounded-card bg-primary/8 p-4 ring-1 ring-primary/15">
+      <div class="flex items-start gap-3">
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
+          <UIcon
+            name="i-lucide-sparkles"
+            class="size-5"
+          />
+        </span>
+        <div class="min-w-0">
+          <p class="text-body font-semibold text-highlighted">
+            Just looking?
+          </p>
+          <p class="text-sm text-muted">
+            Open a diary with two weeks already in it.
+          </p>
+        </div>
+      </div>
       <UButton
         label="Try the demo"
-        icon="i-lucide-sparkles"
         color="neutral"
-        variant="subtle"
+        variant="outline"
         size="lg"
         block
         :loading="demoLoading"
         :disabled="loading"
         @click="tryDemo"
       />
-      <p class="text-[11px] text-dimmed">
-        No email needed. The demo is deleted after a few days unless you keep it.
+      <p class="text-center text-caption text-muted">
+        No email needed. Deleted after a few days unless you keep it.
       </p>
     </div>
   </div>
