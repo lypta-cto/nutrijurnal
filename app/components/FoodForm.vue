@@ -27,6 +27,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ saved: [Food], removed: [Food] }>()
 const open = defineModel<boolean>('open', { default: false })
+useSheetHistory(open)
 
 const { createFood, updateFood } = useEating()
 const toast = useToast()

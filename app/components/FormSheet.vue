@@ -27,6 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
+// Back closes the sheet rather than leaving the page under it
+useSheetHistory(open)
 
 defineSlots<{
   /** Form fields */

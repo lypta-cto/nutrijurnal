@@ -91,3 +91,16 @@ describe('searching in the "+" sheet', () => {
     expect(text()).not.toContain('Not in the pantry yet')
   })
 })
+
+describe('the "+" sheet and the back gesture', () => {
+  it('closes on Back instead of leaving the page under it', async () => {
+    const page = useRouter().currentRoute.value.fullPath
+    await openSheet()
+    expect(useQuickAdd().isOpen.value).toBe(true)
+
+    history.back()
+
+    await vi.waitFor(() => expect(useQuickAdd().isOpen.value).toBe(false))
+    expect(useRouter().currentRoute.value.fullPath).toBe(page)
+  })
+})

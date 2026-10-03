@@ -12,6 +12,7 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
+useSheetHistory(open)
 
 const { exportFile } = useEating()
 const toast = useToast()

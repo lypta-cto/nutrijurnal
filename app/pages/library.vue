@@ -95,6 +95,7 @@ function kcalOf(recipe: Recipe): number {
 
 /** A recipe of one's own starts as a title — the rest is filled in the panel */
 const newOpen = ref(false)
+useSheetHistory(newOpen)
 const newTitle = ref('')
 const creating = ref(false)
 

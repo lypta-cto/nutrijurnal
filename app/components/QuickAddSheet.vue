@@ -51,6 +51,7 @@ const sheetOpen = computed({
     }
   }
 })
+useSheetHistory(sheetOpen)
 
 const slot = computed({
   get: () => quickAdd.slot.value,

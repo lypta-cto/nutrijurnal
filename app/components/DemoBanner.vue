@@ -8,6 +8,7 @@ const { user, keepDemo } = useAuth()
 const toast = useToast()
 
 const open = ref(false)
+useSheetHistory(open)
 const saving = ref(false)
 const form = reactive({ full_name: '', email: '', password: '' })
 

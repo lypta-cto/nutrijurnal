@@ -381,6 +381,7 @@ async function addLine(meal: Meal) {
 // --- Meal actions ----------------------------------------------------------------
 
 const moveOpen = ref(false)
+useSheetHistory(moveOpen)
 const moving = ref<Meal | null>(null)
 const moveDay = ref(today.value)
 
@@ -486,6 +487,7 @@ function mealMenu(meal: Meal): DropdownMenuItem[][] {
 // --- Targets -----------------------------------------------------------------------
 
 const targetsOpen = ref(false)
+useSheetHistory(targetsOpen)
 const savingTargets = ref(false)
 const targets = ref<Targets>(targetsOf(null))
 

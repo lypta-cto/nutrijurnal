@@ -117,6 +117,7 @@ async function storeWater() {
 /* --- The goal calculator ------------------------------------------------- */
 
 const calculatorOpen = ref(false)
+useSheetHistory(calculatorOpen)
 const savingCalculated = ref(false)
 
 async function storeCalculated(result: { profile: GoalProfile, targets: Targets }) {

@@ -51,7 +51,9 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
   and recent foods, amount panel, quick kcal, copy, scanner, voice). `MealForm.vue` is the
   full form (and the editor): open it on a tab rather than building another.
 - Forms are bottom sheets: `FormSheet.vue`, or a `UDrawer` with `:ui="SHEET_UI"`
-  (`app/utils/sheet.ts`). Destructive actions don't confirm — the toast carries Undo.
+  (`app/utils/sheet.ts`) and `useSheetHistory(open)` beside it, so Back (Android's
+  gesture) closes the sheet instead of leaving the page — FormSheet already calls it.
+  Destructive actions don't confirm — the toast carries Undo.
 - Charts are hand-rolled SVG in `app/components/chart/` (`ChartColumns`, `ChartLine`,
   `ChartSplit`); colours from tokens (`MACRO_BARS.fill`, `CHART_COLORS`).
 - PWA: `pwa` in `nuxt.config.ts` (@vite-pwa/nuxt), `public/push-sw.js` for notifications.
