@@ -203,6 +203,8 @@
   --app-separator: rgb(60 60 67 / 29%);
   --app-hairline: 1px;
   --app-scrim: rgb(0 0 0 / 25%);
+  /* The band between a menu's groups — shade on the glass, not a line */
+  --app-menu-gap: rgb(0 0 0 / 6%);
   --app-grabber: rgb(60 60 67 / 30%);
   /* The segmented control's thumb: white on the grey track */
   --app-thumb: #fff;
@@ -273,6 +275,7 @@
   --app-plain: #000;
   --app-separator: rgb(84 84 88 / 60%);
   --app-scrim: rgb(0 0 0 / 50%);
+  --app-menu-gap: rgb(0 0 0 / 28%);
   --app-grabber: rgb(235 235 245 / 30%);
   --app-thumb: #636366;
 

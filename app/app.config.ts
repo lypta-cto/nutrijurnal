@@ -174,6 +174,36 @@ export default defineAppConfig({
       }
     },
 
+    // A checkbox picks rows out of a list, so it is iOS's selection circle: a
+    // grey ring when off, the accent filled with a white tick when on
+    checkbox: {
+      slots: {
+        base: 'rounded-full ring-[1.5px] ring-(--ui-text-dimmed)',
+        icon: 'size-3.5'
+      },
+      variants: {
+        size: {
+          md: { base: 'size-[1.375rem]', container: 'h-[1.375rem]' }
+        }
+      }
+    },
+
+    // iOS's slider: a thin grey track, the accent up to a white thumb with a
+    // soft shadow — the switch's thumb, not a ringed dot
+    slider: {
+      slots: {
+        thumb: 'bg-white ring-0 shadow-[0_3px_8px_rgb(0_0_0/0.15),0_1px_1px_rgb(0_0_0/0.16),0_0_0_0.5px_rgb(0_0_0/0.04)]'
+      },
+      variants: {
+        size: {
+          md: { thumb: 'size-7' }
+        }
+      },
+      compoundVariants: [
+        { orientation: 'horizontal', size: 'md', class: { track: 'h-1' } }
+      ]
+    },
+
     // UTabs, should a screen reach for it, is the same segmented control as ShellSegmented
     tabs: {
       variants: {
@@ -238,17 +268,24 @@ export default defineAppConfig({
       }
     },
 
-    // Menus are glass, like iOS's context menus
+    // Menus are iOS's context menus: glass, rows edge to edge in body type
+    // with hairlines between them, the glyph after the words, and a band of
+    // shade (not a line) between groups
     dropdownMenu: {
       slots: {
-        content: `z-50 min-w-52 rounded-[0.8125rem] ring-0 shadow-overlay ${GLASS}`,
-        viewport: 'divide-separator',
-        item: 'before:rounded-md data-highlighted:not-data-disabled:before:bg-accented',
-        separator: 'bg-separator'
+        content: `z-50 min-w-60 rounded-[0.8125rem] ring-0 shadow-overlay ${GLASS}`,
+        viewport: 'divide-y-[0.5rem] divide-(--app-menu-gap)',
+        group: 'p-0',
+        item: 'not-first:shadow-[inset_0_var(--app-hairline)_0_0_var(--app-separator)] before:inset-0 before:rounded-none data-highlighted:not-data-disabled:before:bg-accented',
+        itemLeadingIcon: 'order-last ms-auto',
+        separator: 'mx-0 my-0 h-2 bg-(--app-menu-gap)'
       },
       variants: {
+        active: {
+          false: { itemLeadingIcon: 'text-default group-data-highlighted:text-default' }
+        },
         size: {
-          md: { item: 'px-3 py-2.5 gap-3 text-subheadline', itemLeadingIcon: 'size-5' }
+          md: { item: 'px-4 py-[0.6875rem] gap-3 text-body', itemLeadingIcon: 'size-5' }
         }
       }
     },

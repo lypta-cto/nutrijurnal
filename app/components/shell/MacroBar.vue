@@ -33,10 +33,10 @@ const props = withDefaults(defineProps<{
 })
 
 const LOOKS: Record<MacroKey, { label: string, dot: string, fill: string, track: string }> = {
-  kcal: { label: 'Calories', dot: 'bg-kcal', fill: 'bg-kcal', track: 'bg-kcal/15' },
-  protein: { label: 'Protein', dot: 'bg-protein', fill: 'bg-protein', track: 'bg-protein/15' },
-  carbs: { label: 'Carbs', dot: 'bg-carbs', fill: 'bg-carbs', track: 'bg-carbs/15' },
-  fat: { label: 'Fat', dot: 'bg-fat', fill: 'bg-fat', track: 'bg-fat/15' }
+  kcal: { label: 'Calories', dot: 'bg-kcal', fill: 'bg-kcal', track: 'bg-kcal/15 dark:bg-kcal/25' },
+  protein: { label: 'Protein', dot: 'bg-protein', fill: 'bg-protein', track: 'bg-protein/15 dark:bg-protein/25' },
+  carbs: { label: 'Carbs', dot: 'bg-carbs', fill: 'bg-carbs', track: 'bg-carbs/15 dark:bg-carbs/25' },
+  fat: { label: 'Fat', dot: 'bg-fat', fill: 'bg-fat', track: 'bg-fat/15 dark:bg-fat/25' }
 }
 
 const look = computed(() => LOOKS[props.macro])

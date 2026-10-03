@@ -51,11 +51,13 @@ const props = withDefaults(defineProps<{
 
 defineSlots<{ default?: () => unknown }>()
 
+// The empty track is a faint tint of the ring's own colour — a step stronger
+// on black, where 15 % all but disappears (Fitness draws its tracks the same way)
 const STROKES = {
-  kcal: { fill: 'stroke-kcal', track: 'stroke-kcal/15' },
-  protein: { fill: 'stroke-protein', track: 'stroke-protein/15' },
-  carbs: { fill: 'stroke-carbs', track: 'stroke-carbs/15' },
-  fat: { fill: 'stroke-fat', track: 'stroke-fat/15' }
+  kcal: { fill: 'stroke-kcal', track: 'stroke-kcal/15 dark:stroke-kcal/25' },
+  protein: { fill: 'stroke-protein', track: 'stroke-protein/15 dark:stroke-protein/25' },
+  carbs: { fill: 'stroke-carbs', track: 'stroke-carbs/15 dark:stroke-carbs/25' },
+  fat: { fill: 'stroke-fat', track: 'stroke-fat/15 dark:stroke-fat/25' }
 } as const
 
 const NAMES = { kcal: 'Calories', protein: 'protein', carbs: 'carbs', fat: 'fat' } as const
