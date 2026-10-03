@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+ * Design tokens.
+ * Swap the brand scale below to re-skin the whole app.
+ */
+@theme static {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — the blue used for active nav, primary buttons, focus rings */
+  --color-brand-50: #eff5ff;
+  --color-brand-100: #dbe8fe;
+  --color-brand-200: #bfd7fe;
+  --color-brand-300: #93bcfd;
+  --color-brand-400: #609afa;
+  --color-brand-500: #2f7bf6;
+  --color-brand-600: #1b6bf2;
+  --color-brand-700: #1655dc;
+  --color-brand-800: #1846b2;
+  --color-brand-900: #1a3f8c;
+  --color-brand-950: #142755;
+
+  /* Ink — cool grey used for surfaces, borders and text */
+  --color-ink-50: #f5f6f8;
+  --color-ink-100: #edeff3;
+  --color-ink-200: #e1e4ea;
+  --color-ink-300: #cbd0da;
+  --color-ink-400: #9aa2b1;
+  --color-ink-500: #6c7689;
+  --color-ink-600: #525b6c;
+  --color-ink-700: #414857;
+  --color-ink-800: #2a303b;
+  --color-ink-900: #1a1f27;
+  --color-ink-950: #10141a;
+}
+
+:root,
+.light {
+  --ui-radius: 0.5rem;
+
+  /* Grey canvas the white cards sit on */
+  --app-canvas: #f1f3f7;
+  --app-card-shadow: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
+}
+
+.dark {
+  /* Cards are lighter than the canvas in dark mode, so --ui-bg is lifted */
+  --ui-bg: #151a22;
+  --app-canvas: #0d1117;
+  --app-card-shadow: none;
+}
+
+/* The canvas every page and the tab bar sit on */
+.app-canvas {
+  background-color: var(--app-canvas);
+}
+
+/* White rounded card matching the reference design */
+.app-card {
+  @apply bg-default rounded-2xl border border-default;
+
+  box-shadow: var(--app-card-shadow);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+/* Square icon button used in page headers */
+.app-icon-btn {
+  @apply size-9 justify-center rounded-xl bg-default border border-default text-toned;
+
+  box-shadow: var(--app-card-shadow);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.app-icon-btn:hover {
+  @apply bg-elevated border-accented;
+}
+
+.app-icon-btn:active {
+  transform: scale(0.94);
+}
+
+/*
+ * One-shot entrance for page content. A leave transition would blank the panel
+ * between routes, so content only animates in — the top bar never flickers.
+ */
+@keyframes app-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.app-page-in {
+  animation: app-page-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Stagger the direct children so cards cascade in rather than arriving as a block */
+.app-page-in > * {
+  animation: app-page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-page-in > :nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.app-page-in > :nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.app-page-in > :nth-child(n + 4) {
+  animation-delay: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-card,
+  .app-icon-btn {
+    transition: none;
+  }
+
+  .app-page-in,
+  .app-page-in > * {
+    animation: none;
+  }
+}
+
+/*
+ * The phone's own edges. With `viewport-fit=cover` the page runs under the
+ * notch and the home indicator, so anything pinned to an edge pads itself by
+ * the inset the device reports (zero on a desktop browser).
+ */
+.app-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.app-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

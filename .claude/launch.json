@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nutri-api",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "cd /Users/lukasavovic/Personal/nutrijurnal-back && exec .venv/bin/python -m app.cli dev"],
+      "port": 8004
+    },
+    {
+      "name": "nutri-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nuxt", "dev", "--port", "3400"],
+      "port": 3400
+    }
+  ]
+}
