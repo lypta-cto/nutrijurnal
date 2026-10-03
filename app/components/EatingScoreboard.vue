@@ -55,11 +55,16 @@ const firstLoad = computed(() => props.loading && !props.meals)
       class="flex flex-col items-center gap-5 pt-2"
     >
       <ShellSkeleton variant="ring" />
-      <ShellSkeleton
-        variant="tiles"
-        :count="3"
-        class="w-full"
-      />
+      <div
+        class="grid w-full grid-cols-3 gap-4"
+        aria-hidden="true"
+      >
+        <span
+          v-for="index in 3"
+          :key="index"
+          class="app-shimmer h-10 rounded-xl"
+        />
+      </div>
     </div>
 
     <template v-else>

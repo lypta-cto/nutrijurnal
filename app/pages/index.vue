@@ -113,6 +113,14 @@ async function repeat(slot: Slot) {
 
 const route = useRoute()
 
+/**
+ * Nothing has come back yet on this visit: the settings load before the day,
+ * and until both are in, "0 kcal eaten" and "Set your targets" would be
+ * claims about data that simply hasn't arrived. The cards hold their shape.
+ */
+const settled = ref(false)
+const firstLoad = computed(() => !meals.value.length && (loading.value || !settled.value))
+
 onMounted(async () => {
   // A meal reminder opens the app on "/?add=lunch", the home-screen shortcut
   // on "/?add=now": straight into adding food, on that slot or the clock's
@@ -125,6 +133,7 @@ onMounted(async () => {
   }
   await loadSettings().catch(() => {})
   await refreshAll()
+  settled.value = true
 })
 
 watch(day, async () => {
@@ -578,6 +587,14 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         @click="move(-1)"
       />
       <div class="grid min-w-0 flex-1 grid-cols-7 gap-0.5">
+        <template v-if="!weekDays.length">
+          <span
+            v-for="index in 7"
+            :key="index"
+            class="app-shimmer h-[3.75rem] rounded-tile"
+            aria-hidden="true"
+          />
+        </template>
         <button
           v-for="entry in weekDays"
           :key="entry.day"
@@ -638,7 +655,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         :totals="totals"
         :target="target"
         :meals="meals.length"
-        :loading="loading"
+        :loading="firstLoad"
         @targets="openTargets"
       />
 
@@ -653,7 +670,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         :icon="group.icon"
         :hint="group.meals.length
           ? `${formatKcal(group.kcal)} kcal`
-          : group.yesterday.length || (loading && !meals.length) ? undefined : 'Nothing yet'"
+          : group.yesterday.length || firstLoad ? undefined : 'Nothing yet'"
         :aria-label="group.plural"
       >
         <template #actions>
@@ -681,7 +698,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         </template>
 
         <template
-          v-if="loading && !meals.length"
+          v-if="firstLoad"
           #default
         >
           <ShellSkeleton
