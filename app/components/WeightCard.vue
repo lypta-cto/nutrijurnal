@@ -21,22 +21,33 @@ const haptics = useHaptics()
 /** The month up to the day: enough for "last weighed" and the week's change */
 const recent = ref<WeightEntry[]>([])
 const loading = ref(false)
+/** The weighings could not be read — never shown as "not weighed" */
+const failed = ref(false)
 const editing = ref(false)
 const typed = ref<number | null | undefined>(undefined)
 const saving = ref(false)
+// Each load is numbered: stepping through days, only the newest may land
+let loadsAsked = 0
 
 async function load() {
+  const ask = (loadsAsked += 1)
   const which = props.day
   loading.value = true
   try {
     const found = await weightRange(shiftDay(which, -60), which)
-    if (which === props.day) {
+    if (ask === loadsAsked) {
       recent.value = found
+      failed.value = false
     }
   } catch {
-    recent.value = []
+    if (ask === loadsAsked) {
+      recent.value = []
+      failed.value = true
+    }
   } finally {
-    loading.value = false
+    if (ask === loadsAsked) {
+      loading.value = false
+    }
   }
 }
 
@@ -120,8 +131,26 @@ async function remove() {
   <ShellCard
     title="Weight"
     icon="i-lucide-scale"
+    :is-empty="failed && !loading"
     aria-label="Weight"
   >
+    <template #empty>
+      <ShellEmpty
+        compact
+        icon="i-lucide-wifi-off"
+        title="Your weighings didn't load"
+        description="Nothing is lost — check the connection and try again."
+      >
+        <UButton
+          label="Try again"
+          size="sm"
+          variant="soft"
+          :loading="loading"
+          @click="load"
+        />
+      </ShellEmpty>
+    </template>
+
     <template
       v-if="onDay && !editing"
       #actions

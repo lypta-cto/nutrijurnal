@@ -24,17 +24,32 @@ const source = ref(shiftDay(props.day, -1))
 const meals = ref<Meal[]>([])
 const chosen = ref(new Set<string>())
 const loading = ref(false)
+/** The day could not be read — never shown as "Nothing written down that day" */
+const failed = ref(false)
 const copying = ref(false)
+// Each load is numbered: stepping on through the days, an older day's answer
+// must not land over the one on screen
+let loadsAsked = 0
 
 async function load() {
+  const ask = (loadsAsked += 1)
   loading.value = true
   try {
-    meals.value = (await peekDay(source.value)).meals
-    chosen.value = new Set(meals.value.map(meal => meal.id))
+    const found = (await peekDay(source.value)).meals
+    if (ask === loadsAsked) {
+      meals.value = found
+      chosen.value = new Set(found.map(meal => meal.id))
+      failed.value = false
+    }
   } catch {
-    meals.value = []
+    if (ask === loadsAsked) {
+      meals.value = []
+      failed.value = true
+    }
   } finally {
-    loading.value = false
+    if (ask === loadsAsked) {
+      loading.value = false
+    }
   }
 }
 
@@ -139,6 +154,20 @@ async function copy() {
       :count="3"
       class="overflow-hidden rounded-tile border border-default"
     />
+    <ShellEmpty
+      v-else-if="failed"
+      icon="i-lucide-wifi-off"
+      title="That day didn't load"
+      description="Nothing is lost — check the connection and try again."
+    >
+      <UButton
+        label="Try again"
+        icon="i-lucide-refresh-cw"
+        color="neutral"
+        variant="soft"
+        @click="load"
+      />
+    </ShellEmpty>
     <ShellEmpty
       v-else-if="!meals.length"
       icon="i-lucide-calendar-x"

@@ -120,23 +120,36 @@ function chooseWay(way: typeof WAYS[number]) {
 const favourites = ref<FoodPick[]>([])
 const recent = ref<FoodPick[]>([])
 const listsLoading = ref(false)
+/** The starred and recent foods could not be read — never shown as none yet */
+const listsFailed = ref(false)
 const yesterday = ref<Meal[]>([])
+// Each refresh is numbered: a star or an add refreshes again, and only the
+// newest answer may land
+let listsAsked = 0
 
 async function refreshLists() {
+  const ask = (listsAsked += 1)
   listsLoading.value = true
   try {
     const [lists, before] = await Promise.all([
       quickFoods(),
+      // Only the "Repeat yesterday's" shortcut hangs on this one
       peekDay(shiftDay(day.value, -1)).catch(() => null)
     ])
-    favourites.value = lists.favourites
-    recent.value = lists.recent
-    yesterday.value = before?.meals ?? []
+    if (ask === listsAsked) {
+      favourites.value = lists.favourites
+      recent.value = lists.recent
+      yesterday.value = before?.meals ?? []
+      listsFailed.value = false
+    }
   } catch {
-    favourites.value = []
-    recent.value = []
+    if (ask === listsAsked) {
+      listsFailed.value = true
+    }
   } finally {
-    listsLoading.value = false
+    if (ask === listsAsked) {
+      listsLoading.value = false
+    }
   }
 }
 
@@ -760,7 +773,21 @@ const description = computed(() => {
             </section>
 
             <ShellEmpty
-              v-if="!listsLoading && !favourites.length && !recent.length"
+              v-if="listsFailed && !listsLoading && !favourites.length && !recent.length"
+              icon="i-lucide-wifi-off"
+              title="Your foods didn't load"
+              description="Nothing is lost — check the connection and try again."
+            >
+              <UButton
+                label="Try again"
+                icon="i-lucide-refresh-cw"
+                color="neutral"
+                variant="soft"
+                @click="refreshLists"
+              />
+            </ShellEmpty>
+            <ShellEmpty
+              v-else-if="!listsLoading && !favourites.length && !recent.length"
               icon="i-lucide-search"
               title="Your usual foods land here"
               description="Search for a food to start. What you eat often shows up here, ready to add again in one tap."

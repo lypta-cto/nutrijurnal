@@ -19,6 +19,9 @@ const haptics = useHaptics()
 
 const water = ref<WaterDay | null>(null)
 const busy = ref(false)
+/** The day's glasses could not be read — never shown as none drunk */
+const failed = ref(false)
+const retrying = ref(false)
 
 async function load() {
   const which = props.day
@@ -26,9 +29,22 @@ async function load() {
     const result = await loadWater(which)
     if (which === props.day) {
       water.value = result
+      failed.value = false
     }
   } catch {
-    water.value = null
+    if (which === props.day) {
+      water.value = null
+      failed.value = true
+    }
+  }
+}
+
+async function retry() {
+  retrying.value = true
+  try {
+    await load()
+  } finally {
+    retrying.value = false
   }
 }
 
@@ -106,11 +122,29 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
     title="Water"
     icon="i-lucide-glass-water"
     icon-class="text-info"
-    :hint="`${formatWater(drunk)} of ${formatWater(goal)}`"
+    :hint="failed ? undefined : `${formatWater(drunk)} of ${formatWater(goal)}`"
+    :is-empty="failed"
     aria-label="Water"
   >
+    <template #empty>
+      <ShellEmpty
+        compact
+        icon="i-lucide-wifi-off"
+        title="The water didn't load"
+        description="Nothing is lost — check the connection and try again."
+      >
+        <UButton
+          label="Try again"
+          size="sm"
+          variant="soft"
+          :loading="retrying"
+          @click="retry"
+        />
+      </ShellEmpty>
+    </template>
+
     <template
-      v-if="reached"
+      v-if="reached && !failed"
       #actions
     >
       <UBadge

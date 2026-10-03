@@ -4,6 +4,10 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import type { Food } from '~/composables/useEating'
 import { changedTargets, targetsOf } from '~/composables/useEating'
 import LibraryPage from '~/pages/library.vue'
+import CopyMealsPanel from '~/components/CopyMealsPanel.vue'
+import QuickAddSheet from '~/components/QuickAddSheet.vue'
+import WaterCard from '~/components/WaterCard.vue'
+import WeightCard from '~/components/WeightCard.vue'
 
 describe('saving the daily targets', () => {
   it('sends only the targets that were changed', () => {
@@ -95,5 +99,81 @@ describe('searching the pantry while typing', () => {
 
     expect(page.text()).toContain('Pire krompir')
     expect(page.text()).not.toContain('Pileći file')
+  })
+})
+
+/** An endpoint that is down until told otherwise, then answers with `body` */
+function flaky<T>(path: string, body: () => T) {
+  const state = { down: true }
+  registerEndpoint(path, () => {
+    if (state.down) {
+      throw createError({ statusCode: 503 })
+    }
+    return body()
+  })
+  return state
+}
+
+async function tryAgain(find: () => { trigger: (event: string) => Promise<void> } | undefined) {
+  await find()!.trigger('click')
+  await flushPromises()
+}
+
+describe('a card or a panel that could not be read', () => {
+  it('says the water didn’t load rather than that none was drunk', async () => {
+    const water = flaky('/api/v1/eating/water/2026-09-21', () => ({ day: '2026-09-21', ml: 500, goal_ml: 2000, glass_ml: 250, entries: [] }))
+
+    const card = await mountSuspended(WaterCard, { props: { day: '2026-09-21' } })
+    await vi.waitFor(() => expect(card.text()).toContain('The water didn\'t load'), { timeout: 2000 })
+    expect(card.text()).not.toContain('0 ml of')
+
+    water.down = false
+    await tryAgain(() => card.findAll('button').find(button => button.text() === 'Try again'))
+    await vi.waitFor(() => expect(card.text()).toContain('500 ml of 2 l'))
+    card.unmount()
+  })
+
+  it('says the weighings didn’t load rather than that there are none', async () => {
+    const weights = flaky('/api/v1/eating/weight', () => [{ day: '2026-09-21', kg: 72.4 }])
+
+    const card = await mountSuspended(WeightCard, { props: { day: '2026-09-21' } })
+    await vi.waitFor(() => expect(card.text()).toContain('Your weighings didn\'t load'), { timeout: 2000 })
+    expect(card.text()).not.toContain('Weigh in once a week')
+
+    weights.down = false
+    await tryAgain(() => card.findAll('button').find(button => button.text() === 'Try again'))
+    await vi.waitFor(() => expect(card.text()).toContain('72.4'))
+    card.unmount()
+  })
+
+  it('says the day to copy from didn’t load rather than that nothing was eaten', async () => {
+    const day = flaky('/api/v1/eating/days/2026-09-20', () => ({ day: '2026-09-20', meals: [] }))
+
+    const panel = await mountSuspended(CopyMealsPanel, { props: { day: '2026-09-21' } })
+    await vi.waitFor(() => expect(panel.text()).toContain('That day didn\'t load'), { timeout: 2000 })
+    expect(panel.text()).not.toContain('Nothing written down that day')
+
+    day.down = false
+    await tryAgain(() => panel.findAll('button').find(button => button.text() === 'Try again'))
+    await vi.waitFor(() => expect(panel.text()).toContain('Nothing written down that day'))
+    panel.unmount()
+  })
+
+  it('says the starred and recent foods didn’t load rather than that there are none yet', async () => {
+    clearNuxtState(['quick-add-open', 'quick-add-kind', 'quick-add-slot'])
+    const lists = flaky('/api/v1/eating/foods/quick', () => ({ favourites: [], recent: [food('egg', 'Jaje')] }))
+    registerEndpoint(`/api/v1/eating/days/${shiftDay(useDiaryDay().value, -1)}`, () => ({ meals: [] }))
+    const sheet = await mountSuspended(QuickAddSheet)
+    useQuickAdd().open()
+    const text = () => document.body.textContent ?? ''
+
+    await vi.waitFor(() => expect(text()).toContain('Your foods didn\'t load'), { timeout: 2000 })
+    expect(text()).not.toContain('Your usual foods land here')
+
+    lists.down = false
+    ;[...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Try again')!.click()
+    await vi.waitFor(() => expect(text()).toContain('Jaje'))
+    useQuickAdd().close()
+    sheet.unmount()
   })
 })
