@@ -154,10 +154,10 @@ const progress = computed(() => Math.min(1, Math.abs(offset.value) / (width() * 
     <!-- What the swipe will do, revealed underneath -->
     <div
       v-if="showing"
-      class="absolute inset-0 flex items-center px-5 text-sm font-semibold"
+      class="absolute inset-0 flex items-center px-5 text-subheadline font-semibold text-inverted"
       :class="showing === 'left'
-        ? 'justify-end bg-error/15 text-error'
-        : 'justify-start bg-primary/15 text-primary'"
+        ? 'justify-end bg-error'
+        : 'justify-start bg-primary'"
       aria-hidden="true"
     >
       <span
@@ -174,7 +174,7 @@ const progress = computed(() => Math.min(1, Math.abs(offset.value) / (width() * 
 
     <div
       ref="row"
-      class="relative bg-default"
+      class="relative bg-cell"
       :class="settling && !reduced ? 'transition-transform duration-200 ease-soft' : ''"
       :style="{ transform: offset ? `translateX(${offset}px)` : undefined, touchAction: 'pan-y' }"
       @pointerdown="onDown"

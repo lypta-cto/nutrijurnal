@@ -98,7 +98,7 @@ onBeforeUnmount(() => {
   <span class="flex items-center gap-1">
     <button
       type="button"
-      class="app-press inline-flex h-7 items-center gap-1.5 rounded-full bg-default px-2.5 text-xs font-semibold text-default tabular-nums ring-1 ring-default outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      class="app-press inline-flex h-7 items-center gap-1.5 rounded-full bg-elevated px-2.5 text-footnote font-medium text-default tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-primary"
       :title="meal.voice_transcribed
         ? 'Listen back — the note is what the browser heard, unchecked'
         : 'Listen back — this was never written down'"

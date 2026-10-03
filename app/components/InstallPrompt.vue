@@ -68,14 +68,18 @@ function snooze() {
   >
     <div class="flex flex-col gap-3">
       <div class="flex items-start gap-3">
-        <span class="flex size-11 shrink-0 items-center justify-center rounded-tile bg-primary/10">
-          <ShellLogoMark class="size-6" />
+        <!-- The icon as the home screen will show it -->
+        <span class="flex size-11 shrink-0 items-center justify-center rounded-tile bg-(--ui-color-primary-600) text-white">
+          <ShellLogoMark
+            tone="mono"
+            class="size-7"
+          />
         </span>
         <div class="min-w-0 flex-1">
-          <p class="text-body font-semibold text-highlighted">
+          <p class="text-headline text-highlighted">
             Put Nutrijurnal on your home screen
           </p>
-          <p class="mt-0.5 text-sm text-muted">
+          <p class="mt-0.5 text-subheadline text-muted">
             It opens like an app, works offline for reading, and can send you reminders.
           </p>
         </div>
@@ -84,10 +88,10 @@ function snooze() {
       <!-- Safari has no install prompt: say where its two taps are -->
       <ol
         v-if="ios && !canPrompt"
-        class="flex flex-col gap-2 rounded-tile bg-elevated/70 px-3.5 py-3 text-sm text-default"
+        class="flex flex-col gap-2 rounded-tile bg-elevated px-3.5 py-3 text-subheadline text-default"
       >
         <li class="flex items-center gap-2">
-          <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-default text-xs font-bold text-muted tabular-nums">1</span>
+          <span class="w-4 shrink-0 font-semibold text-muted tabular-nums">1</span>
           Tap
           <UIcon
             name="i-lucide-share"
@@ -97,7 +101,7 @@ function snooze() {
           in Safari's toolbar
         </li>
         <li class="flex items-center gap-2">
-          <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-default text-xs font-bold text-muted tabular-nums">2</span>
+          <span class="w-4 shrink-0 font-semibold text-muted tabular-nums">2</span>
           Choose
           <span class="inline-flex items-center gap-1 font-semibold">
             <UIcon

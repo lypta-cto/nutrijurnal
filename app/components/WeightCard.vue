@@ -191,12 +191,12 @@ async function remove() {
       class="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
       <span class="flex items-baseline gap-1">
-        <span class="text-[2rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ onDay.kg.toFixed(1) }}</span>
-        <span class="text-sm font-semibold text-muted">kg</span>
+        <span class="font-rounded text-[2.125rem] leading-none font-semibold text-highlighted tabular-nums">{{ onDay.kg.toFixed(1) }}</span>
+        <span class="text-subheadline text-muted">kg</span>
       </span>
       <span
         v-if="weekChange !== null"
-        class="inline-flex items-center gap-1 rounded-full bg-elevated px-2.5 py-1 text-xs font-semibold text-toned tabular-nums"
+        class="inline-flex items-center gap-1 text-subheadline text-muted tabular-nums"
       >
         <UIcon
           :name="weekChange < 0 ? 'i-lucide-trending-down' : weekChange > 0 ? 'i-lucide-trending-up' : 'i-lucide-equal'"
@@ -213,13 +213,13 @@ async function remove() {
     >
       <p
         v-if="!editing && last"
-        class="text-sm text-muted"
+        class="text-subheadline text-muted"
       >
         Last weighed <span class="font-semibold text-default tabular-nums">{{ formatWeight(last.kg) }}</span> on {{ dayShort(last.day) }}.
       </p>
       <p
         v-else-if="!editing"
-        class="text-sm text-muted"
+        class="text-subheadline text-muted"
       >
         Weigh in once a week or so — the trend shows up in Progress.
       </p>
@@ -233,7 +233,7 @@ async function remove() {
           @focus="!editing && (typed === undefined || typed === null) && (typed = last?.kg)"
         >
           <template #trailing>
-            <span class="text-sm text-dimmed">kg</span>
+            <span class="text-subheadline text-muted">kg</span>
           </template>
         </DecimalInput>
         <UButton

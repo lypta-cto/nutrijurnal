@@ -554,17 +554,20 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
 </script>
 
 <template>
-  <AppPage title="Today">
+  <AppPage
+    title="Today"
+    :compact-title="heading.title"
+  >
     <!-- The day's name, tapped to pick another; the date in full above it -->
     <template #heading>
       <p class="app-eyebrow truncate">
         {{ heading.eyebrow }}
       </p>
       <label class="relative flex max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-lg has-focus-visible:ring-2 has-focus-visible:ring-primary">
-        <h1 class="truncate font-display text-title font-semibold text-highlighted">{{ heading.title }}</h1>
+        <h1 class="truncate text-large-title text-highlighted">{{ heading.title }}</h1>
         <UIcon
           name="i-lucide-chevron-down"
-          class="mt-1 size-5 shrink-0 text-muted"
+          class="mt-1.5 size-5 shrink-0 text-primary"
         />
         <input
           :value="day"
@@ -582,11 +585,8 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       <UButton
         v-if="day !== today"
         label="Today"
-        icon="i-lucide-undo-2"
-        size="sm"
-        color="neutral"
-        variant="soft"
-        class="app-hit"
+        variant="ghost"
+        class="font-normal"
         @click="day = today"
       />
       <UDropdownMenu
@@ -595,16 +595,16 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       >
         <UButton
           icon="i-lucide-ellipsis"
-          color="neutral"
           variant="ghost"
           square
           aria-label="Targets and export"
+          :ui="{ leadingIcon: 'size-6' }"
         />
       </UDropdownMenu>
     </template>
 
     <!-- The week: seven days, each a small ring against the target. The day
-         being read is raised; today is in the brand colour wherever it falls. -->
+         being read sits on a grey fill; today's letter is the accent wherever it falls. -->
     <nav
       class="-mx-1 flex items-center gap-0.5"
       aria-label="This week"
@@ -632,15 +632,15 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           v-for="entry in weekDays"
           :key="entry.day"
           type="button"
-          class="app-press flex min-w-0 flex-col items-center gap-1 rounded-tile py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
-          :class="day === entry.day ? 'bg-default shadow-card ring-1 ring-default' : 'active:bg-elevated/70'"
+          class="app-press flex min-w-0 flex-col items-center gap-1 rounded-tile py-1.5 outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 motion-reduce:transition-none"
+          :class="day === entry.day ? 'bg-elevated' : 'active:bg-elevated/60'"
           :disabled="entry.future"
           :aria-label="`${dayLabel(entry.day, today)}: ${entry.meals ? `${formatKcal(entry.kcal)} kcal` : 'nothing written down'}`"
           :aria-pressed="day === entry.day"
           @click="day = entry.day"
         >
           <span
-            class="text-caption font-semibold"
+            class="text-caption2 font-semibold"
             :class="entry.isToday ? 'text-primary' : 'text-muted'"
           >{{ entry.letter }}</span>
           <ShellMacroRing
@@ -650,10 +650,10 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
             :label="entry.meals ? `${formatKcal(entry.kcal)} kcal` : 'nothing written down'"
           >
             <span
-              class="text-xs tabular-nums"
+              class="text-caption tabular-nums"
               :class="entry.isToday
-                ? 'font-bold text-primary'
-                : entry.meals ? 'font-semibold text-highlighted' : 'font-medium text-dimmed'"
+                ? 'font-semibold text-primary'
+                : entry.meals ? 'font-medium text-highlighted' : 'text-dimmed'"
             >{{ entry.date }}</span>
           </ShellMacroRing>
         </button>
@@ -684,15 +684,23 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       @pointerup="onDayUp"
       @pointercancel="dayGesture = null"
     >
-      <UAlert
-        v-if="failed"
-        color="warning"
-        variant="subtle"
-        icon="i-lucide-wifi-off"
-        title="This day didn't load"
-        description="Nothing is lost — the diary just couldn't be reached. Check the connection and try again."
-        :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', color: 'warning', variant: 'outline', loading: retrying, onClick: () => void retry() }]"
-      />
+      <ShellCard v-if="failed">
+        <ShellEmpty
+          compact
+          icon="i-lucide-wifi-off"
+          title="This day didn't load"
+          description="Nothing is lost — the diary just couldn't be reached. Check the connection and try again."
+          class="-mx-4 -my-4"
+        >
+          <UButton
+            label="Try again"
+            size="sm"
+            variant="soft"
+            :loading="retrying"
+            @click="retry"
+          />
+        </ShellEmpty>
+      </ShellCard>
 
       <EatingScoreboard
         :totals="totals"
@@ -720,11 +728,9 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           <UButton
             v-if="!group.meals.length && group.yesterday.length"
             label="Repeat"
-            icon="i-lucide-repeat"
             size="sm"
-            color="neutral"
-            variant="soft"
-            class="app-hit"
+            variant="ghost"
+            class="app-hit font-normal"
             :aria-label="`Repeat ${dayBefore}'s ${group.label.toLowerCase()}`"
             :loading="repeating === group.value"
             @click="repeat(group.value)"
@@ -732,9 +738,10 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           <UButton
             icon="i-lucide-plus"
             size="sm"
-            variant="soft"
+            variant="ghost"
             square
             class="app-hit"
+            :ui="{ leadingIcon: 'size-5.5' }"
             :aria-label="`Add to ${group.label}`"
             @click="quickAdd.open(undefined, { slot: group.value })"
           />
@@ -757,7 +764,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           <TransitionGroup
             tag="div"
             name="list"
-            class="flex flex-col divide-y divide-default"
+            class="app-divide flex flex-col"
           >
             <div
               v-for="meal in group.meals"
@@ -771,8 +778,8 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
               >
                 <div :class="MEAL_ROW">
                   <span
-                    class="rounded-lg py-1 text-center text-xs font-semibold tabular-nums"
-                    :class="meal.at ? 'bg-elevated text-toned' : 'text-dimmed'"
+                    class="text-footnote tabular-nums"
+                    :class="meal.at ? 'text-muted' : 'text-dimmed'"
                   >{{ timeLabel(meal.at) }}</span>
 
                   <button
@@ -782,7 +789,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                     @click="toggle(meal)"
                   >
                     <!-- Two lines before it gives up: a meal's name is worth reading -->
-                    <span class="line-clamp-2 text-body font-semibold break-words text-highlighted">
+                    <span class="line-clamp-2 text-body break-words text-highlighted">
                       {{ meal.title }}<UIcon
                         v-if="meal.has_voice"
                         name="i-lucide-mic"
@@ -800,7 +807,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                     />
                     <span
                       v-else
-                      class="text-caption text-muted"
+                      class="text-footnote text-muted"
                     >Not counted yet</span>
                   </button>
 
@@ -809,13 +816,13 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                     v-if="meal.items.length"
                     class="flex flex-col items-end leading-tight tabular-nums"
                   >
-                    <span class="text-body font-semibold text-highlighted">{{ formatKcal(meal.kcal) }}</span>
-                    <span class="text-caption text-muted">kcal</span>
+                    <span class="text-body font-medium text-highlighted">{{ formatKcal(meal.kcal) }}</span>
+                    <span class="text-caption2 text-muted">kcal</span>
                   </span>
                   <button
                     v-else
                     type="button"
-                    class="app-press app-hit inline-flex h-8 items-center justify-center rounded-full bg-warning/12 text-xs font-semibold text-warning outline-none focus-visible:ring-2 focus-visible:ring-warning"
+                    class="app-hit inline-flex h-8 items-center justify-end rounded-lg text-subheadline font-semibold text-primary outline-none transition-opacity duration-120 ease-soft focus-visible:ring-2 focus-visible:ring-primary active:opacity-50 motion-reduce:transition-none"
                     :aria-label="`Fill in ${meal.title}: written down, not counted yet`"
                     @click.stop="fillIn(meal)"
                   >
@@ -848,11 +855,11 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                   class="overflow-hidden"
                   :inert="!isOpen(meal)"
                 >
-                  <div class="border-t border-default bg-elevated/40 pb-3">
+                  <div class="app-rule-t bg-muted pb-3">
                     <TransitionGroup
                       tag="div"
                       name="list"
-                      class="flex flex-col divide-y divide-default"
+                      class="app-divide flex flex-col"
                     >
                       <div
                         v-for="item in meal.items"
@@ -863,7 +870,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                           v-model="item.label"
                           variant="none"
                           class="col-span-3 min-w-0"
-                          :ui="{ root: 'w-full', base: 'px-0 py-1 text-body font-medium text-highlighted' }"
+                          :ui="{ root: 'w-full', base: 'px-0 py-1 text-body text-highlighted' }"
                           :aria-label="`Name of ${item.label}`"
                           @focus="remember(item)"
                           @blur="commitItem(meal, item)"
@@ -897,7 +904,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                           @update:model-value="commitItem(meal, item, true)"
                         />
                         <span class="col-span-2 flex min-w-0 flex-col items-end gap-0.5 text-right">
-                          <span class="text-xs font-semibold text-highlighted tabular-nums">
+                          <span class="text-footnote font-medium text-highlighted tabular-nums">
                             {{ formatKcal(item.kcal) }} kcal<span
                               v-if="item.unit !== 'serving'"
                               class="font-normal text-dimmed"
@@ -927,8 +934,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                       <UButton
                         type="submit"
                         label="Add"
-                        color="neutral"
-                        variant="soft"
+                        variant="ghost"
                         :loading="addingTo === meal.id"
                         :disabled="!(addText[meal.id] ?? '').trim()"
                       />
@@ -936,7 +942,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
 
                     <p
                       v-if="meal.note || meal.has_voice"
-                      class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 text-xs text-muted"
+                      class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-3 text-footnote text-muted"
                     >
                       <UIcon
                         :name="meal.has_voice ? 'i-lucide-mic' : 'i-lucide-sticky-note'"

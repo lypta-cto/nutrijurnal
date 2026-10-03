@@ -586,7 +586,7 @@ export const CHART_COLORS = {
  */
 
 /** time · meal (name over its macros) · kcal, or the "Fill in" pill · ⋮ */
-export const MEAL_COLUMNS = 'grid items-center gap-x-3 grid-cols-[2.75rem_minmax(0,1fr)_4rem_2rem]'
+export const MEAL_COLUMNS = 'grid items-center gap-x-3 grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_2rem]'
 
 /**
  * An item inside an open meal, on two lines: the name across with ✕ at the

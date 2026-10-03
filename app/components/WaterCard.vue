@@ -147,13 +147,13 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
       v-if="reached && !failed"
       #actions
     >
-      <UBadge
-        label="Goal reached"
-        icon="i-lucide-check"
-        color="info"
-        variant="soft"
-        class="rounded-full"
-      />
+      <span class="flex items-center gap-1 text-footnote font-medium text-info">
+        <UIcon
+          name="i-lucide-check"
+          class="size-4"
+        />
+        Goal reached
+      </span>
     </template>
 
     <div class="flex flex-col gap-3">
@@ -167,8 +167,8 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
           v-for="entry in glasses"
           :key="entry.index"
           type="button"
-          class="app-press flex h-10 max-w-12 min-w-0 flex-1 items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-info disabled:opacity-60"
-          :class="entry.full ? 'bg-info/15 text-info' : 'bg-elevated text-dimmed'"
+          class="app-press flex h-10 max-w-12 min-w-0 flex-1 items-center justify-center rounded-tile bg-elevated outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-info disabled:opacity-60 motion-reduce:transition-none"
+          :class="entry.full ? 'text-info' : 'text-dimmed'"
           :aria-label="entry.full ? `Take back a glass (${formatWater(glass)})` : `Drink a glass (${formatWater(glass)})`"
           :disabled="busy"
           @click="tapGlass(entry)"
@@ -194,9 +194,10 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
         <UButton
           :label="`+${formatWater(glass)}`"
           icon="i-lucide-glass-water"
-          color="info"
+          color="neutral"
           variant="soft"
           class="flex-1 justify-center tabular-nums"
+          :ui="{ leadingIcon: 'text-info' }"
           :loading="busy"
           @click="add(glass)"
         />

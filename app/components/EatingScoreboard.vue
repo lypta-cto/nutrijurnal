@@ -46,10 +46,7 @@ const firstLoad = computed(() => props.loading && !props.meals)
 </script>
 
 <template>
-  <ShellCard
-    tone="brand"
-    aria-label="The day so far"
-  >
+  <ShellCard aria-label="The day so far">
     <div
       v-if="firstLoad"
       class="flex flex-col items-center gap-5 pt-2"
@@ -62,30 +59,30 @@ const firstLoad = computed(() => props.loading && !props.meals)
         <span
           v-for="index in 3"
           :key="index"
-          class="app-shimmer h-10 rounded-xl"
+          class="app-shimmer h-10 rounded-tile"
         />
       </div>
     </div>
 
     <template v-else>
-      <div class="flex items-center justify-center gap-3 pt-2">
+      <div class="flex items-center justify-center gap-2 pt-2">
         <!-- What was eaten and what the day allows, either side of the ring -->
         <div
           v-if="kcalTarget !== null"
-          class="flex w-16 shrink-0 flex-col items-center text-center"
+          class="flex w-14 shrink-0 flex-col items-center text-center"
         >
-          <span class="app-eyebrow">Eaten</span>
-          <span class="text-lg leading-tight font-bold text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }}</span>
-          <span class="text-caption text-muted">kcal</span>
+          <span class="text-footnote text-muted">Eaten</span>
+          <span class="font-rounded text-title3 text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }}</span>
+          <span class="text-caption2 text-muted">kcal</span>
         </div>
 
         <ShellMacroRing
           :tracks="tracks"
-          :size="184"
+          :size="172"
           :thickness="9"
         >
           <span
-            class="text-[2rem] leading-none font-bold tracking-tight"
+            class="font-rounded text-[2.125rem] leading-none font-bold tabular-nums"
             :class="centre.over ? 'text-warning' : 'text-highlighted'"
           >
             <CountUp
@@ -94,18 +91,18 @@ const firstLoad = computed(() => props.loading && !props.meals)
             />
           </span>
           <span
-            class="mt-1 text-caption font-medium"
+            class="mt-1 text-footnote"
             :class="centre.over ? 'text-warning' : 'text-muted'"
           >{{ centre.caption }}</span>
         </ShellMacroRing>
 
         <div
           v-if="kcalTarget !== null"
-          class="flex w-16 shrink-0 flex-col items-center text-center"
+          class="flex w-14 shrink-0 flex-col items-center text-center"
         >
-          <span class="app-eyebrow">Target</span>
-          <span class="text-lg leading-tight font-bold text-highlighted tabular-nums">{{ formatKcal(kcalTarget) }}</span>
-          <span class="text-caption text-muted">kcal</span>
+          <span class="text-footnote text-muted">Target</span>
+          <span class="font-rounded text-title3 text-highlighted tabular-nums">{{ formatKcal(kcalTarget) }}</span>
+          <span class="text-caption2 text-muted">kcal</span>
         </div>
       </div>
 
@@ -122,7 +119,7 @@ const firstLoad = computed(() => props.loading && !props.meals)
 
       <div
         v-if="kcalTarget === null"
-        class="-mx-4 mt-4 -mb-4 border-t border-default"
+        class="app-rule-t -mx-4 mt-4 -mb-4"
       >
         <ShellEmpty
           compact
