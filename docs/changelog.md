@@ -20,6 +20,8 @@ Newest first. One line per piece of work that landed, in either repo.
   one person's diary never shows in the next session on the same tab; "no connection"
   and "can't be played on this device" in place of "Is the backend running?"; the
   microphone explains an http page; "Serbian", not "Srpski"; "Calories:" pastes.
+  Also: recipe steps, notes, aliases and a paste's pieces are bounded, the PDF export is
+  built off the event loop, and Progress reloads after a "+" add.
 - **Every screen restyled for the phone.** Today (week rings, the day's four rings with
   eaten and target, meal rows whose names wrap, two-line items), the quick-add sheet and
   every form sheet (grouped lists, chips, one full-width action), Library, Progress (stat
