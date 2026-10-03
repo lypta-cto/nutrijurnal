@@ -79,28 +79,29 @@ onBeforeUnmount(() => {
   <span class="flex items-center gap-1">
     <button
       type="button"
-      class="flex items-center gap-1 rounded-md bg-elevated px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-default transition-colors hover:text-highlighted"
+      class="app-press inline-flex h-7 items-center gap-1.5 rounded-full bg-default px-2.5 text-xs font-semibold text-default tabular-nums ring-1 ring-default outline-none focus-visible:ring-2 focus-visible:ring-primary"
       :title="meal.voice_transcribed
         ? 'Listen back — the note is what the browser heard, unchecked'
         : 'Listen back — this was never written down'"
+      :aria-label="playing ? 'Pause the recording' : 'Play the recording'"
       @click="play"
     >
       <UIcon
         :name="loading
           ? 'i-lucide-loader-circle'
           : playing ? 'i-lucide-pause' : 'i-lucide-play'"
-        :class="['size-3', loading && 'animate-spin']"
+        :class="['size-3.5 text-primary', loading && 'animate-spin']"
       />
       {{ meal.voice_seconds ? clockOf(meal.voice_seconds) : 'Play' }}
     </button>
 
     <UButton
       icon="i-lucide-trash-2"
-      size="xs"
+      size="sm"
       color="neutral"
       variant="ghost"
       square
-      class="text-dimmed hover:text-error"
+      class="app-hit text-dimmed"
       title="Throw the recording away, keep the words"
       aria-label="Delete the recording"
       @click="forget"

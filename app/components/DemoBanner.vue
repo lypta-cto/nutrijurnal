@@ -47,20 +47,21 @@ async function keep() {
 <template>
   <div
     v-if="user?.is_demo"
-    class="flex items-center gap-3 rounded-2xl bg-primary/10 px-4 py-3"
+    class="flex items-center gap-3 rounded-card bg-primary/10 py-3 pr-3 pl-4 ring-1 ring-primary/15"
     role="status"
   >
     <UIcon
       name="i-lucide-sparkles"
       class="size-5 shrink-0 text-primary"
     />
-    <p class="min-w-0 flex-1 text-xs text-default">
-      <span class="font-semibold">This is a demo diary.</span>
-      It is deleted {{ expires }} unless you keep it.
+    <p class="min-w-0 flex-1 text-sm text-default">
+      <span class="font-semibold text-highlighted">A demo diary.</span>
+      Deleted {{ expires }} unless you keep it.
     </p>
     <UButton
       label="Keep it"
       size="sm"
+      class="app-hit"
       @click="open = true"
     />
 
@@ -73,7 +74,7 @@ async function keep() {
       <template #body>
         <form
           id="keep-demo"
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-4"
           @submit.prevent="keep"
         >
           <UFormField label="Name">

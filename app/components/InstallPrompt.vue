@@ -62,75 +62,73 @@ function snooze() {
 </script>
 
 <template>
-  <section
+  <ShellCard
     v-if="visible"
-    class="app-card flex flex-col gap-3 px-4 py-3"
     aria-label="Install the app"
   >
-    <div class="flex items-start gap-3">
-      <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <UIcon
-          name="i-lucide-smartphone"
-          class="size-5"
+    <div class="flex flex-col gap-3">
+      <div class="flex items-start gap-3">
+        <span class="flex size-11 shrink-0 items-center justify-center rounded-tile bg-primary/10">
+          <ShellLogoMark class="size-6" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-body font-semibold text-highlighted">
+            Put Nutrijurnal on your home screen
+          </p>
+          <p class="mt-0.5 text-sm text-muted">
+            It opens like an app, works offline for reading, and can send you reminders.
+          </p>
+        </div>
+      </div>
+
+      <!-- Safari has no install prompt: say where its two taps are -->
+      <ol
+        v-if="ios && !canPrompt"
+        class="flex flex-col gap-2 rounded-tile bg-elevated/70 px-3.5 py-3 text-sm text-default"
+      >
+        <li class="flex items-center gap-2">
+          <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-default text-xs font-bold text-muted tabular-nums">1</span>
+          Tap
+          <UIcon
+            name="i-lucide-share"
+            class="size-4.5 text-primary"
+            aria-label="the Share button"
+          />
+          in Safari's toolbar
+        </li>
+        <li class="flex items-center gap-2">
+          <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-default text-xs font-bold text-muted tabular-nums">2</span>
+          Choose
+          <span class="inline-flex items-center gap-1 font-semibold">
+            <UIcon
+              name="i-lucide-square-plus"
+              class="size-4.5"
+            />
+            Add to Home Screen
+          </span>
+        </li>
+      </ol>
+
+      <div
+        v-if="canPrompt || variant === 'card'"
+        class="flex gap-2"
+      >
+        <UButton
+          v-if="canPrompt"
+          label="Install"
+          icon="i-lucide-download"
+          class="flex-1 justify-center"
+          @click="install"
         />
-      </span>
-      <div class="min-w-0 flex-1">
-        <p class="text-sm font-semibold text-highlighted">
-          Put Nutrijurnal on your home screen
-        </p>
-        <p class="text-xs text-muted">
-          It opens like an app, works offline for reading, and can send you reminders.
-        </p>
+        <UButton
+          v-if="variant === 'card'"
+          :label="canPrompt ? 'Not now' : 'Got it'"
+          color="neutral"
+          :variant="canPrompt ? 'ghost' : 'soft'"
+          :class="!canPrompt && 'flex-1 justify-center'"
+          @click="snooze"
+        />
       </div>
     </div>
-
-    <!-- Safari has no install prompt: say where its two taps are -->
-    <ol
-      v-if="ios && !canPrompt"
-      class="flex flex-col gap-1.5 rounded-xl bg-elevated/60 px-3 py-2 text-xs text-default"
-    >
-      <li class="flex items-center gap-2">
-        <span class="flex size-5 items-center justify-center rounded-full bg-default text-[10px] font-semibold text-muted">1</span>
-        Tap
-        <UIcon
-          name="i-lucide-share"
-          class="size-4 text-primary"
-          aria-label="the Share button"
-        />
-        in Safari's toolbar
-      </li>
-      <li class="flex items-center gap-2">
-        <span class="flex size-5 items-center justify-center rounded-full bg-default text-[10px] font-semibold text-muted">2</span>
-        Choose
-        <span class="inline-flex items-center gap-1 font-medium">
-          <UIcon
-            name="i-lucide-square-plus"
-            class="size-4"
-          />
-          Add to Home Screen
-        </span>
-      </li>
-    </ol>
-
-    <div
-      v-if="canPrompt || variant === 'card'"
-      class="flex gap-2"
-    >
-      <UButton
-        v-if="canPrompt"
-        label="Install"
-        icon="i-lucide-download"
-        class="flex-1 justify-center"
-        @click="install"
-      />
-      <UButton
-        v-if="variant === 'card'"
-        :label="canPrompt ? 'Not now' : 'Got it'"
-        color="neutral"
-        variant="ghost"
-        :class="!canPrompt && 'flex-1 justify-center'"
-        @click="snooze"
-      />
-    </div>
-  </section>
+  </ShellCard>
 </template>

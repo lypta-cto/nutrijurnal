@@ -102,91 +102,83 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
 </script>
 
 <template>
-  <section
-    class="app-card flex flex-col gap-3 px-4 py-3"
+  <ShellCard
+    title="Water"
+    icon="i-lucide-glass-water"
+    icon-class="text-info"
+    :hint="`${formatWater(drunk)} of ${formatWater(goal)}`"
     aria-label="Water"
   >
-    <header class="flex items-center gap-2">
-      <UIcon
-        name="i-lucide-glass-water"
-        class="size-4 shrink-0 text-info"
-      />
-      <h2 class="text-sm font-semibold text-highlighted">
-        Water
-      </h2>
-      <span class="text-xs tabular-nums text-muted">
-        <span class="font-medium text-default">{{ formatWater(drunk) }}</span> of {{ formatWater(goal) }}
-      </span>
+    <template
+      v-if="reached"
+      #actions
+    >
       <UBadge
-        v-if="reached"
         label="Goal reached"
         icon="i-lucide-check"
-        color="success"
-        variant="soft"
-        size="sm"
-        class="ml-auto"
-      />
-    </header>
-
-    <div
-      class="flex flex-wrap gap-1"
-      role="group"
-      aria-label="Glasses"
-    >
-      <button
-        v-for="entry in glasses"
-        :key="entry.index"
-        type="button"
-        class="flex size-8 items-center justify-center rounded-lg transition-colors active:scale-95"
-        :class="entry.full ? 'bg-info/15 text-info' : 'bg-elevated text-dimmed'"
-        :aria-label="entry.full ? `Take back a glass (${formatWater(glass)})` : `Drink a glass (${formatWater(glass)})`"
-        :disabled="busy"
-        @click="tapGlass(entry)"
-      >
-        <UIcon
-          name="i-lucide-glass-water"
-          class="size-4"
-        />
-      </button>
-    </div>
-
-    <UProgress
-      :model-value="share"
-      color="info"
-      size="sm"
-      :aria-label="`${share}% of the water goal`"
-    />
-
-    <div class="flex items-center gap-2">
-      <UButton
-        icon="i-lucide-minus"
-        color="neutral"
-        variant="subtle"
-        square
-        :disabled="busy || !water?.entries.length"
-        aria-label="Take back the last glass"
-        @click="takeBack"
-      />
-      <UButton
-        :label="`+${formatWater(glass)}`"
-        icon="i-lucide-glass-water"
         color="info"
-        class="flex-1 justify-center"
-        :loading="busy"
-        @click="add(glass)"
+        variant="soft"
+        class="rounded-full"
       />
-      <UDropdownMenu
-        :items="moreItems"
-        :content="{ align: 'end' }"
+    </template>
+
+    <div class="flex flex-col gap-3">
+      <!-- The glasses are the buttons: the next empty one drinks, the last full one takes back -->
+      <div
+        class="flex gap-1"
+        role="group"
+        :aria-label="`Glasses — ${share}% of the water goal`"
       >
+        <button
+          v-for="entry in glasses"
+          :key="entry.index"
+          type="button"
+          class="app-press flex h-10 max-w-12 min-w-0 flex-1 items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-info disabled:opacity-60"
+          :class="entry.full ? 'bg-info/15 text-info' : 'bg-elevated text-dimmed'"
+          :aria-label="entry.full ? `Take back a glass (${formatWater(glass)})` : `Drink a glass (${formatWater(glass)})`"
+          :disabled="busy"
+          @click="tapGlass(entry)"
+        >
+          <UIcon
+            name="i-lucide-glass-water"
+            class="size-5 transition-transform duration-300 ease-spring motion-reduce:transition-none"
+            :class="entry.full ? 'scale-100' : 'scale-90'"
+          />
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
         <UButton
-          icon="i-lucide-ellipsis"
+          icon="i-lucide-minus"
           color="neutral"
-          variant="subtle"
+          variant="soft"
           square
-          aria-label="Another amount"
+          :disabled="busy || !water?.entries.length"
+          aria-label="Take back the last glass"
+          @click="takeBack"
         />
-      </UDropdownMenu>
+        <UButton
+          :label="`+${formatWater(glass)}`"
+          icon="i-lucide-glass-water"
+          color="info"
+          variant="soft"
+          class="flex-1 justify-center tabular-nums"
+          :loading="busy"
+          @click="add(glass)"
+        />
+        <UDropdownMenu
+          :items="moreItems"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            icon="i-lucide-ellipsis"
+            color="neutral"
+            variant="soft"
+            square
+            aria-label="Another amount"
+          />
+        </UDropdownMenu>
+      </div>
     </div>
-  </section>
+  </ShellCard>
 </template>

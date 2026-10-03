@@ -161,7 +161,7 @@ const progress = computed(() => Math.min(1, Math.abs(offset.value) / (width() * 
       aria-hidden="true"
     >
       <span
-        class="flex items-center gap-1.5 transition-transform duration-150"
+        class="flex items-center gap-1.5 transition-transform duration-120 ease-soft"
         :style="{ transform: `scale(${0.85 + progress * 0.15})`, opacity: 0.4 + progress * 0.6 }"
       >
         <UIcon
@@ -175,7 +175,7 @@ const progress = computed(() => Math.min(1, Math.abs(offset.value) / (width() * 
     <div
       ref="row"
       class="relative bg-default"
-      :class="settling && !reduced ? 'transition-transform duration-200 ease-out' : ''"
+      :class="settling && !reduced ? 'transition-transform duration-200 ease-soft' : ''"
       :style="{ transform: offset ? `translateX(${offset}px)` : undefined, touchAction: 'pan-y' }"
       @pointerdown="onDown"
       @pointermove="onMove"

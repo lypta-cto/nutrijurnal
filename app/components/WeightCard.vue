@@ -114,59 +114,61 @@ async function remove() {
 </script>
 
 <template>
-  <section
-    class="app-card flex flex-col gap-3 px-4 py-3"
+  <ShellCard
+    title="Weight"
+    icon="i-lucide-scale"
     aria-label="Weight"
   >
-    <header class="flex items-center gap-2">
-      <UIcon
-        name="i-lucide-scale"
-        class="size-4 shrink-0 text-muted"
-      />
-      <h2 class="text-sm font-semibold text-highlighted">
-        Weight
-      </h2>
+    <template
+      v-if="onDay && !editing"
+      #actions
+    >
       <UButton
-        v-if="onDay && !editing"
         icon="i-lucide-pencil"
-        size="xs"
+        size="sm"
         color="neutral"
         variant="ghost"
         square
-        class="ml-auto"
+        class="app-hit text-muted"
         aria-label="Correct the weight"
         @click="startEditing"
       />
       <UButton
-        v-if="onDay && !editing"
         icon="i-lucide-trash-2"
-        size="xs"
+        size="sm"
         color="neutral"
         variant="ghost"
         square
+        class="app-hit text-muted"
         aria-label="Remove the weight"
         @click="remove"
       />
-    </header>
+    </template>
 
-    <USkeleton
+    <ShellSkeleton
       v-if="loading && !recent.length"
-      class="h-8 w-32"
+      variant="text"
+      :count="2"
+      class="py-1"
     />
 
+    <!-- The number in the strong colour, the change beside it in none:
+         a kilo up or down is not good or bad news to colour -->
     <div
       v-else-if="onDay && !editing"
-      class="flex items-baseline gap-3"
+      class="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
-      <span class="text-2xl font-semibold tabular-nums text-highlighted">{{ formatWeight(onDay.kg) }}</span>
+      <span class="flex items-baseline gap-1">
+        <span class="text-[2rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ onDay.kg.toFixed(1) }}</span>
+        <span class="text-sm font-semibold text-muted">kg</span>
+      </span>
       <span
         v-if="weekChange !== null"
-        class="text-xs tabular-nums"
-        :class="weekChange === 0 ? 'text-muted' : 'text-default'"
+        class="inline-flex items-center gap-1 rounded-full bg-elevated px-2.5 py-1 text-xs font-semibold text-toned tabular-nums"
       >
         <UIcon
           :name="weekChange < 0 ? 'i-lucide-trending-down' : weekChange > 0 ? 'i-lucide-trending-up' : 'i-lucide-equal'"
-          class="size-3.5 align-[-2px]"
+          class="size-3.5"
         />
         {{ weekChange > 0 ? '+' : weekChange < 0 ? '−' : '' }}{{ Math.abs(weekChange).toFixed(1) }} kg in a week
       </span>
@@ -174,18 +176,18 @@ async function remove() {
 
     <form
       v-else
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-2.5"
       @submit.prevent="save"
     >
       <p
         v-if="!editing && last"
-        class="text-xs text-muted"
+        class="text-sm text-muted"
       >
-        Last weighed {{ formatWeight(last.kg) }} on {{ dayShort(last.day) }}.
+        Last weighed <span class="font-semibold text-default tabular-nums">{{ formatWeight(last.kg) }}</span> on {{ dayShort(last.day) }}.
       </p>
       <p
         v-else-if="!editing"
-        class="text-xs text-muted"
+        class="text-sm text-muted"
       >
         Weigh in once a week or so — the trend shows up in Progress.
       </p>
@@ -204,7 +206,7 @@ async function remove() {
           @focus="!editing && typed === undefined && (typed = last?.kg)"
         >
           <template #trailing>
-            <span class="text-xs text-dimmed">kg</span>
+            <span class="text-sm text-dimmed">kg</span>
           </template>
         </UInput>
         <UButton
@@ -222,5 +224,5 @@ async function remove() {
         />
       </div>
     </form>
-  </section>
+  </ShellCard>
 </template>

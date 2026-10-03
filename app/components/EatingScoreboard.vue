@@ -3,14 +3,14 @@ import type { Macros } from '~/composables/useEating'
 import { formatKcal } from '~/composables/useEating'
 
 /**
- * The day at a glance: rings for kcal and the three macros filling towards
- * their targets, the kcal still left (or how far over) counting to its new
- * value in the middle, and a bar per macro beside them with the numbers.
- * The rings and bars are the design's (ShellMacroRing, ShellMacroBar), so a
- * target passed turns the same clay everywhere.
+ * The day at a glance, the card that leads Today: four rings filling towards
+ * their targets — kcal outside, then protein, carbs and fat — with the kcal
+ * still left (or how far over) counting to its new value in the middle, what
+ * was eaten and the target either side, and a bar per macro underneath. Past
+ * a target the ring and the bar turn clay, the same as everywhere.
  *
- * Without targets the rings stay empty tracks and the middle shows what was
- * eaten, with the one way out of that state underneath.
+ * Without targets the rings stay empty tracks, the middle shows what was
+ * eaten, and the one way out of that state is offered underneath.
  */
 const props = defineProps<{
   totals: Macros
@@ -42,59 +42,97 @@ const centre = computed(() => {
     : { value: -left.value, caption: 'kcal over', over: true }
 })
 
-const context = computed(() => {
-  if (props.loading && !props.meals) {
-    return 'reading the day…'
-  }
-  if (!props.meals) {
-    return 'nothing logged yet'
-  }
-  return `${formatKcal(props.totals.kcal)} kcal · ${props.meals} ${props.meals === 1 ? 'meal' : 'meals'}`
-})
+const firstLoad = computed(() => props.loading && !props.meals)
 </script>
 
 <template>
-  <section
-    class="app-card flex items-center gap-4 px-4 py-4"
+  <ShellCard
+    tone="brand"
     aria-label="The day so far"
   >
-    <ShellMacroRing
-      :tracks="tracks"
-      :size="148"
-      :thickness="9"
+    <div
+      v-if="firstLoad"
+      class="flex flex-col items-center gap-5 pt-2"
     >
-      <span
-        class="text-[1.65rem] leading-none font-bold"
-        :class="centre.over ? 'text-warning' : 'text-highlighted'"
-      >
-        <CountUp
-          :value="centre.value"
-          :format="formatKcal"
-        />
-      </span>
-      <span class="mt-1 text-[11px] text-muted">{{ centre.caption }}</span>
-    </ShellMacroRing>
-
-    <div class="flex min-w-0 flex-1 flex-col gap-2.5">
-      <ShellMacroBar
-        v-for="track in tracks.slice(1)"
-        :key="track.key"
-        :macro="track.key"
-        :value="track.value"
-        :goal="track.goal"
-        compact
+      <ShellSkeleton variant="ring" />
+      <ShellSkeleton
+        variant="tiles"
+        :count="3"
+        class="w-full"
       />
-      <div class="flex items-baseline gap-2 text-[11px]">
-        <span class="truncate text-muted">{{ context }}</span>
-        <UButton
-          v-if="kcalTarget === null"
-          label="Set targets"
-          size="xs"
-          variant="link"
-          class="ml-auto px-0"
-          @click="emit('targets')"
+    </div>
+
+    <template v-else>
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <!-- What was eaten and what the day allows, either side of the ring -->
+        <div
+          v-if="kcalTarget !== null"
+          class="flex w-16 shrink-0 flex-col items-center text-center"
+        >
+          <span class="app-eyebrow">Eaten</span>
+          <span class="text-lg leading-tight font-bold text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }}</span>
+          <span class="text-caption text-muted">kcal</span>
+        </div>
+
+        <ShellMacroRing
+          :tracks="tracks"
+          :size="184"
+          :thickness="9"
+        >
+          <span
+            class="text-[2rem] leading-none font-bold tracking-tight"
+            :class="centre.over ? 'text-warning' : 'text-highlighted'"
+          >
+            <CountUp
+              :value="centre.value"
+              :format="formatKcal"
+            />
+          </span>
+          <span
+            class="mt-1 text-caption font-medium"
+            :class="centre.over ? 'text-warning' : 'text-muted'"
+          >{{ centre.caption }}</span>
+        </ShellMacroRing>
+
+        <div
+          v-if="kcalTarget !== null"
+          class="flex w-16 shrink-0 flex-col items-center text-center"
+        >
+          <span class="app-eyebrow">Target</span>
+          <span class="text-lg leading-tight font-bold text-highlighted tabular-nums">{{ formatKcal(kcalTarget) }}</span>
+          <span class="text-caption text-muted">kcal</span>
+        </div>
+      </div>
+
+      <div class="mt-5 grid grid-cols-3 gap-4">
+        <ShellMacroBar
+          v-for="track in tracks.slice(1)"
+          :key="track.key"
+          :macro="track.key"
+          :value="track.value"
+          :goal="track.goal"
+          compact
         />
       </div>
-    </div>
-  </section>
+
+      <div
+        v-if="kcalTarget === null"
+        class="-mx-4 mt-4 -mb-4 border-t border-default"
+      >
+        <ShellEmpty
+          compact
+          icon="i-lucide-target"
+          title="Set your targets"
+          description="So the rings have something to fill."
+        >
+          <UButton
+            label="Set"
+            size="sm"
+            variant="soft"
+            @click="emit('targets')"
+          />
+        </ShellEmpty>
+      </div>
+    </template>
+  </ShellCard>
 </template>
