@@ -8,6 +8,12 @@ export interface ApiOptions {
   body?: Record<string, unknown> | FormData | undefined
   query?: Record<string, unknown>
   headers?: Record<string, string>
+  /**
+   * 'blob' for every file download. Left to itself ofetch reads the body by
+   * its content type, so a CSV (text/csv) came back as a string and the
+   * download broke — while a PDF, read as a blob, worked.
+   */
+  responseType?: 'blob' | 'json' | 'text'
 }
 
 /**
@@ -46,6 +52,7 @@ export function useApi() {
         method: options.method,
         body: options.body,
         query: options.query,
+        responseType: options.responseType,
         headers: {
           ...options.headers,
           ...(accessToken.value ? { Authorization: `Bearer ${accessToken.value}` } : {})
