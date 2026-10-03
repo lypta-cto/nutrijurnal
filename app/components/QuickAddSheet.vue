@@ -780,7 +780,7 @@ const description = computed(() => {
             <ShellEmpty
               v-else-if="!listsLoading && !favourites.length && !recent.length"
               icon="i-lucide-search"
-              title="Your usual foods land here"
+              title="No recent foods yet"
               description="Search for a food to start. What you eat often shows up here, ready to add again in one tap."
             />
           </template>

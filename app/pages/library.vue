@@ -37,7 +37,7 @@ function fail(error: unknown) {
 
 const recipes = ref<Recipe[]>([])
 const recipesLoading = ref(false)
-/** The shelf could not be read — said as such, never as "your cookbook starts here" */
+/** The shelf could not be read — said as such, never as "no recipes yet" */
 const recipesFailed = ref(false)
 const recipeQuery = ref('')
 // Each fetch is numbered: typing on, an older answer must not land over a newer one
@@ -338,7 +338,7 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
           <ShellEmpty
             v-else
             icon="i-lucide-chef-hat"
-            title="Your cookbook starts here"
+            title="No recipes yet"
             description="A name is enough — or paste a dish with its numbers, and it can go on any day."
           >
             <UButton

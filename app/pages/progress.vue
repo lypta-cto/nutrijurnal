@@ -122,7 +122,7 @@ const streakHint = computed(() => {
   if (streak.current && !streak.logged_today) {
     return 'Log today to keep it going'
   }
-  return streak.longest > streak.current ? `Best: ${streak.longest} days` : streak.current ? 'Your best yet' : 'Log a meal to start one'
+  return streak.longest > streak.current ? `Best: ${streak.longest} days` : streak.current ? 'Your longest' : 'Log a meal to start one'
 })
 
 const weightChange = computed(() => data.value?.weight.change ?? null)
@@ -233,7 +233,7 @@ const rows = computed(() => {
           icon="i-lucide-notebook-pen"
           :value="averages?.logged_days ?? 0"
           :unit="`of ${averages?.days ?? span}`"
-          :hint="averages?.logged_days === (averages?.days ?? span) ? 'every single one' : 'in this period'"
+          :hint="averages?.logged_days === (averages?.days ?? span) ? 'every day' : 'in this period'"
         >
           <template #value>
             <CountUp :value="averages?.logged_days ?? 0" />

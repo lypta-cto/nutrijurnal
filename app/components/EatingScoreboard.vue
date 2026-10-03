@@ -128,7 +128,7 @@ const firstLoad = computed(() => props.loading && !props.meals)
           compact
           icon="i-lucide-target"
           title="Set your targets"
-          description="So the rings have something to fill."
+          description="The rings fill towards them."
         >
           <UButton
             label="Set"

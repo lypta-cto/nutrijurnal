@@ -38,7 +38,7 @@ describe('a Library shelf that could not be read', () => {
     await flushPromises()
 
     expect(page.text()).toContain('Your recipes didn\'t load')
-    expect(page.text()).not.toContain('Your cookbook starts here')
+    expect(page.text()).not.toContain('No recipes yet')
   })
 
   it('shows the empty cookbook only when it really is empty', async () => {
@@ -48,7 +48,7 @@ describe('a Library shelf that could not be read', () => {
     const page = await mountSuspended(LibraryPage)
     await flushPromises()
 
-    expect(page.text()).toContain('Your cookbook starts here')
+    expect(page.text()).toContain('No recipes yet')
   })
 })
 
@@ -168,7 +168,7 @@ describe('a card or a panel that could not be read', () => {
     const text = () => document.body.textContent ?? ''
 
     await vi.waitFor(() => expect(text()).toContain('Your foods didn\'t load'), { timeout: 2000 })
-    expect(text()).not.toContain('Your usual foods land here')
+    expect(text()).not.toContain('No recent foods yet')
 
     lists.down = false
     ;[...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Try again')!.click()
