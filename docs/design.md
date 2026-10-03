@@ -7,68 +7,85 @@ in `app/components/shell/`.
 
 ## Direction
 
-**A kitchen notebook in morning light.** Nutrijurnal is opened three to six times a day,
-usually with one hand, often with food nearby. It should feel like a calm, well-made
-notebook — fresh, warm, food-friendly — never like a lab report or a gym.
+**A quiet iOS app.** Nutrijurnal is opened three to six times a day, usually with one
+hand, often with food nearby. It should feel like something Apple could have shipped next
+to Health and Fitness: system type, grouped lists, one accent, glass only where something
+floats over content — and nothing on the screen that is there to decorate.
 
-- **Fresh.** One leafy green carries the brand; plenty of air; white cards on a warm
-  cream canvas.
-- **Warm.** Warm greys instead of blue-greys, a soft serif for titles, rounded shapes,
-  and nothing harsher than it needs to be — going over a target turns clay, not red.
-- **Calm.** One accent at a time. Colour always means something (a macro, a state), and
-  the same thing has the same colour on every screen. Numbers come with context.
-- **Food-friendly.** Food names (Serbian data) are shown exactly as written, in a face
-  that handles č ć š ž đ well, at a size that is read at arm's length.
+- **Native.** The system font, iOS text styles, inset grouped lists with hairlines,
+  segmented controls, sheets with a grabber, a large title that turns into a compact
+  glass bar as the page scrolls. If iOS has a convention for it, use the convention.
+- **Neutral.** True white and near-black surfaces in layered greys. Colour is rare, so
+  when it appears it means something: the accent is the one thing to tap, the macro
+  colours are the macros, clay is "over".
+- **Flat.** Hierarchy comes from grey layers, spacing and type weight — not shadows,
+  borders around everything, gradients or tinted boxes. One level of surface per region.
+- **Numbers first.** Tabular figures everywhere a number changes or lines up; the rings
+  are Apple's activity rings, simplified — no glow, no gradient.
 - **Phone first.** One column, at most 34rem, the same on a desktop. Everything a thumb
   needs sits in the lower two thirds; the "+" is always one tap away.
 
-What it is not: a dashboard, a spreadsheet, a gamified streak machine. The CTO app's
-ledger-sheet habit stays where it helps — lists keep one shared grid so numbers line up
-down a column — but here it is softer: bigger rows, more air, rings and bars before
-tables.
+**What it is not.** No illustrations or hero art, no sparkles or "magic" icons, no glow
+blobs or gradient washes, no gradient text, no serif display type, no emoji-like
+ornament, no badge or pill on every count, no cards inside cards, no heavy shadows, no
+oversized "bubbly" corners. Copy is plain and short — say what it is, not how delightful
+it is.
 
 ## Colour
 
 Every colour is a token. Pages use the semantic names (`text-primary`, `bg-protein`,
-`text-warning`, `bg-elevated`), never a raw palette step, so light and dark stay in step.
+`text-warning`, `bg-cell`), never a raw palette step, so light and dark stay in step.
 
 ### Palettes (`@theme static` in main.css)
 
-| Scale | Role | 500 | Light-mode ink |
+| Scale | Role | Light | Dark |
 | --- | --- | --- | --- |
-| `basil` | brand, success, kcal | `#3eb268` | `600` `#307e4b` (5.0:1 on white) |
-| `oat` | neutral: canvas, text, borders (warm grey) | `#706d67` | `500` (4.6:1 on canvas) |
-| `clay` | warning: over a target, attention | `#e56b29` | `600` `#c75306` (4.5:1) |
-| `rose` (Tailwind) | error, destructive | `#f43f5e` | `600` |
-| `teal` (Tailwind) | info — and water | `#14b8a6` | `700` `#0f766e` |
+| `basil` | **the accent** — actions, links, selection, success, kcal | ink/fill `600` `#1d7f43` (5.0:1 on white), ring `500` `#2fb463` | `400` `#4cd07a` |
+| `graphite` | neutral: text, separators (Apple's greys) | — | — |
+| `clay` | warning: over a target | `600` `#c75306` | `400` `#f38651` |
+| `rose` (Tailwind) | error, destructive | `600` | `400` |
+| `teal` (Tailwind) | info — and water | `700` `#0f766e` | `400` |
 
 Nuxt UI mapping (`app.config.ts`): `primary: basil`, `success: basil`, `warning: clay`,
-`error: rose`, `info: teal`, `neutral: oat`. In light mode `--ui-primary` /
-`--ui-success` / `--ui-warning` / `--ui-error` point at step 600 (`--ui-info` at 700) so
-coloured text passes AA; in dark mode at 400.
+`error: rose`, `info: teal`, `neutral: graphite`. In light mode the coloured tokens point
+one step darker than Nuxt UI's default so coloured text passes AA on white and on the
+canvas; in dark mode at 400.
 
-### Surfaces
+**One accent.** Basil is the only colour that says "tap here" — buttons, links, the
+selected tab, a switch that is on, the "+". Never a second accent for variety.
 
-| Token | Light | Dark | Used for |
+### Surfaces — iOS's layers
+
+| Token · utility | Light | Dark | Used for |
 | --- | --- | --- | --- |
-| `--app-canvas` · `bg-canvas` | `#f8f5f1` cream | `#0f0e0c` | the page, the app bar at rest |
-| `--ui-bg` · `bg-default` | `#ffffff` | `#1b1916` | cards, sheets, the tab bar |
-| `--ui-bg-elevated` · `bg-elevated` | `#f4f2ee` | `#24231f` | tracks, wells, pressed rows, segmented controls |
-| `--ui-bg-accented` · `bg-accented` | `#e9e6e0` | `#302e29` | empty bar tracks on elevated |
-| `--ui-border` · `border-default` | `#e9e6e0` | `#292724` | hairlines between rows and around cards |
+| `--app-canvas` · `bg-canvas` | `#f2f2f7` | `#000000` | the page behind grouped content (iOS grouped background) |
+| `--app-cell` · `bg-cell` | `#ffffff` | `#1c1c1e` | cards and list groups on the canvas; inside a sheet it steps to `#f2f2f7` / `#2c2c2e` by itself |
+| `--ui-bg` · `bg-default` | `#ffffff` | `#1c1c1e` | sheets, modals, popovers |
+| `--app-plain` · `bg-plain` | `#ffffff` | `#000000` | a screen without groups: sign-in, sign-up, onboarding |
+| `--ui-bg-elevated` · `bg-elevated` | grey 12 % | grey 24 % | fills: input fields, segmented track, wells, pressed rows |
+| `--ui-bg-accented` · `bg-accented` | grey 20 % | grey 32 % | a stronger fill: a switch's track, a row being pressed |
+| `--app-separator` · `bg-separator` | `rgb(60 60 67 / 29%)` | `rgb(84 84 88 / 60%)` | hairlines between rows, under bars |
+| `--ui-border` · `border-default` | `rgb(60 60 67 / 13%)` | `rgb(84 84 88 / 45%)` | the rare 1 px border Nuxt UI draws |
 
-Text: `text-highlighted` (titles, numbers that matter), `text-default` (body),
-`text-muted` (secondary, ≥ 4.5:1), `text-dimmed` (placeholders, "—", never the only
+The fills are translucent on purpose (iOS's `tertiarySystemFill`): the same field reads
+right on white, on the grey canvas and on a sheet.
+
+Text: `text-highlighted` (titles, numbers that matter — black / white), `text-default`
+(body, `#1c1c1e` / `#ebebf0`), `text-muted` (secondary, `#6e6e73` / `#98989d`, ≥ 4.5:1
+on white and on the canvas), `text-dimmed` (placeholders, chevrons, "—", never the only
 carrier of meaning).
 
 ### The diary's own colours — one per question, everywhere
 
+Kept apart from each other, but quieter than before — a step less saturated, so four of
+them on one screen don't shout.
+
 | Token | Fill (bars, rings, dots) light / dark | Ink (small text) light / dark |
 | --- | --- | --- |
-| `kcal` | basil-500 `#3eb268` / basil-400 `#65cc85` | `#307e4b` / `#65cc85` |
-| `protein` | sky `#0ea5e9` / `#38bdf8` | `#0370ab` / `#38bdf8` |
-| `carbs` | violet `#8b5cf6` / `#a78bfa` | `#7c3aed` / `#a78bfa` |
-| `fat` | amber `#f59e0b` / `#fbbf24` | `#b45309` / `#fbbf24` |
+| `kcal` | `#2fb463` / `#4cd07a` (the accent) | `#1d7f43` / `#4cd07a` |
+| `protein` | `#4a8fe7` / `#62a3f5` | `#2563c9` / `#62a3f5` |
+| `carbs` | `#8e7ce8` / `#a598f5` | `#6a55d4` / `#b1a6f7` |
+| `fat` | `#e9a23b` / `#f2b65a` | `#9c5c00` / `#f2be6b` |
 
 Utilities: `bg-protein`, `text-protein-ink`, `stroke-protein`, `bg-protein/15` (tracks),
 and the same for `kcal`, `carbs`, `fat`. Raw values for SVG or inline styles:
@@ -78,137 +95,190 @@ and the same for `kcal`, `carbs`, `fat`. Raw values for SVG or inline styles:
   turns `warning` (clay) — the same rule for kcal and for each macro.
 - A **day** is coloured by how it went: within target `kcal`, over `warning`, nothing
   written down `bg-elevated` with "—".
-- **Water** is `info` (teal: `text-info`, `bg-info/15`) — never sky, which is protein's.
-  **Weight** has no colour of its own: the number in `text-highlighted`, the change
-  in `text-muted` (a lost or gained kilo is not good or bad news to colour).
-- Never use the macro colours for anything that is not that macro (no violet buttons,
-  no sky links). Links and actions are `primary`.
+- **Water** is `info` (teal). **Weight** has no colour of its own: the number in
+  `text-highlighted`, the change in `text-muted`.
+- Macro colours appear only as small marks — a ring, a bar, a dot, a letter. Never a
+  macro colour for anything that is not that macro, and never a tinted background box.
 
 ## Type
 
-Two families, both picked up by `@nuxt/fonts` from the `font-family` tokens (no
-`nuxt.config` change needed):
+**The system font, never an embedded one.** `--font-sans` is
+`-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, "Segoe UI",
+sans-serif`: San Francisco on Apple devices, Roboto on Android, Segoe on Windows. SF is
+never shipped as a file (its licence covers Apple platforms only); `@nuxt/fonts` finds
+nothing to download. `font-rounded` (`ui-rounded`, SF Pro Rounded on Apple, the system
+face elsewhere) is for the one big number on a screen and stat values only — the way
+Fitness and Health set their numbers.
 
-- **Plus Jakarta Sans** — `font-sans`, everything by default. Friendly, open, very
-  legible at 11 px, full Latin Extended (č ć š ž đ), true tabular figures
-  (`tabular-nums` on every number that sits in a column or changes in place).
-- **Fraunces** — `font-display`, a soft "old-style" serif with warmth. Page titles, the
-  wordmark, the auth hero headline and empty-state titles only. Never for numbers,
-  never below 17 px.
+iOS's text styles, with Apple's tracking. Line heights are the iOS ones; sizes are
+`rem`, so the browser's text-size setting still scales them.
 
-| Utility | Size / line | Use |
+| Utility | Size / line · weight · tracking | iOS style · use |
 | --- | --- | --- |
-| `text-hero` | 44 / 1, −0.035em, 700 | the one big number on a screen (kcal left, average) |
-| `text-title` | 28 / 1.15, −0.02em | page title in the app bar (`font-display`) |
-| `text-headline` | 17 / 1.4 | card and section titles (`font-semibold`) |
-| `text-body` | 15 / 1.45 | row titles, food names, form text |
-| `text-sm` | 14 / 20 | supporting text, buttons |
-| `text-xs` | 12 / 16 | meta lines, pills |
-| `text-caption` | 11 / 1.35 | macro lines, tab labels, eyebrows (`uppercase tracking-[0.08em]` for eyebrows) |
-| `text-micro` | 10 / 1.3 | column heads only |
+| `text-large-title` | 34 / 41 · 700 · +0.004em | Large Title · the page title in the app bar, auth titles |
+| `text-title` | 28 / 34 · 700 · +0.007em | Title 1 · a sheet's hero number, a big heading |
+| `text-title2` | 22 / 28 · 700 · +0.01em | Title 2 · a prominent section heading |
+| `text-title3` | 20 / 25 · 600 · +0.01em | Title 3 · empty-state titles, a stat value |
+| `text-headline` | 17 / 22 · 600 · −0.022em | Headline · card titles, sheet titles, the compact bar title |
+| `text-body` | 17 / 22 · 400 · −0.022em | Body · row titles, food names, form text |
+| `text-callout` | 16 / 21 · −0.02em | Callout · descriptions under a title |
+| `text-subheadline` | 15 / 20 · −0.016em | Subheadline · secondary values, buttons, field labels |
+| `text-footnote` | 13 / 18 · −0.006em | Footnote · section headers and footers, row subtitles, meta lines |
+| `text-caption` | 12 / 16 | Caption 1 · macro lines, small labels |
+| `text-caption2` | 11 / 13 · +0.005em | Caption 2 · units under a number, column heads |
+| `text-hero` | 44 / 1.05 · 700 | the one big number on a screen (with `font-rounded`) |
 
-Inputs are 16 px on touch screens whatever their size, so iOS never zooms into a field
-(main.css, `@media (pointer: coarse)`).
+`text-micro` (10 px) is kept only for the column heads that still use it.
 
-## Space, shape, depth
+- Weights: 400 for reading, 600 for headlines and buttons, 700 for titles and big
+  numbers. Row titles are **regular**, not semibold — iOS lists are.
+- `tabular-nums` on every number that sits in a column or changes in place.
+- Section headers are `text-footnote uppercase text-muted` (the `.app-group-title`
+  helper); the eyebrow over a page title is the same at weight 600.
+- Inputs are 16 px on touch screens whatever their size, so iOS never zooms into a field
+  (main.css, `@media (pointer: coarse)`).
 
-- **Spacing** on a 4 px grid. Page gutter `px-4` (16). Card padding `p-4`; list rows
-  `px-4 py-3`. Between cards `gap-3` (12); between sections `gap-6` (24).
-- **Radii** — `--ui-radius: 0.3125rem`, so Nuxt UI's scale runs `rounded-md` 7.5 ·
-  `rounded-lg` 10 · `rounded-xl` 15 · `rounded-2xl` 20. Named radii:
-  `rounded-card` 20 (cards), `rounded-tile` 16 (tiles, wells), `rounded-control` 14
-  (buttons and inputs, md and up), `rounded-sheet` 28 (bottom sheets, modals),
-  `rounded-full` (pills, chips, the "+", avatars).
-- **Elevation** — four steps, warm-tinted shadows in light mode, none in dark mode
-  (surfaces get lighter instead, with a hairline):
-  - `shadow-card` — resting cards (with `ring-1 ring-default` / `border-default`)
-  - `shadow-raised` — the tab bar, the app bar once the page scrolls, floating buttons
-  - `shadow-overlay` — sheets, modals, menus
-  - `shadow-fab` — the "+" only: a soft brand-coloured glow
-- **Glass** — `.app-glass`: translucent canvas + blur + saturate, for chrome that floats
-  over scrolling content (app bar when scrolled, tab bar).
+## Space and shape
+
+- **Spacing** on a 4 / 8 pt grid. Page gutter `px-4` (16). Inside a group, rows are
+  `px-4`, at least 44 tall (`py-2.5` around one line, more for two). Card padding `p-4`.
+  Between groups `gap-4`–`gap-6`; a section's header sits `6` above its group and its
+  footer `6` below.
+- **Radii — small and consistent.** `--ui-radius: 0.25rem`, so Nuxt UI's scale runs
+  `rounded-md` 6 · `rounded-lg` 8 · `rounded-xl` 12. Named radii:
+  `rounded-card` 12 (groups, cards, tiles), `rounded-tile` 10 (wells, small tiles),
+  `rounded-control` 10 (buttons and inputs, md), `rounded-sheet` 14 (sheets, modals).
+  `rounded-full` only for things that are round by nature: icon-only buttons, the "+",
+  avatars, switches, chips, the tab bar capsule.
+- **Separators** are hairlines: `--app-hairline` is 0.5 px on a retina screen and 1 px
+  elsewhere, in `--app-separator`. Between rows they start where the text starts (16 px
+  in, or 52 px when the row has an icon) and run to the edge — `.app-divide` draws them.
+  Don't put a border around a group: white on the grey canvas is the edge.
+
+## Materials — glass
+
+Glass is for chrome that floats over content: the **tab bar**, the **compact nav bar**
+once the page scrolls under it, a **sheet's header and footer** when its body scrolls
+under them, **toasts** and **menus**. Nothing else — cards and lists are opaque.
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--app-material` (`bg-glass`) | `rgb(250 250 252 / 72%)` | `rgb(30 30 32 / 70%)` |
+| `--app-blur` | `blur(20px) saturate(180%)` | same |
+| `--app-glass-border` | `rgb(0 0 0 / 7%)` | `rgb(255 255 255 / 9%)` |
+
+`.app-glass` is the whole recipe (tint + `backdrop-filter`); in Nuxt UI slots it is
+`bg-glass backdrop-blur-glass backdrop-saturate-180`. **Fallbacks:** where
+`backdrop-filter` is unsupported, and under `prefers-reduced-transparency: reduce`,
+`--app-material` itself turns opaque (`#f7f7f9` / `#1c1c1e`), so every glass surface
+becomes a solid bar without a separate rule.
+
+## Elevation
+
+Almost none. Surfaces are told apart by their grey, not by shadows.
+
+- `shadow-card` — **none**. Cards and groups sit flat on the canvas.
+- `shadow-raised` — the floating tab bar only: a soft, wide, faint shadow so the glass
+  separates from what is under it.
+- `shadow-overlay` — menus, popovers, toasts, modals: one soft shadow, no more.
+- `shadow-fab` — none (kept so old classes resolve; the "+" is flat).
+
+Sheets cast no shadow; the scrim (`--app-scrim`, black 25 % / 50 %) does the work.
 
 ## Motion
 
-Quick, soft, never bouncy on data.
+Short, purposeful, spring-like; nothing moves to entertain.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `duration-120` | 120 ms | press feedback (`active:scale-[0.97]`), a page or panel leaving |
-| `duration-200` | 200 ms | colour and state changes, app bar material, rows leaving a list |
-| `duration-300` | 300 ms | anything arriving: rows, panels, a day sliding in, the tab indicator, sheets |
-| `duration-700` | 700 ms | anything filling: rings, bars, chart columns and lines, counting numbers |
-| `ease-soft` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default for all of the above: fast out, gentle landing |
-| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | small UI only: the tab pill, the "+", a glass filling |
-| `animate-rise` | 320 ms rise-and-fade | content arriving (`.app-page-in` staggers children) |
+| `duration-120` | 120 ms | press feedback, something leaving |
+| `duration-200` | 200 ms | colour and state changes, the bar's material, the compact title |
+| `duration-300` | 300 ms | something arriving: a row, a panel, a day sliding in, a sheet |
+| `duration-700` | 700 ms | something filling: rings, bars, chart columns, counting numbers |
+| `ease-soft` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default: fast out, gentle landing |
+| `ease-spring` | a damped spring (`linear()`, ~2 % overshoot; a cubic-bezier where `linear()` isn't supported) | small UI only: the tab highlight, the segmented thumb, the "+" |
+| `animate-rise` | 240 ms, 4 px rise and fade | a page's content arriving (`.app-page-in`) — once, no stagger |
 
-The named transitions live in `assets/css/motion.css`: `list` (`<TransitionGroup>`),
-`page` (between tabs), `panel` (one panel swapped for another inside a sheet, with
-`mode="out-in"`), and `.day-from-next` / `.day-from-prev` for Today's day slide.
-Loops are the only thing off the scale — the scan line sweeps `ease-in-out`, spinners
-spin — because they are not arriving anywhere.
+Presses: buttons scale to 0.98; rows don't scale, they highlight (`active:bg-accented`),
+the way iOS cells do. The named transitions live in `assets/css/motion.css`: `list`,
+`page`, `panel`, and `.day-from-next` / `.day-from-prev` for Today's day slide.
 
 Everything that moves respects `prefers-reduced-motion`: main.css and motion.css switch
-the animations and transitions off, utilities carry `motion-reduce:transition-none` or
+animations and transitions off, utilities carry `motion-reduce:transition-none` or
 `motion-safe:animate-*`, script checks `useReducedMotion()`, and bottom sheets appear
 instead of sliding (1 ms, not none — the drawer waits for its animation to end).
 Spinners keep spinning: they say "still working", which nothing else does.
 
 ## Icons
 
-Lucide (`i-lucide-*`) only, 2 px stroke as shipped. `size-5` (20) in buttons and tabs,
-`size-4` (16) inline with text, `size-6` (24) in the "+" and empty states. An icon
-without a visible word carries an `aria-label`. Diary meanings: `flame` kcal,
-`beef` protein, `wheat` carbs, `droplet` fat; `coffee` / `salad` / `utensils` /
-`apple` for breakfast / lunch / dinner / snack (the `SLOTS` list in `useEating`);
-`scan-barcode`, `mic`, `search`, `book-open` (recipes). Tabs: `notebook-pen` Today,
-`chef-hat` Library, `chart-no-axes-column` Progress, `settings` Settings.
+Lucide (`i-lucide-*`) only, 2 px stroke as shipped — the closest open set to SF Symbols.
+`size-5` (20) in buttons and rows, `size-4` (16) inline with text, `size-6` (24) in the
+tab bar and the "+". An icon is a plain glyph in `text-muted` (or the accent when it is
+the action) — never sitting on a tinted tile or a circle badge. An icon without a visible
+word carries an `aria-label`. Diary meanings: `flame` kcal, `beef` protein, `wheat` carbs,
+`droplet` fat; `coffee` / `salad` / `utensils` / `apple` for breakfast / lunch / dinner /
+snack (the `SLOTS` list in `useEating`); `scan-barcode`, `mic`, `search`, `book-open`
+(recipes). Tabs: `notebook-pen` Today, `chef-hat` Library, `chart-no-axes-column`
+Progress, `settings` Settings. **No `sparkles`, `wand`, `stars` or similar** as ornament.
 
 ## Touch, safe areas, scrolling
 
-- **44 px minimum** for anything tapped on its own: `md` buttons and inputs are 44,
-  `lg` 48, `xl` 56; tab bar items are 64 tall. `xs`/`sm` buttons (24/32) live only inside
+- **44 px minimum** for anything tapped on its own: `md` buttons and inputs are 44, `lg`
+  48, `xl` 56; tab bar items fill a 56 px bar. `xs`/`sm` buttons (28/32) live only inside
   rows that are themselves the target, or get `.app-hit` (an invisible 44 px hit area).
 - **No hover-only anything**; hover styles are a bonus for mouse users. Pressed states
   (`active:`) give the feedback a finger needs.
 - **Safe areas**: the page runs under the notch and the home indicator
   (`viewport-fit=cover`); anything pinned to an edge pads itself with
   `.app-safe-top` / `.app-safe-bottom` or `env(safe-area-inset-*)`.
-- **Scrolling** is the window's own (momentum, Safari's collapsing bars). The app bar is
+- **Scrolling** is the window's own (momentum, Safari's collapsing bars). The nav bar is
   sticky, the tab bar fixed; `scroll-padding` keeps a focused field clear of both.
   Horizontal strips use `.app-scroll-x` (snap, no scrollbar, edge fade).
 - `--app-tabbar-space` is how much room the tab bar takes at the bottom — use it for
   anything that must clear it (a sticky action bar, a toast offset).
-- **Layers**: app bar `z-30`, tab bar `z-40`, everything that floats — sheets, modals,
-  slideovers, menus, popovers, tooltips — `z-50` (set once in `app.config.ts`), the
-  confirm dialog `z-[60]`, toasts `z-[100]`. Don't invent other z-indexes.
+- **Layers**: nav bar and its toolbar `z-30`, tab bar `z-40`, everything that floats —
+  sheets, modals, slideovers, menus, popovers, tooltips — `z-50` (set once in
+  `app.config.ts`), the confirm dialog `z-[60]`, toasts `z-[100]`. Don't invent others.
 
 ## The shell
 
 ```
-┌──────────────────────────────┐  ShellAppBar — sticky, transparent until the
-│ SATURDAY 3 OCTOBER        ⋯  │  page scrolls, then glass + hairline.
-│ Today                        │  eyebrow (date) · display title · actions
-│ [toolbar: segmented, search] │  #toolbar stays pinned with it
+┌──────────────────────────────┐
+│ ‹                     ⋯   ⊕ │  ShellAppBar — the 44 px bar: back, actions.
+│ SATURDAY 3 OCTOBER           │  Transparent at rest; glass once the page scrolls.
+│ Today                        │  Large title (34 bold) under it, scrolling away…
+│ [ Week | 30 days | 90 days ] │  #toolbar sticks under the bar once the title is gone
 ├──────────────────────────────┤
-│  cards …                     │  AppPage body: px-4, gap-3, .app-page-in
-│                              │
-│ ╭──────────────────────────╮ │  ShellBottomTabBar — floating glass bar,
-│ │ Today Library (+) Prog Set│ │  raised "+" → useQuickAdd().open()
+│ ╭──────────────────────────╮ │
+│ │ row                    › │ │  grouped lists on the grey canvas
+│ │ row                    › │ │
 │ ╰──────────────────────────╯ │
+│  ╭────────────────────────╮  │  ShellBottomTabBar — a floating glass capsule,
+│  │ Today Library ⊕ Prog Set│  │  the "+" a flat accent circle in the middle
+│  ╰────────────────────────╯  │
 └──────────────────────────────┘
+          ↓ scrolled
+┌──────────────────────────────┐
+│ ‹          Today       ⋯   ⊕ │  compact glass bar: the title in 17 semibold,
+│ [ Week | 30 days | 90 days ] │  centred; a hairline under the bar (or the toolbar)
 ```
 
-- `layouts/default.vue` — canvas, a soft light wash at the top, the 34rem column padded
-  for the tab bar, then `ShellBottomTabBar`, `QuickAddSheet`, `ConfirmDialog` (each
-  mounted once).
-- `ShellBottomTabBar` — Today · Library · [+] · Progress · Settings. The active tab gets
-  a pill behind its icon and a bolder label; the "+" is a 56 px brand circle raised out
-  of the bar. While a text field has focus on a touch screen the bar slides away, so it
-  never sits on top of the keyboard.
-- `layouts/auth.vue` — `/login`, `/register`, `/onboarding`, `/auth/callback`: logo and
-  theme toggle on top, the hero illustration (`ShellHeroArt`) in a warm wash, and the form
-  on a sheet that rises over it. Onboarding gets the compact version (no illustration).
+- `layouts/default.vue` — the grey canvas, the 34rem column padded for the tab bar, then
+  `ShellBottomTabBar`, `QuickAddSheet`, `ConfirmDialog` (each mounted once). No wash.
+- `ShellAppBar` — iOS's large-title navigation bar. The 44 px bar holds the back
+  chevron, the compact title (hidden until the large title has scrolled under it) and the
+  actions. With nothing in the bar the large title tucks up under it, so a screen without
+  bar items doesn't start with an empty strip. `compactTitle` names the compact bar when
+  `#heading` replaces the large title (Today: the day's name).
+- `ShellBottomTabBar` — Today · Library · [+] · Progress · Settings, a glass capsule
+  floating over the home indicator. The selected tab is the accent, with a faint grey
+  capsule behind it; the others are `text-muted`. The "+" is a 44 px flat accent circle
+  in line with the tabs — no glow, no ring, not raised. While a text field has focus on a
+  touch screen the bar slides away, so it never sits on top of the keyboard.
+- `layouts/auth.vue` — `/login`, `/register`, `/onboarding`, `/auth/callback`: a plain
+  white (black) screen, the wordmark top left and the theme toggle top right, the form in
+  a narrow column with plenty of air, the tagline as a footnote at the bottom. No
+  illustration.
 
 ## Building blocks (`components/shell/`)
 
@@ -216,100 +286,98 @@ Each file documents its props at the top. Auto-imported with the `Shell` prefix.
 
 | Component | What it is | Main props / slots |
 | --- | --- | --- |
-| `ShellAppBar` | the top app bar | `title`, `eyebrow?` (defaults to today's date; `false` hides it), `back?`; `#heading`, `#actions`, `#toolbar` |
-| `ShellBottomTabBar` | the tab bar with the "+" | — |
-| `ShellCard` | the card every screen is built of; flush rows or padded body, optional header (alone, it is a one-line card) | `title?`, `icon?`, `iconClass?`, `count?`, `hint?`, `flush?`, `tone?: 'default' \| 'brand' \| 'muted'`, `to?`, `loading?`, `isEmpty?`, `empty?`; `#actions`, `#header`, `#empty`, `#footer` |
-| `ShellSection` | a titled group of cards | `title?`, `description?`; `#actions` |
-| `ShellListRow` | a tappable row: icon, title, subtitle, trailing value, chevron | `title`, `subtitle?`, `icon?`, `tone?` (`error` reddens the title too), `to?`, `plain?`, `chevron?`; `#leading`, `#subtitle`, `#trailing` |
-| `ShellMacroRing` | concentric progress rings (kcal outside, macros in) | `tracks: { key, value, goal }[]` (type `RingTrack`), `size?` (208), `thickness?` (10 for several rings, 16 for one), `label?`; default slot = the centre — `text-[2rem]` inside four rings, `text-hero` inside one |
-| `ShellMacroBar` | one macro (or kcal) against its target: label, `used/goal`, bar | `macro`, `value`, `goal`, `label?`, `unit?`, `compact?` |
-| `ShellMacroLine` | "P 24 · C 30 · F 8 · 320 kcal" in the macro inks | `macros`, `kcal?: boolean`, `size?` |
-| `ShellStatTile` | one number with its label and context | `label`, `value`, `unit?`, `hint?`, `macro?`, `icon?`, `tone?`, `size?`; `#value` (a `CountUp`) |
-| `ShellSegmented` | segmented control with a sliding thumb | `v-model`, `options: { value, label, icon? }[]`, `size?` |
-| `ShellEmpty` | an empty state that invites the next step | `icon?`, `title`, `description?`, `compact?`; default slot = actions |
-| `ShellSkeleton` | shimmering placeholders shaped like the content | `variant: 'rows' \| 'card' \| 'ring' \| 'tiles' \| 'text'`, `count?` |
-| `ShellLogoMark` / `ShellLogo` | the mark (two-tone, follows the theme) / mark + wordmark | `ShellLogo`: `size?`, `to?` |
-| `ShellHeroArt` | the auth illustration (a bowl of good things) | — |
+| `ShellAppBar` | large title + compact glass bar | `title`, `eyebrow?` (today's date by default; `''` hides it), `back?`, `compactTitle?`; `#heading`, `#actions`, `#toolbar` |
+| `ShellBottomTabBar` | the glass tab bar with the "+" | — |
+| `ShellList` | **an inset grouped list** (iOS Settings): rows on one rounded surface, inset hairlines between them, a small header above and a footnote under it | `title?`, `description?` (the footnote), `plain?` (edge to edge, no surface — a list filling a sheet); `#actions` (right of the header), default = `ShellListRow`s |
+| `ShellListRow` | one row of a list: glyph, title, subtitle, trailing value or control, chevron | `title`, `subtitle?`, `icon?`, `tone?` (the glyph's colour; `error` reddens the title), `to?`, `plain?`, `chevron?`, `disabled?`; `#leading`, `#subtitle`, `#trailing` |
+| `ShellSection` | a titled group of anything — cards, a form, a chart | `title?`, `description?` (a footnote under the content), `prominent?` (a bold Title 2 heading instead of the small caps one); `#actions` |
+| `ShellCard` | a surface for content that isn't a plain list: the day's rings, a chart, a form, a meal slot with its rows | `title?`, `icon?`, `iconClass?`, `count?` (plain muted number, no pill), `hint?`, `flush?` (rows edge to edge with inset hairlines), `tone?: 'default' \| 'muted'` (`brand` is accepted and looks like `default`), `to?`, `loading?`, `isEmpty?`, `empty?`; `#actions`, `#header`, `#empty`, `#footer` |
+| `ShellMacroRing` | concentric activity rings (kcal outside, macros in) | `tracks: { key, value, goal }[]` (type `RingTrack`), `size?` (208), `thickness?`, `label?`; default slot = the centre |
+| `ShellMacroBar` | one macro against its target: label, `used / goal`, bar | `macro`, `value`, `goal`, `label?`, `unit?`, `compact?` |
+| `ShellMacroLine` | "P 24 · C 30 · F 8 · 320 kcal" — the letters in the macro inks, the numbers muted | `macros`, `kcal?: boolean`, `size?` |
+| `ShellStatTile` | one number with its label and context, the number in `font-rounded` | `label`, `value`, `unit?`, `hint?`, `macro?`, `icon?`, `tone?: 'card' \| 'well' \| 'warning'` (`brand` looks like `card`), `size?`; `#value` |
+| `ShellSegmented` | iOS segmented control with a sliding thumb | `v-model`, `options: { value, label, icon? }[]`, `label?`, `size?: 'sm' \| 'md'` |
+| `ShellEmpty` | an empty state: a glyph, a title, one sentence, the button that does it | `icon?`, `title`, `description?`, `compact?`; default slot = actions |
+| `ShellSkeleton` | placeholders shaped like the content, gently pulsing | `variant: 'rows' \| 'card' \| 'ring' \| 'tiles' \| 'text'`, `count?` |
+| `ShellLogoMark` / `ShellLogo` | the mark (one colour, follows the theme) / mark + wordmark | `ShellLogo`: `size?`, `to?` |
+
+**Which to use.** A list of things to tap or toggle — settings, menus, a list of foods
+or recipes — is a `ShellList` of `ShellListRow`s (or of the page's own rows inside it). A
+region that holds something other than rows — the rings, a chart, a form, a meal slot
+whose header carries buttons — is a `ShellCard`. Several cards under one heading are a
+`ShellSection`. Never a `ShellCard` inside a `ShellCard`, or a list group inside a card.
 
 ### Helpers in main.css
 
 | Class | What it is |
 | --- | --- |
-| `.app-field` | a native date or time `<input>` dressed as a `UInput` (44 px, `rounded-control`, inset ring, primary focus). The phone's own picker is the best one there is; only the box is ours |
-| `.app-chip` | one choice among a few, or a shortcut — an amount, a period, a weekday. Chosen when `aria-pressed` / `aria-checked` is true, so the look can't disagree with a screen reader |
+| `.app-glass` | the glass material (tint + blur + saturate, opaque fallback) |
+| `.app-card` | a cell surface: `bg-cell`, `rounded-card`, no border, no shadow |
+| `.app-divide` | inset hairlines between a container's children (`--app-divide-inset`, 16 px by default; a `ShellListRow` with an icon sets 52 px) |
+| `.app-rule-t` / `.app-rule-b` | one inset hairline above / below an element |
+| `.app-group-title` | a grouped section header: footnote, uppercase, muted |
+| `.app-field` | a native date or time `<input>` dressed as a `UInput` (44 px, grey fill, accent focus ring) |
+| `.app-chip` | one choice among a few, or a shortcut — an amount, a period, a weekday: a grey capsule, the chosen one filled with the accent (`aria-pressed` / `aria-checked`) |
 | `.app-hit` | a small control keeps its looks but gets a 44 px hit area |
-| `.app-press` | press feedback for anything tappable that isn't a `UButton` |
-| `.app-eyebrow` | the small uppercase line over a title, and the label over a group in a sheet |
-
-On touch screens every field's text is at least 16 px (iOS zooms into anything
-smaller); the rule only ever raises a size, so a field set large on purpose — the amount,
-the quick kcal — keeps its own.
+| `.app-press` | press feedback (0.98) for anything tappable that isn't a `UButton` or a row |
+| `.app-eyebrow` | the small uppercase line over a page title |
+| `.app-sheet` | set on every drawer's content (app.config): groups inside it step one layer up |
 
 ## Patterns
 
-The same few shapes, everywhere:
-
-- **A list row** — the name first, and it may wrap to two lines (`line-clamp-2`): a
-  food's or a meal's name is worth reading, and Serbian names run long. Under it, one
-  quiet line — a `ShellMacroLine`, the brand, the minutes. On the right, the kcal in one
-  fixed column (`w-14` or `w-16`, `tabular-nums`, the unit in a caption under it) so the
-  numbers line up down the list. Then at most one control (a star, a "+", ⋮) or a
-  chevron. Rows are at least 56 px tall.
-- **An editable item** (an open meal, the plate in the meal form, a recipe's
-  ingredients) is two lines: the name across the full width with ✕ (and "optional") at
-  the end, then amount · unit · what it comes to, right-aligned. Never four inputs on
-  one line at phone width.
-- **A list inside a sheet** is a group: `rounded-tile border border-default` with
-  hairlines between rows. A border, not a ring — rings draw outside the box and the
-  sheet's scrolling body clips them.
-- **A sheet** opens with its title and one line of description. A panel inside it
-  (amount, quick kcal, copy, scan) starts with a back arrow and its own headline. The
-  footer is a quiet `Cancel` (ghost, lg) and the one thing the sheet is for, filling the
-  rest (lg, `flex-1`). Destructive actions are an icon on the left of the footer, never
-  the big button.
+- **A list row** — the name first, regular weight, and it may wrap to two lines
+  (`line-clamp-2`): Serbian food names run long. Under it, one quiet line — a
+  `ShellMacroLine`, the brand, the minutes. On the right, the kcal in one fixed column
+  (`w-14` or `w-16`, `tabular-nums`, the unit in `text-caption2` under it) so the numbers
+  line up down the list. Then at most one control or a chevron. At least 44 px tall.
+- **An editable item** is two lines: the name across the full width with ✕ at the end,
+  then amount · unit · what it comes to, right-aligned. Never four inputs on one line.
+- **A list inside a sheet** is a `ShellList` (it steps to the sheet's group colour by
+  itself), or `plain` when it fills the sheet. No bordered boxes.
+- **A sheet** has a grabber, a title (headline) and one line of description in a header
+  that turns to glass when the body scrolls under it. The footer is a quiet `Cancel`
+  (ghost, lg) and the one thing the sheet is for, filling the rest (lg, `flex-1`).
+  Destructive actions are an icon on the left of the footer, never the big button.
 - **A choice of two to four** in place is `ShellSegmented`; more, or labels that won't
-  fit a quarter of the width, are `.app-chip`s that wrap; a few with an explanation each
-  are tiles (`rounded-tile border`, the chosen one `border-primary/50 bg-primary/8` with
-  its icon filled in the brand).
-- **Empty** is a `ShellEmpty`: the full one when a whole card or screen has nothing,
-  `compact` inside a card or a sheet. An empty meal slot is just its card's header —
-  "Breakfast · Nothing yet" with Repeat and "+".
-- **Loading** keeps the layout: `ShellSkeleton` shaped like what's coming (rows in a
-  list card, the ring on Today, tiles on Progress). A refetch dims what is there rather
-  than flashing skeletons.
+  fit, are `.app-chip`s that wrap; a few with an explanation each are a `ShellList` with
+  a checkmark on the chosen row.
+- **Empty** is a `ShellEmpty`: the full one when a whole screen or group has nothing,
+  `compact` inside a group or a sheet. An empty meal slot is just its card's header.
+- **Loading** keeps the layout: `ShellSkeleton` shaped like what's coming. A refetch dims
+  what is there rather than flashing skeletons.
 - **Errors** say what happened and offer the way out: a toast for an action that failed
   (with the API's own words), a `ShellEmpty` with "Try again" for a screen that didn't
   load, the error page in the app's own look.
-- **Toasts** come in at the top, under the notch; anything undoable carries Undo and a
-  faint timer line.
-- **Dark mode**: a thumb or a chosen tab on an `bg-elevated` track is `bg-accented`, not
-  `bg-default` — in dark mode surfaces come forward by getting lighter.
+- **Toasts** are glass banners at the top, under the notch; anything undoable carries
+  Undo and a faint timer line.
+- **Counts and states** are plain text (`text-muted tabular-nums`), not pills. A badge is
+  for the rare state that must stand out (a demo account), never for a number.
+- **Dark mode** is its own design, not an inversion: black canvas, `#1c1c1e` groups,
+  `#2c2c2e` groups in sheets, lighter accent and inks; the segmented thumb is `#636366`.
 
 ## Screens
 
-- **Today** — the app bar names the day ("Today", "Yesterday", a weekday) over the full
-  date, and tapping the name opens the date picker. Under it the week: seven small rings
-  against the kcal target, chevrons either side, the chosen day raised, today in the
-  brand, days to come disabled. Then the day's card (`tone="brand"`): four rings with
-  the kcal left (or over, in clay) counting in the middle, eaten and target either side,
-  a bar per macro under it. One card per slot, each meal a `SwipeRow`; water, weight,
-  the install offer.
-- **Library** — a segmented Recipes / Foods with the search field pinned under it in
-  the app bar (and a "Mine" chip for foods), so a long pantry keeps its search in
-  reach. One flush card per shelf.
-- **Progress** — Week / 30 / 90 days in the bar, the period as the eyebrow; four stat
-  tiles; one card per chart; the day-by-day twin with a bar per day against the target.
-- **Settings** — the profile first (avatar with a camera badge, name), then titled
-  `ShellSection`s of shell cards: daily targets, water, reminders, appearance, your
-  data, account. Actions that go somewhere are `ShellListRow`s; delete is the one red row.
-- **Sign-in, sign-up, onboarding** — the auth layout's sheet; display titles from the
-  theme; the calculator moves on step dots and ends on the day's kcal at hero size.
+The screens are restyled onto these blocks in their own pass; until then they inherit
+the tokens. Where they are headed:
+
+- **Today** — the large title names the day ("Today", "Yesterday", a weekday) under the
+  full date, and tapping it opens the date picker; the compact bar says the same. The
+  week strip under it, the day's rings in a plain card (kcal left counting in the middle
+  in `font-rounded`), then one card per meal slot with its rows, water, weight.
+- **Library** — Recipes / Foods as a segmented control and the search field in the
+  toolbar, pinned under the compact bar; one grouped list per shelf.
+- **Progress** — Week / 30 / 90 days in the toolbar; stat tiles; one card per chart.
+- **Settings** — the profile first, then `ShellList`s: daily targets, water, reminders,
+  appearance, your data, account; descriptions as section footnotes; delete account is
+  the one red row.
+- **Sign-in, sign-up, onboarding** — the auth layout: a large title, grey fields, one
+  accent button, the demo offered as a plain secondary button.
 
 ## The mark and the icons
 
 The mark is the day's ring — three quarters closed — with a leaf growing where the day
-starts: the same ring Today fills, and, read small, a fruit with a leaf. Basil on light,
-light basil on dark, cream on the basil tile.
+starts: the same ring Today fills, and, read small, a fruit with a leaf. One colour:
+the accent on light, the light accent on dark, white on the accent tile. No gradient.
 
 `scripts/make-icons.py` holds the geometry and writes `public/logo.svg`,
 `public/favicon.svg` and `public/icons/` (`icon-192.png`, `icon-512.png` rounded tiles;
@@ -322,16 +390,17 @@ light basil on dark, cream on the basil tile.
 
 `components/shell/LogoMark.vue` carries the same paths for use inside the app.
 
-PWA colours for the manifest and `<meta name="theme-color">`: `theme_color` /
-`background_color` `#f8f5f1` (light canvas); dark `#0f0e0c`.
+PWA colours for the manifest and `<meta name="theme-color">`: `#f2f2f7` (the light
+canvas); dark `#000000`.
 
 ## Rules of thumb
 
-- One accent per screen region; colour must answer a question.
+- One accent. Colour must answer a question; if it doesn't, it's grey.
 - Numbers: `tabular-nums`, thin-space thousands (`formatKcal`), the unit smaller and
-  muted after the number.
-- Every number has context — "of 2 300", "left", "a day on average".
+  muted after the number. Every number has context — "of 2 300", "left".
+- Hierarchy by type weight and grey layers, not by boxes, borders or shadows.
+- One surface per region: inside a card, use hairlines and `bg-elevated` wells.
 - Empty is an invitation: say what to do next and offer the button that does it.
-- Cards, not boxes in boxes: one level of card per region; inside a card use hairlines
-  and `bg-elevated` wells.
 - No `sm:`/`md:` breakpoints inside the column; no hover-only actions.
+- If it would look at home in a template gallery — a gradient, a glow, a sparkle, a
+  cute line of copy — it doesn't belong here.
