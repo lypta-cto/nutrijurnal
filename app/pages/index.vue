@@ -1054,10 +1054,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
     </UDrawer>
 
     <!-- The diary for a period, as a file -->
-    <ExportSheet
-      v-model:open="exportOpen"
-      :day="day"
-    />
+    <ExportSheet v-model:open="exportOpen" />
 
     <MealForm
       v-model:open="formOpen"

@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { dayShort, shiftDay } from '~/composables/useEating'
+import type { ExportPreset } from '~/composables/useEating'
+import { dayShort, presetRange } from '~/composables/useEating'
 
 /**
  * The diary for a period, as a file: a PDF to print (a doctor, a coach) or
- * a CSV for a spreadsheet. Presets around the day on screen, or two dates
- * picked by hand — checked here before the API would refuse them.
+ * a CSV for a spreadsheet. Presets named after the calendar — today, this
+ * week, last week, this month — or two dates picked by hand, checked here
+ * before the API would refuse them.
  */
-const props = defineProps<{
-  /** The day the presets are counted back from */
-  day: string
-}>()
 
 const open = defineModel<boolean>('open', { default: false })
 useSheetHistory(open)
@@ -23,14 +21,13 @@ function fail(error: unknown) {
 }
 
 const exporting = ref(false)
-type Period = 'day' | 'week' | 'month' | '30d' | 'custom'
-type Preset = Exclude<Period, 'custom'>
+type Period = ExportPreset | 'custom'
 
-const PERIODS: { value: Preset, label: string }[] = [
-  { value: 'day', label: 'This day' },
-  { value: 'week', label: 'Last 7 days' },
-  { value: 'month', label: 'This month' },
-  { value: '30d', label: 'Last 30 days' }
+const PERIODS: { value: ExportPreset, label: string }[] = [
+  { value: 'today', label: 'Today' },
+  { value: 'this-week', label: 'This week' },
+  { value: 'last-week', label: 'Last week' },
+  { value: 'this-month', label: 'This month' }
 ]
 
 /** What the backend will hand over in one file; past this it answers 400 */
@@ -39,27 +36,15 @@ const MAX_EXPORT_DAYS = 400
 /** The presets, then two dates of one's own */
 const CHOICES: { value: Period, label: string }[] = [...PERIODS, { value: 'custom', label: 'Pick the dates' }]
 
-const period = ref<Period>('week')
+const today = useToday()
+const period = ref<Period>('this-week')
 const customFrom = ref('')
 const customTo = ref('')
-
-function presetRange(which: Preset, to: string): { from: string, to: string } {
-  if (which === 'day') {
-    return { from: to, to }
-  }
-  if (which === 'week') {
-    return { from: shiftDay(to, -6), to }
-  }
-  if (which === '30d') {
-    return { from: shiftDay(to, -29), to }
-  }
-  return { from: `${to.slice(0, 7)}-01`, to }
-}
 
 const range = computed<{ from: string, to: string }>(() =>
   period.value === 'custom'
     ? { from: customFrom.value, to: customTo.value }
-    : presetRange(period.value, props.day))
+    : presetRange(period.value, today.value))
 
 // Custom opens on whatever period was showing, so the dates are already sane
 // and only the edge that matters needs moving. Typed dates are left alone.
@@ -67,7 +52,7 @@ watch(period, (now, before) => {
   if (now !== 'custom' || before === 'custom' || (customFrom.value && customTo.value)) {
     return
   }
-  const seed = presetRange(before, props.day)
+  const seed = presetRange(before, today.value)
   customFrom.value = customFrom.value || seed.from
   customTo.value = customTo.value || seed.to
 })

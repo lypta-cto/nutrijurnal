@@ -9,7 +9,6 @@ const api = useApi()
 const { confirm } = useConfirm()
 
 const { user, displayName, logout, deleteAccount } = useAuth()
-const today = useToday()
 const { settings, loadSettings, saveSettings } = useEating()
 const { putWeight } = useBody()
 
@@ -199,6 +198,30 @@ async function exportEverything() {
     fail(error)
   } finally {
     exportingAll.value = false
+  }
+}
+
+/** A backup or a diary CSV brought in — from here, or from the CTO app's export */
+const { importFile } = useImportDiary()
+const importInput = ref<HTMLInputElement | null>(null)
+const importing = ref(false)
+
+async function importChosen(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Cleared at once, so choosing the same file again still fires
+  input.value = ''
+  if (!file) {
+    return
+  }
+  importing.value = true
+  try {
+    const result = await importFile(file)
+    toast.add({ title: importSummary(result), icon: 'i-lucide-circle-check', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    importing.value = false
   }
 }
 
@@ -434,12 +457,34 @@ async function confirmDelete() {
           />
         </template>
       </ShellListRow>
+      <ShellListRow
+        icon="i-lucide-upload"
+        tone="neutral"
+        title="Import a diary"
+        subtitle="A Nutrijurnal backup (.json) or a diary export (.csv). Nothing already here is added twice."
+        :chevron="false"
+        :disabled="importing"
+        @click="importInput?.click()"
+      >
+        <template #trailing>
+          <UIcon
+            :name="importing ? 'i-lucide-loader-circle' : 'i-lucide-upload'"
+            class="size-5 text-muted"
+            :class="importing && 'animate-spin'"
+          />
+        </template>
+      </ShellListRow>
     </ShellList>
+    <input
+      ref="importInput"
+      type="file"
+      accept=".json,.csv,application/json,text/csv"
+      class="hidden"
+      aria-label="Choose a backup or diary export to import"
+      @change="importChosen"
+    >
 
-    <ExportSheet
-      v-model:open="exportOpen"
-      :day="today"
-    />
+    <ExportSheet v-model:open="exportOpen" />
 
     <!-- Account -->
     <ShellList title="Account">

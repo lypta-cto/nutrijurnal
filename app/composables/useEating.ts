@@ -538,6 +538,28 @@ export function shiftDay(day: string, delta: number): string {
   return localIsoDay(date)
 }
 
+export type ExportPreset = 'today' | 'this-week' | 'last-week' | 'this-month'
+
+/**
+ * The days an export preset covers, counted from today. A week starts on
+ * Monday, the way a Serbian calendar hangs; "this week" and "this month"
+ * stop at today rather than at days that have not come.
+ */
+export function presetRange(which: ExportPreset, today: string): { from: string, to: string } {
+  const sinceMonday = (new Date(`${today}T12:00:00`).getDay() + 6) % 7
+  const monday = shiftDay(today, -sinceMonday)
+  if (which === 'today') {
+    return { from: today, to: today }
+  }
+  if (which === 'this-week') {
+    return { from: monday, to: today }
+  }
+  if (which === 'last-week') {
+    return { from: shiftDay(monday, -7), to: shiftDay(monday, -1) }
+  }
+  return { from: `${today.slice(0, 7)}-01`, to: today }
+}
+
 /** "Today", "Yesterday", "Fri 19 Sep". A computed passes `useToday()`'s
  *  value, so the label moves on at midnight with everything else. */
 export function dayLabel(day: string, today = localIsoDay()): string {
@@ -825,7 +847,7 @@ export function useEating() {
    *  so it cannot be an <audio src> — it arrives as a blob and is played from
    *  an object URL. */
   async function loadVoice(mealId: string) {
-    return api.get<Blob>(`/eating/meals/${mealId}/voice`)
+    return api.get<Blob>(`/eating/meals/${mealId}/voice`, { responseType: 'blob' })
   }
 
   /** Once it is written down properly, the recording has done its job */
@@ -919,7 +941,7 @@ export function useEating() {
   // --- Export -----------------------------------------------------------------
 
   async function exportFile(from: string, to: string, format: 'pdf' | 'csv' = 'pdf'): Promise<Blob> {
-    return api.request<Blob>('/eating/export', { query: { from, to, format } })
+    return api.request<Blob>('/eating/export', { query: { from, to, format }, responseType: 'blob' })
   }
 
   return {
