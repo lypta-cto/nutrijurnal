@@ -4,6 +4,21 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Redesign, part 2 — every screen.** Today, the "+" sheet and its panels, every form
+  sheet, Library, Progress, Settings, sign-in and onboarding are restyled onto the new
+  system: grouped lists with small-caps headers instead of bordered boxes and stacked
+  cards, regular-weight row titles, counts as plain words, no tinted tiles, washes,
+  sparkles, wands, gradient buttons, glows or badges. Settings is iOS Settings (the
+  profile first, values edited inline with the new `ShellFieldRow`, Save only once
+  something changed); the five ways into a meal and the slot are segmented controls;
+  the export period, activity and goal are checkmark lists; the ways into the "+"
+  sheet are a row of equal accent buttons; the mic is one flat circle and recording a
+  red dot and a running time; swipe actions are solid. Numbers that matter are SF
+  Rounded. Charts: hairline gridlines, a glass callout, and water columns on a lighter
+  `--app-water` fill. Alerts are grey notes with only the glyph in colour; field text
+  keeps its phone size at every width; groups on the plain sign-in screens step to grey
+  (`.app-on-plain`). The "+" sheet's container now scrolls (glass header), so dragging
+  down from the header while its list is scrolled scrolls rather than closes.
 - **Redesign, part 1 — the system and the shell.** `docs/design.md` is now "a quiet iOS
   app": the system font (SF on Apple devices, never embedded), iOS text styles with
   Apple's tracking, Apple's grey layers (`#f2f2f7` canvas, white cells; black and
