@@ -547,18 +547,19 @@ export function dayShort(day: string): string {
   return new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-/** The three bars under the kcal headline — one colour per macro, everywhere.
- *  `fill` is the same colour as a CSS value, for SVG and inline styles: the
- *  design tokens, with the palette step as the fallback. */
+/** The three macros, in their order everywhere — one colour each, from the
+ *  design's tokens (docs/design.md → The diary's own colours): `bar` and
+ *  `dot` fill, `text` is the ink that reads as small text, `fill` the same
+ *  colour as a CSS value for SVG and inline styles. */
 export const MACRO_BARS: { key: 'protein' | 'carbs' | 'fat', label: string, letter: string, bar: string, text: string, dot: string, fill: string }[] = [
-  { key: 'protein', label: 'Protein', letter: 'P', bar: 'bg-sky-500', text: 'text-sky-500', dot: 'bg-sky-500', fill: 'var(--app-protein, #0ea5e9)' },
-  { key: 'carbs', label: 'Carbs', letter: 'C', bar: 'bg-violet-500', text: 'text-violet-500', dot: 'bg-violet-500', fill: 'var(--app-carbs, #8b5cf6)' },
-  { key: 'fat', label: 'Fat', letter: 'F', bar: 'bg-amber-500', text: 'text-amber-500', dot: 'bg-amber-500', fill: 'var(--app-fat, #f59e0b)' }
+  { key: 'protein', label: 'Protein', letter: 'P', bar: 'bg-protein', text: 'text-protein-ink', dot: 'bg-protein', fill: 'var(--app-protein)' },
+  { key: 'carbs', label: 'Carbs', letter: 'C', bar: 'bg-carbs', text: 'text-carbs-ink', dot: 'bg-carbs', fill: 'var(--app-carbs)' },
+  { key: 'fat', label: 'Fat', letter: 'F', bar: 'bg-fat', text: 'text-fat-ink', dot: 'bg-fat', fill: 'var(--app-fat)' }
 ]
 
-/** Chart colours for what is not a macro — tokens with a fallback, like `fill` above */
+/** Chart colours for what is not a macro — water is teal (info), weight has none */
 export const CHART_COLORS = {
-  kcal: 'var(--app-kcal, var(--ui-primary))',
+  kcal: 'var(--app-kcal)',
   water: 'var(--ui-info)',
   weight: 'var(--ui-text-highlighted)'
 }
@@ -566,17 +567,22 @@ export const CHART_COLORS = {
 /**
  * The grids the diary is read on — phone-width, always: the app is one
  * column even on a desktop, so the macros sit on a line under each name
- * rather than in columns of their own.
+ * rather than in columns of their own, and the kcal keep one column down
+ * the whole list.
  *
  * Written out in full on purpose: Tailwind reads these class names out of the
  * source, so an arbitrary value stitched together at runtime never exists.
  */
 
-/** time · meal · state pill · ⋮ · chevron */
-export const MEAL_COLUMNS = 'grid items-center gap-x-2 grid-cols-[3.25rem_minmax(0,1fr)_4.25rem_1.75rem_1.75rem]'
+/** time · meal (name over its macros) · kcal, or the "Fill in" pill · ⋮ */
+export const MEAL_COLUMNS = 'grid items-center gap-x-3 grid-cols-[2.75rem_minmax(0,1fr)_4rem_2rem]'
 
-/** amount · unit · name · ✕ */
-export const ITEM_COLUMNS = 'grid items-center gap-x-2 grid-cols-[3.25rem_4.5rem_minmax(0,1fr)_1.75rem]'
+/**
+ * An item inside an open meal, on two lines: the name across with ✕ at the
+ * end, then amount · unit · what it comes to. The name gets the whole width
+ * a phone has, the numbers still sit in their columns.
+ */
+export const ITEM_COLUMNS = 'grid items-center gap-x-2 gap-y-1 grid-cols-[3.75rem_6rem_minmax(0,1fr)_2rem]'
 
 /**
  * The drafted-items table inside the meal form: amount, unit and name on the

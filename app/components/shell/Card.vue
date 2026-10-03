@@ -14,6 +14,8 @@ import { NuxtLink } from '#components'
  * The optional header is one line: icon · title · count pill · quiet hint, and
  * #actions on the right. `isEmpty` swaps the body for `empty` (or #empty) and
  * `loading` + `isEmpty` for a skeleton — a list card never collapses to nothing.
+ * A card with a header and no body at all (no default slot, not empty, not
+ * loading) is just that one line — an empty meal slot with its "+".
  *
  *   <ShellCard title="Breakfast" icon="i-lucide-coffee" :count="2" hint="420 kcal" flush
  *              :is-empty="!meals.length" empty="Nothing yet.">
@@ -24,6 +26,8 @@ import { NuxtLink } from '#components'
 const props = withDefaults(defineProps<{
   title?: string
   icon?: string
+  /** The icon's colour — muted, unless the card is about water (`text-info`) and the like */
+  iconClass?: string
   /** A small pill after the title */
   count?: number | string | null
   /** Quiet words after the count */
@@ -41,6 +45,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   title: undefined,
   icon: undefined,
+  iconClass: 'text-muted',
   count: null,
   hint: undefined,
   flush: false,
@@ -70,6 +75,7 @@ const TONES = {
 } as const
 
 const hasHeader = computed(() => Boolean(props.title || slots.header || slots.actions))
+const hasBody = computed(() => Boolean(slots.default || props.isEmpty))
 const hasCount = computed(() => props.count !== null && props.count !== undefined && props.count !== '')
 </script>
 
@@ -82,14 +88,15 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
   >
     <header
       v-if="hasHeader"
-      class="flex min-h-13 items-center gap-2 px-4 pt-3"
-      :class="flush ? 'pb-2.5' : ''"
+      class="flex min-h-14 items-center gap-2 px-4"
+      :class="!hasBody ? 'py-2' : flush ? 'pt-3 pb-2.5' : 'pt-3'"
     >
       <slot name="header">
         <UIcon
           v-if="icon"
           :name="icon"
-          class="size-4.5 shrink-0 text-muted"
+          class="size-4.5 shrink-0"
+          :class="iconClass"
         />
         <h2
           v-if="title"
@@ -137,7 +144,7 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
     </div>
 
     <div
-      v-else-if="flush"
+      v-else-if="flush && $slots.default"
       class="flex min-h-0 flex-1 flex-col divide-y divide-default"
       :class="hasHeader ? 'border-t border-default' : ''"
     >
@@ -145,7 +152,7 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
     </div>
 
     <div
-      v-else
+      v-else-if="$slots.default"
       class="flex min-w-0 flex-1 flex-col p-4"
       :class="hasHeader ? 'pt-2' : ''"
     >

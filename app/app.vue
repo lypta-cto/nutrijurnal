@@ -32,7 +32,8 @@ useHead({
 </script>
 
 <template>
-  <UApp :toaster="{ position: 'top-center' }">
+  <!-- Toasts come in under the notch, not behind it -->
+  <UApp :toaster="{ position: 'top-center', ui: { viewport: 'top-[max(1rem,env(safe-area-inset-top))]' } }">
     <!-- The web app manifest link, from @vite-pwa/nuxt -->
     <NuxtPwaManifest />
 
@@ -43,8 +44,10 @@ useHead({
     <div
       v-else
       class="app-canvas flex min-h-svh items-center justify-center"
+      role="status"
+      aria-label="Opening Nutrijurnal"
     >
-      <AppLogoMark class="size-10 animate-pulse text-primary" />
+      <ShellLogoMark class="size-12 motion-safe:animate-pulse" />
     </div>
   </UApp>
 </template>

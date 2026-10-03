@@ -8,7 +8,11 @@ definePageMeta({ layout: 'auth' })
 </script>
 
 <template>
-  <div class="flex min-h-[50svh] items-center justify-center">
-    <AppLogoMark class="size-10 animate-pulse text-primary" />
+  <div
+    class="flex min-h-[50svh] items-center justify-center"
+    role="status"
+    aria-label="Signing you in"
+  >
+    <ShellLogoMark class="size-12 motion-safe:animate-pulse" />
   </div>
 </template>

@@ -1,24 +1,33 @@
 <script setup lang="ts">
 /**
- * One screen of the phone shell: a header that stays put at the top (under
- * the notch, never behind it) and the page body scrolling under it.
+ * One screen of the phone shell: the app bar (ShellAppBar — transparent at
+ * rest, glass once the page scrolls under it) and the page body under it,
+ * its cards cascading in on arrival.
+ *
+ *   <AppPage title="Library" eyebrow="Your foods and recipes">
+ *     <template #actions>…</template>
+ *     <template #toolbar>…a segmented control, a search field…</template>
+ *     <ShellCard>…</ShellCard>
+ *   </AppPage>
  */
 const props = withDefaults(defineProps<{
   /** Names the browser tab, and heads the page unless `heading` replaces it */
   title: string
-  description?: string
+  /** The small line over the title; today's date when left out, '' for none */
+  eyebrow?: string | null
   /** A back arrow before the title, for screens one level down */
-  back?: boolean
+  back?: boolean | string
 }>(), {
+  eyebrow: undefined,
   back: false
 })
 
 defineSlots<{
-  /** Replaces the plain title — the diary puts its day picker here */
+  /** Replaces the eyebrow and title — the diary puts its day picker here */
   heading?: () => unknown
-  /** Icon buttons on the right of the header */
+  /** Buttons on the right of the bar */
   actions?: () => unknown
-  /** A second header row that stays pinned with it — a week strip, tabs */
+  /** A second row that stays pinned with the bar — tabs, a search field */
   toolbar?: () => unknown
   /** Page body */
   default?: () => unknown
@@ -29,51 +38,34 @@ useHead({ title: props.title })
 
 <template>
   <div class="flex flex-1 flex-col">
-    <header class="app-safe-top app-canvas sticky top-0 z-30">
-      <div class="flex min-h-14 items-center gap-2 px-4 pt-2">
-        <UButton
-          v-if="back"
-          icon="i-lucide-arrow-left"
-          color="neutral"
-          variant="ghost"
-          square
-          aria-label="Go back"
-          @click="$router.back()"
-        />
-
-        <div class="min-w-0 flex-1">
-          <slot name="heading">
-            <h1 class="truncate text-xl font-semibold text-highlighted">
-              {{ title }}
-            </h1>
-            <p
-              v-if="description"
-              class="truncate text-xs text-muted"
-            >
-              {{ description }}
-            </p>
-          </slot>
-        </div>
-
-        <div
-          v-if="$slots.actions"
-          class="flex shrink-0 items-center gap-1.5"
-        >
-          <slot name="actions" />
-        </div>
-      </div>
-
-      <div
+    <ShellAppBar
+      :title="title"
+      :eyebrow="eyebrow"
+      :back="back"
+    >
+      <template
+        v-if="$slots.heading"
+        #heading
+      >
+        <slot name="heading" />
+      </template>
+      <template
+        v-if="$slots.actions"
+        #actions
+      >
+        <slot name="actions" />
+      </template>
+      <template
         v-if="$slots.toolbar"
-        class="px-4 pt-2 pb-1"
+        #toolbar
       >
         <slot name="toolbar" />
-      </div>
-    </header>
+      </template>
+    </ShellAppBar>
 
     <main
       :key="$route.path"
-      class="app-page-in flex flex-col gap-4 px-4 pt-3 pb-6"
+      class="app-page-in flex flex-col gap-3 px-4 pt-2 pb-6"
     >
       <slot />
     </main>

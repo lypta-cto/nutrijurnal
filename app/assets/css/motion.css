@@ -1,14 +1,18 @@
 /*
- * Motion for the app's moving parts — lists, sheets, page changes. Owned by
- * the features work; the tokens it leans on (durations, easing) are the
- * design's (docs/design.md → Motion). Everything here stands still under
- * prefers-reduced-motion.
+ * Motion for the app's moving parts — lists, page changes, days. Every
+ * duration and curve is one of the design's (docs/design.md → Motion): 120 ms
+ * for a press, 200 ms for a state change or something leaving, 300 ms for
+ * something arriving, `--ease-soft` for all of it. Everything here stands
+ * still under prefers-reduced-motion.
  */
 
 /* Rows arriving and leaving a list: <TransitionGroup name="list"> */
-.list-enter-active,
+.list-enter-active {
+  transition: opacity 300ms var(--ease-soft), transform 300ms var(--ease-soft);
+}
+
 .list-leave-active {
-  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 200ms var(--ease-soft), transform 200ms var(--ease-soft);
 }
 
 .list-enter-from {
@@ -22,15 +26,7 @@
 }
 
 .list-move {
-  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .list-enter-active,
-  .list-leave-active,
-  .list-move {
-    transition: none;
-  }
+  transition: transform 300ms var(--ease-soft);
 }
 
 /*
@@ -38,7 +34,7 @@
  * rises in (AppPage's own entrance) — nuxt.config.ts → app.pageTransition.
  */
 .page-leave-active {
-  transition: opacity 110ms ease-out;
+  transition: opacity 120ms var(--ease-soft);
 }
 
 .page-leave-to {
@@ -46,7 +42,7 @@
 }
 
 .page-enter-active {
-  transition: opacity 160ms ease-out;
+  transition: opacity 200ms var(--ease-soft);
 }
 
 .page-enter-from {
@@ -55,11 +51,11 @@
 
 /* Today, swiped (or stepped) to another day: it slides in from that side */
 .day-from-next {
-  animation: day-from-next 260ms var(--ease-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: day-from-next 300ms var(--ease-soft) both;
 }
 
 .day-from-prev {
-  animation: day-from-prev 260ms var(--ease-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: day-from-prev 300ms var(--ease-soft) both;
 }
 
 @keyframes day-from-next {
@@ -86,9 +82,35 @@
   }
 }
 
+/*
+ * A panel swapped for another inside a sheet (the list for the amount, the
+ * scanner, voice): <Transition name="panel" mode="out-in">
+ */
+.panel-enter-active {
+  transition: opacity 200ms var(--ease-soft), transform 300ms var(--ease-soft);
+}
+
+.panel-leave-active {
+  transition: opacity 120ms var(--ease-soft);
+}
+
+.panel-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.panel-leave-to {
+  opacity: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .list-enter-active,
+  .list-leave-active,
+  .list-move,
   .page-leave-active,
-  .page-enter-active {
+  .page-enter-active,
+  .panel-enter-active,
+  .panel-leave-active {
     transition: none;
   }
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
  * A number that counts to its new value instead of jumping there — the kcal
- * after a meal is added, an average when the period changes. Quick and
- * eased; under reduced motion it simply shows the new value.
+ * after a meal is added, an average when the period changes. Eased and in
+ * step with the rings and bars filling (700 ms); under reduced motion it
+ * simply shows the new value.
  */
 const props = withDefaults(defineProps<{
   value: number
@@ -11,7 +12,7 @@ const props = withDefaults(defineProps<{
   duration?: number
 }>(), {
   format: (value: number) => String(Math.round(value)),
-  duration: 600
+  duration: 700
 })
 
 const reduced = useReducedMotion()

@@ -126,6 +126,9 @@
 
 :root,
 .light {
+  /* Native pickers (date, time), scrollbars and autofill follow the theme */
+  color-scheme: light;
+
   --ui-radius: 0.3125rem;
 
   /* Coloured text has to read on white: one step darker than Nuxt UI's default */
@@ -175,6 +178,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   --ui-primary: var(--ui-color-primary-400);
   --ui-success: var(--ui-color-success-400);
   --ui-warning: var(--ui-color-warning-400);
@@ -304,6 +309,57 @@
     transform: scale(0.94);
   }
 
+  /*
+   * The browser's own date and time fields, dressed as a Nuxt UI input (md):
+   * the native picker is the best one a phone has, so it stays — only the box
+   * around it is ours.
+   */
+  .app-field {
+    @apply h-11 w-full min-w-0 appearance-none rounded-control bg-default px-3.5 text-left text-sm tabular-nums text-highlighted ring ring-accented ring-inset outline-none;
+
+    transition: box-shadow 200ms var(--ease-soft);
+  }
+
+  .app-field:focus-visible {
+    @apply ring-2 ring-primary;
+  }
+
+  .app-field:disabled {
+    @apply cursor-not-allowed opacity-75;
+  }
+
+  /*
+   * A chip: one choice among a few, or a shortcut (an amount, a period, a
+   * weekday). Chosen when `aria-pressed` or `aria-checked` says so, so the
+   * look can never disagree with what a screen reader hears.
+   */
+  .app-chip {
+    @apply inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-default px-3.5 text-sm font-semibold whitespace-nowrap text-toned ring ring-default ring-inset outline-none;
+
+    transition:
+      background-color 200ms var(--ease-soft),
+      color 200ms var(--ease-soft),
+      box-shadow 200ms var(--ease-soft),
+      transform 120ms var(--ease-soft);
+  }
+
+  .app-chip:active {
+    transform: scale(0.96);
+  }
+
+  .app-chip:focus-visible {
+    @apply ring-2 ring-primary;
+  }
+
+  .app-chip[aria-pressed="true"],
+  .app-chip[aria-checked="true"] {
+    @apply bg-primary/12 text-primary ring-primary/35;
+  }
+
+  .app-chip:disabled {
+    @apply pointer-events-none opacity-50;
+  }
+
   /* Press feedback for anything tappable that isn't a Nuxt UI button */
   .app-press {
     transition: transform 120ms var(--ease-soft), background-color 150ms var(--ease-soft);
@@ -405,7 +461,9 @@
 @media (prefers-reduced-motion: reduce) {
   .app-card,
   .app-icon-btn,
-  .app-press {
+  .app-press,
+  .app-field,
+  .app-chip {
     transition: none;
   }
 
@@ -416,7 +474,8 @@
   }
 
   .app-press:active,
-  .app-icon-btn:active {
+  .app-icon-btn:active,
+  .app-chip:active {
     transform: none;
   }
 }

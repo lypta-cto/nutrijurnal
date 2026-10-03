@@ -58,13 +58,12 @@ export default defineNuxtConfig({
     }
   },
 
+  // Plus Jakarta Sans and Fraunces are found in main.css's --font-sans and
+  // --font-display and served by @nuxt/fonts; nothing to list here
   fonts: {
     defaults: {
       weights: [400, 500, 600, 700]
-    },
-    families: [
-      { name: 'Inter', provider: 'google' }
-    ]
+    }
   },
 
   // An installable app with an offline shell. The manifest's colours are the
