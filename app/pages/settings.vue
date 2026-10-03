@@ -9,6 +9,7 @@ const api = useApi()
 const { confirm } = useConfirm()
 
 const { user, displayName, logout, deleteAccount } = useAuth()
+const today = useToday()
 const { settings, loadSettings, saveSettings } = useEating()
 const { putWeight } = useBody()
 
@@ -431,7 +432,7 @@ async function confirmDelete() {
 
     <ExportSheet
       v-model:open="exportOpen"
-      :day="localIsoDay()"
+      :day="today"
     />
 
     <!-- Account -->

@@ -527,9 +527,9 @@ export function shiftDay(day: string, delta: number): string {
   return localIsoDay(date)
 }
 
-/** "Today", "Yesterday", "Fri 19 Sep" */
-export function dayLabel(day: string): string {
-  const today = localIsoDay()
+/** "Today", "Yesterday", "Fri 19 Sep". A computed passes `useToday()`'s
+ *  value, so the label moves on at midnight with everything else. */
+export function dayLabel(day: string, today = localIsoDay()): string {
   if (day === today) {
     return 'Today'
   }
@@ -641,7 +641,7 @@ export function useEating() {
   const api = useApi()
 
   const settings = useState<EatingSettings | null>('eating-settings', () => null)
-  const day = useState<string>('eating-day', () => localIsoDay())
+  const day = useDiaryDay()
   const dayView = useState<DayView | null>('eating-day-view', () => null)
   const week = useState<DayTotals[]>('eating-week', () => [])
   const loading = ref(false)

@@ -24,22 +24,34 @@ const span = ref<Span>(7)
 const data = ref<Progress | null>(null)
 const loading = ref(false)
 const failed = ref(false)
+const today = useToday()
+/** Bumped per load, so a slow answer for the week can't land over the 90 days asked for since */
+let asked = 0
 
 async function load() {
+  const ask = (asked += 1)
   loading.value = true
   failed.value = false
-  const today = localIsoDay()
+  const until = today.value
   try {
-    data.value = await loadProgress(shiftDay(today, -(span.value - 1)), today, today)
+    const answer = await loadProgress(shiftDay(until, -(span.value - 1)), until, until)
+    if (ask === asked) {
+      data.value = answer
+    }
   } catch {
-    failed.value = true
+    if (ask === asked) {
+      failed.value = true
+    }
   } finally {
-    loading.value = false
+    if (ask === asked) {
+      loading.value = false
+    }
   }
 }
 
 onMounted(() => void load())
-watch(span, () => void load())
+// A new day (the app was left open overnight) is a new period
+watch([span, today], () => void load())
 
 const days = computed(() => data.value?.days ?? [])
 const averages = computed(() => data.value?.averages ?? null)
@@ -115,10 +127,8 @@ const streakHint = computed(() => {
 const weightChange = computed(() => data.value?.weight.change ?? null)
 
 /** The period, said over the title: "27 Sep – 3 Oct" */
-const periodLabel = computed(() => {
-  const today = localIsoDay()
-  return `${dayShort(shiftDay(today, -(span.value - 1)))} – ${dayShort(today)}`
-})
+const periodLabel = computed(() =>
+  `${dayShort(shiftDay(today.value, -(span.value - 1)))} – ${dayShort(today.value)}`)
 
 /**
  * Day by day, newest first — the same numbers as the charts, each day with a

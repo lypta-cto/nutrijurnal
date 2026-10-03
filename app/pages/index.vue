@@ -52,7 +52,9 @@ const {
 const quickAdd = useQuickAdd()
 const toast = useToast()
 
-const today = computed(() => localIsoDay())
+// Kept current by plugins/today.client.ts — an app left open overnight
+// opens the next morning on the new day, not on yesterday
+const today = useToday()
 const strip = ref<DayTotals[]>([])
 /** The day before the one on screen — what "repeat" copies from */
 const before = ref<Meal[]>([])
@@ -154,6 +156,14 @@ function move(delta: number) {
   }
 }
 
+/** The date picker's choice — checked here too, because iOS's date wheel
+ *  ignores `max` and happily offers next week */
+function pickDay(value: string) {
+  if (value && value <= today.value) {
+    day.value = value
+  }
+}
+
 /** Which side the new day slides in from: later days from the right */
 const dayEnter = ref('')
 watch(day, (now, before) => {
@@ -198,9 +208,9 @@ function onDayUp(event: PointerEvent) {
 /** The app bar names the day; the eyebrow over it carries the date in full */
 const heading = computed(() => {
   const date = new Date(`${day.value}T12:00:00`)
-  const label = dayLabel(day.value)
+  const label = dayLabel(day.value, today.value)
   const relative = label === 'Today' || label === 'Yesterday'
-  const sameYear = date.getFullYear() === new Date().getFullYear()
+  const sameYear = day.value.slice(0, 4) === today.value.slice(0, 4)
   const full = date.toLocaleDateString('en-GB', {
     weekday: relative ? 'long' : undefined,
     day: 'numeric',
@@ -358,7 +368,7 @@ async function addLine(meal: Meal) {
 
 const moveOpen = ref(false)
 const moving = ref<Meal | null>(null)
-const moveDay = ref(localIsoDay())
+const moveDay = ref(today.value)
 
 function askMove(meal: Meal) {
   moving.value = meal
@@ -515,7 +525,7 @@ async function afterSaved(meal: Meal) {
 }
 
 /** "yesterday", or "the day before" when the diary is open on an older day */
-const dayBefore = computed(() => (dayLabel(shiftDay(day.value, -1)) === 'Yesterday' ? 'yesterday' : 'the day before'))
+const dayBefore = computed(() => (dayLabel(shiftDay(day.value, -1), today.value) === 'Yesterday' ? 'yesterday' : 'the day before'))
 
 const MEAL_ROW = `${MEAL_COLUMNS} min-h-16 px-4 py-3`
 const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
@@ -540,7 +550,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           :max="today"
           class="absolute inset-0 cursor-pointer opacity-0"
           aria-label="Pick a day"
-          @change="event => day = (event.target as HTMLInputElement).value || day"
+          @change="event => pickDay((event.target as HTMLInputElement).value)"
         >
       </label>
     </template>
@@ -602,7 +612,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           class="app-press flex min-w-0 flex-col items-center gap-1 rounded-tile py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
           :class="day === entry.day ? 'bg-default shadow-card ring-1 ring-default' : 'active:bg-elevated/70'"
           :disabled="entry.future"
-          :aria-label="`${dayLabel(entry.day)}: ${entry.meals ? `${formatKcal(entry.kcal)} kcal` : 'nothing written down'}`"
+          :aria-label="`${dayLabel(entry.day, today)}: ${entry.meals ? `${formatKcal(entry.kcal)} kcal` : 'nothing written down'}`"
           :aria-pressed="day === entry.day"
           @click="day = entry.day"
         >

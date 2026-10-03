@@ -17,6 +17,7 @@ import type { QuickAddKind } from '~/composables/useQuickAdd'
  * breakfast of three foods is one row in the diary, not three.
  */
 const quickAdd = useQuickAdd()
+const today = useToday()
 const { day, peekDay, quickFoods, searchFoods, setFavourite, addMeal, addItem, updateMeal, removeMeal, removeItem, copyDay } = useEating()
 const toast = useToast()
 const haptics = useHaptics()
@@ -414,7 +415,7 @@ const description = computed(() => {
   if (panel.value === 'voice') {
     return 'Say what you ate — it is read into a meal you check before saving.'
   }
-  return `${dayLabel(day.value)} · ${session.value ? `${formatKcal(session.value.meal.kcal)} kcal added so far` : 'pick a slot, then the food'}`
+  return `${dayLabel(day.value, today.value)} · ${session.value ? `${formatKcal(session.value.meal.kcal)} kcal added so far` : 'pick a slot, then the food'}`
 })
 </script>
 
