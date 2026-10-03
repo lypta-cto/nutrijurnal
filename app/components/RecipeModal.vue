@@ -917,17 +917,20 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
           </ol>
         </section>
 
-        <UFormField
-          label="Note"
-          hint="optional"
-        >
+        <!-- A group of its own, headed like Ingredients and Steps above it -->
+        <div class="flex flex-col gap-1.5">
+          <p class="app-group-title px-4">
+            Note
+          </p>
           <UTextarea
             v-model="form.note"
             :rows="2"
             autoresize
+            placeholder="Optional"
+            aria-label="Note"
             class="w-full"
           />
-        </UFormField>
+        </div>
       </div>
 
       <div
