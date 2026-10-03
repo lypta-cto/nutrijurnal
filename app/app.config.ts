@@ -140,6 +140,8 @@ export default defineAppConfig({
       compoundVariants: SAME_SIZE_EVERYWHERE
     },
 
+    // No red asterisk: every field on the forms that mark one is required, so
+    // it says nothing — and a missing value is named under the field anyway
     formField: {
       slots: {
         label: 'text-subheadline font-medium text-default',
@@ -147,6 +149,11 @@ export default defineAppConfig({
         hint: 'text-footnote text-muted',
         help: 'mt-1.5 text-footnote text-muted',
         error: 'mt-1.5 text-footnote text-error'
+      },
+      variants: {
+        required: {
+          true: { label: 'after:content-none' }
+        }
       }
     },
 
