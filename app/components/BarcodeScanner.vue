@@ -119,7 +119,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
     <!-- The picture, with the guide the bars should fill -->
     <div
       v-show="live || looking"
-      class="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-inverted/90"
+      class="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-black"
     >
       <video
         ref="video"
@@ -131,7 +131,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
       />
 
       <div
-        class="pointer-events-none absolute inset-x-[8%] top-1/2 h-[45%] -translate-y-1/2 rounded-xl border-2 border-white/80 shadow-[0_0_0_9999px_rgb(0_0_0/0.35)]"
+        class="pointer-events-none absolute inset-x-[8%] top-1/2 h-[45%] -translate-y-1/2 rounded-tile border-2 border-white/85 shadow-[0_0_0_9999px_rgb(0_0_0/0.4)]"
         aria-hidden="true"
       >
         <span
@@ -142,7 +142,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
 
       <div
         v-if="state === 'starting' || looking"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 text-sm font-medium text-white"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 text-sm font-semibold text-white backdrop-blur-[2px]"
         role="status"
       >
         <UIcon
@@ -164,8 +164,9 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
         v-if="torchSupported && state === 'scanning'"
         :icon="torchOn ? 'i-lucide-flashlight-off' : 'i-lucide-flashlight'"
         color="neutral"
-        variant="solid"
-        class="absolute top-3 right-3 rounded-full"
+        variant="ghost"
+        square
+        class="absolute top-3 right-3 bg-black/45 text-white backdrop-blur-sm hover:bg-black/60 active:bg-black/70"
         :aria-label="torchOn ? 'Turn the light off' : 'Turn the light on'"
         :aria-pressed="torchOn"
         @click="toggleTorch"
@@ -174,7 +175,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
 
     <p
       v-if="state === 'scanning'"
-      class="text-center text-xs text-muted"
+      class="text-center text-sm text-muted"
       role="status"
     >
       Hold the barcode inside the frame — it is read by itself.
@@ -198,7 +199,8 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
       label="Scan again"
       icon="i-lucide-scan-barcode"
       color="neutral"
-      variant="subtle"
+      variant="soft"
+      size="lg"
       block
       @click="begin"
     />
@@ -207,7 +209,8 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
       label="Try the camera again"
       icon="i-lucide-rotate-ccw"
       color="neutral"
-      variant="subtle"
+      variant="soft"
+      size="lg"
       block
       @click="begin"
     />
@@ -230,7 +233,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
         type="submit"
         label="Look up"
         color="neutral"
-        variant="subtle"
+        variant="soft"
         :disabled="typed.replace(/\D/g, '').length < 6 || Boolean(looking)"
       />
     </form>
@@ -248,7 +251,6 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
       icon="i-lucide-camera"
       color="neutral"
       variant="ghost"
-      size="sm"
       class="self-center"
       :disabled="Boolean(looking)"
       @click="photoInput?.click()"

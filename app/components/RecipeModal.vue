@@ -515,14 +515,14 @@ async function remove() {
   }
 }
 
-const NATIVE_INPUT = 'w-full rounded-md border border-default bg-default px-2 py-1.5 text-sm tabular-nums text-default focus:outline-primary'
+// The ingredients read the way Today reads an open meal: the name across
+// with "optional" and ✕ at the end, then amount · unit · its weight
+const LINE_COLS = 'grid items-center gap-x-2 gap-y-1 grid-cols-[3.75rem_6rem_minmax(0,1fr)_2rem_2rem]'
 
-// The ingredients are a sheet like everything else: amount, unit, ingredient;
-// the weight sits under the name, where a phone has room for it
-const LINE_COLS = 'grid items-center gap-x-2 grid-cols-[3.25rem_4.5rem_minmax(0,1fr)_1.75rem_1.75rem]'
+const AMOUNT_UI = { base: 'tabular-nums px-2 text-right' }
 
-const AMOUNT_UI = { base: 'tabular-nums px-1.5 text-right' }
-const UNIT_UI = { base: 'px-1.5' }
+/** A list inside the sheet: a group of rows with hairlines, no card around it */
+const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default'
 </script>
 
 <template>
@@ -535,46 +535,50 @@ const UNIT_UI = { base: 'px-1.5' }
     <template #body>
       <div
         v-if="full"
-        class="flex flex-col gap-4"
+        class="flex flex-col gap-5"
       >
         <!-- What it comes to, and what was stated for it -->
-        <div class="flex flex-col gap-2 rounded-lg bg-elevated/50 px-3 py-2">
-          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span class="text-xl font-semibold leading-none tabular-nums text-emerald-500">{{ formatKcal(shown?.kcal ?? full.kcal) }}</span>
-            <span class="text-xs font-medium text-muted">kcal · {{ servingsLabel(full) }}</span>
+        <div class="flex flex-col gap-3 rounded-tile bg-elevated/70 p-4">
+          <div class="flex flex-wrap items-end gap-x-3 gap-y-1">
+            <span class="flex items-baseline gap-1.5">
+              <span class="text-[2rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ formatKcal(shown?.kcal ?? full.kcal) }}</span>
+              <span class="text-sm font-semibold text-muted">kcal</span>
+            </span>
+            <span class="pb-0.5 text-xs text-muted">for {{ servingsLabel(full) }}</span>
             <span
               v-if="statedOnly"
-              class="rounded-md bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-dimmed"
+              class="mb-0.5 rounded-full bg-default px-2 py-0.5 text-micro font-semibold tracking-wide text-muted uppercase"
             >as stated</span>
             <span
-              v-if="each && full.servings > 1"
-              class="text-[11px] tabular-nums text-dimmed"
-            >{{ formatKcal(each.kcal) }} kcal per {{ full.serving_unit }}</span>
-            <span
               v-if="gap && full.stated && !statedOnly"
-              class="ml-auto rounded-md bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-warning"
+              class="mb-0.5 ml-auto rounded-full bg-warning/12 px-2 py-0.5 text-xs font-semibold text-warning tabular-nums"
               :aria-label="`Stated as ${formatKcal(full.stated.kcal)} kcal; the ingredients add up to ${formatKcal(full.kcal)}`"
             >stated {{ formatKcal(full.stated.kcal) }}</span>
           </div>
-          <div class="grid grid-cols-3 gap-x-3">
+          <p
+            v-if="each && full.servings > 1"
+            class="-mt-1 text-sm font-semibold text-default tabular-nums"
+          >
+            {{ formatKcal(each.kcal) }} kcal per {{ full.serving_unit }}
+          </p>
+          <div class="grid grid-cols-3 gap-3 border-t border-default pt-3">
             <span
               v-for="bar in summary"
               :key="bar.key"
-              class="flex flex-col text-[11px]"
+              class="flex min-w-0 flex-col"
             >
-              <span class="flex items-center gap-1.5 text-default">
+              <span class="flex items-center gap-1.5 text-caption font-semibold text-muted">
                 <span
                   class="size-2 shrink-0 rounded-full"
                   :class="bar.dot"
                 />
                 {{ bar.label }}
               </span>
-              <span class="tabular-nums text-muted">
-                {{ formatMacro(bar.value) }} g<span
-                  v-if="bar.per !== null"
-                  class="text-dimmed"
-                > · {{ formatMacro(bar.per) }} each</span>
-              </span>
+              <span class="text-sm font-semibold text-highlighted tabular-nums">{{ formatMacro(bar.value) }} g</span>
+              <span
+                v-if="bar.per !== null"
+                class="text-caption text-muted tabular-nums"
+              >{{ formatMacro(bar.per) }} g each</span>
             </span>
           </div>
         </div>
@@ -582,14 +586,14 @@ const UNIT_UI = { base: 'px-1.5' }
         <!-- Onto a day — right where the eye is when the button is pressed -->
         <div
           v-if="planning"
-          class="grid grid-cols-2 gap-3 rounded-lg bg-primary/5 p-3 ring-1 ring-primary/20 ring-inset"
+          class="grid grid-cols-2 gap-3 rounded-tile bg-primary/6 p-4 border border-primary/20"
         >
-          <span class="col-span-2 text-[10px] font-semibold uppercase tracking-wide text-primary">Put it on a day</span>
+          <span class="app-eyebrow col-span-2 text-primary">Put it on a day</span>
           <UFormField label="Day">
             <input
               v-model="plan.day"
               type="date"
-              :class="NATIVE_INPUT"
+              class="app-field"
               aria-label="Day"
             >
           </UFormField>
@@ -600,22 +604,25 @@ const UNIT_UI = { base: 'px-1.5' }
             <input
               v-model="plan.at"
               type="time"
-              :class="NATIVE_INPUT"
+              class="app-field"
               aria-label="Time"
             >
           </UFormField>
-          <UFormField :label="full.serving_unit === 'piece' ? 'Pieces' : 'Servings'">
+          <UFormField
+            :label="full.serving_unit === 'piece' ? 'Pieces' : 'Servings'"
+            class="col-span-2"
+          >
             <UInput
               v-model.number="plan.servings"
               type="number"
               inputmode="decimal"
               min="0.25"
               step="0.25"
-              class="w-full"
+              class="w-28"
               :ui="AMOUNT_UI"
             />
           </UFormField>
-          <div class="flex items-end justify-end gap-2">
+          <div class="col-span-2 flex gap-2">
             <UButton
               label="Cancel"
               color="neutral"
@@ -626,94 +633,97 @@ const UNIT_UI = { base: 'px-1.5' }
             <UButton
               label="Write it down"
               icon="i-lucide-check"
+              class="flex-1 justify-center"
               :loading="adding"
               @click="addToDiary"
             />
           </div>
         </div>
 
-        <UFormField label="Title">
-          <UInput
-            v-model="form.title"
-            class="w-full"
-          />
-        </UFormField>
-        <UFormField
-          label="Subtitle"
-          hint="optional"
-        >
-          <UInput
-            v-model="form.subtitle"
-            class="w-full"
-          />
-        </UFormField>
-
-        <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-end gap-3">
-          <UFormField label="Minutes">
+        <div class="flex flex-col gap-4">
+          <UFormField label="Title">
             <UInput
-              v-model.number="form.minutes"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              step="5"
-              placeholder="—"
+              v-model="form.title"
               class="w-full"
-              :ui="{ base: 'tabular-nums' }"
             />
           </UFormField>
-          <UFormField :label="form.serving_unit === 'piece' ? 'Makes (pieces)' : 'Makes (servings)'">
-            <div class="flex items-center gap-2">
+          <UFormField
+            label="Subtitle"
+            hint="optional"
+          >
+            <UInput
+              v-model="form.subtitle"
+              class="w-full"
+            />
+          </UFormField>
+
+          <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-end gap-3">
+            <UFormField label="Minutes">
               <UInput
-                v-model.number="form.servings"
+                v-model.number="form.minutes"
                 type="number"
-                inputmode="decimal"
-                min="1"
-                step="1"
-                class="w-20"
+                inputmode="numeric"
+                min="0"
+                step="5"
+                placeholder="—"
+                class="w-full"
                 :ui="{ base: 'tabular-nums' }"
               />
-              <!-- What the batch divides into. Twelve muffins are pieces; one
-                   pot of stew that feeds four is servings. -->
-              <div class="flex items-center gap-0.5 rounded-lg bg-elevated/70 p-0.5">
-                <button
-                  v-for="unit in SERVING_UNITS"
-                  :key="unit.value"
-                  type="button"
-                  class="rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors"
-                  :class="form.serving_unit === unit.value
-                    ? 'bg-default text-highlighted shadow-sm'
-                    : 'text-muted hover:text-default'"
-                  :aria-pressed="form.serving_unit === unit.value"
-                  :aria-label="unit.hint"
-                  @click="form.serving_unit = unit.value"
-                >
-                  {{ unit.label }}
-                </button>
+            </UFormField>
+            <UFormField label="Makes">
+              <div class="flex items-center gap-2">
+                <UInput
+                  v-model.number="form.servings"
+                  type="number"
+                  inputmode="decimal"
+                  min="1"
+                  step="1"
+                  class="w-16 shrink-0"
+                  :ui="{ base: 'tabular-nums text-center px-2' }"
+                  aria-label="How many it makes"
+                />
+                <!-- What the batch divides into. Twelve muffins are pieces; one
+                     pot of stew that feeds four is servings. -->
+                <ShellSegmented
+                  v-model="form.serving_unit"
+                  label="What it divides into"
+                  size="sm"
+                  :options="SERVING_UNITS.map(unit => ({ value: unit.value, label: unit.label }))"
+                  class="min-w-0 flex-1"
+                />
               </div>
-            </div>
-          </UFormField>
+            </UFormField>
+          </div>
         </div>
 
-        <!-- Ingredients, as an editable sheet -->
-        <div class="flex flex-col overflow-hidden rounded-lg border border-default">
-          <div class="flex items-center gap-2 bg-elevated/50 px-3 py-1.5">
-            <span class="text-[10px] font-semibold uppercase tracking-wide text-dimmed">Ingredients</span>
-            <span class="rounded-full bg-elevated px-2 py-0.5 text-[11px] font-semibold tabular-nums text-default">{{ lines.length }}</span>
+        <!-- Ingredients, edited where they stand -->
+        <section
+          class="flex flex-col gap-2"
+          aria-labelledby="recipe-ingredients"
+        >
+          <div class="flex items-center gap-2 px-1">
+            <h3
+              id="recipe-ingredients"
+              class="app-eyebrow"
+            >
+              Ingredients
+            </h3>
+            <span class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums">{{ lines.length }}</span>
             <UButton
               label="Paste"
               icon="i-lucide-clipboard-list"
-              size="xs"
+              size="sm"
               color="neutral"
-              variant="ghost"
+              :variant="pasting ? 'soft' : 'ghost'"
               class="ml-auto"
+              :aria-pressed="pasting"
               @click="pasting = !pasting"
             />
             <UButton
               label="Add"
               icon="i-lucide-plus"
-              size="xs"
-              color="neutral"
-              variant="ghost"
+              size="sm"
+              variant="soft"
               @click="addLine"
             />
           </div>
@@ -721,74 +731,92 @@ const UNIT_UI = { base: 'px-1.5' }
           <!-- One line in, the rows out — the same parser the diary uses -->
           <form
             v-if="pasting"
-            class="flex items-center gap-2 border-t border-default bg-elevated/30 px-3 py-2"
+            class="flex items-center gap-2"
             @submit.prevent="readPasted"
           >
             <UInput
               v-model="pasted"
-              size="sm"
               autofocus
               placeholder="8 eggs, 220g cottage cheese, 70g ham"
               class="min-w-0 flex-1"
-              :ui="{ root: 'w-full' }"
               aria-label="The whole ingredient list"
             />
             <UButton
               label="Read"
               icon="i-lucide-wand-sparkles"
-              size="sm"
               type="submit"
+              variant="soft"
               :loading="reading"
               :disabled="!pasted.trim()"
             />
           </form>
 
-          <div
-            v-for="line in lines"
-            :key="line.key"
-            class="border-t border-default px-3 py-1.5"
-            :class="LINE_COLS"
-          >
-            <UInput
-              v-model.number="line.quantity"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="0.1"
-              size="xs"
-              class="w-full"
-              :ui="AMOUNT_UI"
-              :aria-label="`Amount of ${line.label || 'the ingredient'}`"
-              @change="weigh(line)"
-            />
-            <USelect
-              v-model="line.unit"
-              :items="unitItemsFor(line.unit)"
-              value-key="value"
-              size="xs"
-              class="w-full"
-              :ui="UNIT_UI"
-              :aria-label="`Unit for ${line.label || 'the ingredient'}`"
-              @update:model-value="weigh(line)"
-            />
-            <span class="flex min-w-0 flex-col">
+          <div :class="GROUP">
+            <div
+              v-for="line in lines"
+              :key="line.key"
+              class="px-3 py-2.5"
+              :class="LINE_COLS"
+            >
               <UInput
                 v-model="line.label"
-                size="xs"
                 variant="none"
                 placeholder="Ingredient"
-                class="w-full"
-                :ui="{ root: 'w-full', base: 'px-0 text-sm text-highlighted' }"
+                class="col-span-3 min-w-0"
+                :ui="{ root: 'w-full', base: 'px-1 py-1 text-body font-medium text-highlighted' }"
                 aria-label="Ingredient"
                 @blur="resolveLine(line)"
                 @keydown.enter="resolveLine(line)"
               />
+              <UButton
+                :icon="line.optional ? 'i-lucide-circle-dashed' : 'i-lucide-circle'"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                square
+                class="app-hit"
+                :class="line.optional ? 'text-warning' : 'text-dimmed'"
+                :aria-label="line.optional ? 'Optional — make it required' : 'Required — make it optional'"
+                :aria-pressed="line.optional"
+                @click="line.optional = !line.optional"
+              />
+              <UButton
+                icon="i-lucide-x"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                square
+                class="app-hit text-dimmed"
+                :aria-label="`Remove ${line.label}`"
+                @click="dropLine(line.key)"
+              />
+              <UInput
+                v-model.number="line.quantity"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.1"
+                size="sm"
+                class="w-full"
+                :ui="AMOUNT_UI"
+                :aria-label="`Amount of ${line.label || 'the ingredient'}`"
+                @change="weigh(line)"
+              />
+              <USelect
+                v-model="line.unit"
+                :items="unitItemsFor(line.unit)"
+                value-key="value"
+                size="sm"
+                class="w-full"
+                :aria-label="`Unit for ${line.label || 'the ingredient'}`"
+                @update:model-value="weigh(line)"
+              />
               <!-- Either the row found its food, or it asks which one -->
-              <span class="flex flex-wrap items-center gap-1 text-[11px] tabular-nums">
+              <span class="col-span-3 flex min-w-0 flex-wrap items-center justify-end gap-1 text-right text-caption tabular-nums">
                 <UIcon
                   v-if="looking.has(line.key)"
                   name="i-lucide-loader-circle"
-                  class="size-3 animate-spin text-dimmed"
+                  class="size-3.5 animate-spin text-dimmed"
                 />
                 <span
                   v-else-if="missing.has(line.key)"
@@ -800,9 +828,11 @@ const UNIT_UI = { base: 'px-1.5' }
                     v-for="food in choices.get(line.key)"
                     :key="food.id"
                     type="button"
-                    class="rounded-md bg-elevated px-1.5 py-0.5 text-[11px] font-medium text-default transition-colors hover:text-highlighted"
+                    class="app-chip h-7 px-2.5 text-xs"
                     @click="pick(line, food)"
-                  >{{ food.name }}</button>
+                  >
+                    {{ food.name }}
+                  </button>
                 </template>
                 <span
                   v-else
@@ -812,50 +842,38 @@ const UNIT_UI = { base: 'px-1.5' }
                   <template v-if="line.optional">{{ line.grams ? ' · ' : '' }}optional</template>
                 </span>
               </span>
-            </span>
-            <UButton
-              :icon="line.optional ? 'i-lucide-circle-dashed' : 'i-lucide-circle'"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              square
-              :class="line.optional ? 'text-warning' : 'text-dimmed'"
-              :aria-label="line.optional ? 'Optional — make it required' : 'Required — make it optional'"
-              @click="line.optional = !line.optional"
-            />
-            <UButton
-              icon="i-lucide-x"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              square
-              class="text-dimmed hover:text-error"
-              :aria-label="`Remove ${line.label}`"
-              @click="dropLine(line.key)"
-            />
-          </div>
+            </div>
 
-          <p
-            v-if="!lines.length"
-            class="border-t border-default px-3 py-3 text-xs text-muted"
-          >
-            No ingredients yet — add the first line, or paste the whole list.
-          </p>
-        </div>
+            <p
+              v-if="!lines.length"
+              class="px-4 py-3.5 text-sm text-muted"
+            >
+              No ingredients yet — add the first line, or paste the whole list.
+            </p>
+          </div>
+        </section>
 
         <!-- Steps read as steps; the textarea is one tap away -->
-        <div class="flex flex-col gap-1.5">
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-semibold uppercase tracking-wide text-dimmed">Steps</span>
+        <section
+          class="flex flex-col gap-2"
+          aria-labelledby="recipe-steps"
+        >
+          <div class="flex items-center gap-2 px-1">
+            <h3
+              id="recipe-steps"
+              class="app-eyebrow"
+            >
+              Steps
+            </h3>
             <span
               v-if="stepList.length"
-              class="rounded-full bg-elevated px-2 py-0.5 text-[11px] font-semibold tabular-nums text-default"
+              class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums"
             >{{ stepList.length }}</span>
             <UButton
               v-if="stepList.length"
               :label="editingSteps ? 'Done' : 'Edit'"
               :icon="editingSteps ? 'i-lucide-check' : 'i-lucide-pencil-line'"
-              size="xs"
+              size="sm"
               color="neutral"
               variant="ghost"
               class="ml-auto"
@@ -874,18 +892,18 @@ const UNIT_UI = { base: 'px-1.5' }
           />
           <ol
             v-else
-            class="flex flex-col gap-1.5"
+            class="flex flex-col gap-3 px-1"
           >
             <li
               v-for="(step, index) in stepList"
               :key="index"
-              class="flex gap-2.5 text-sm leading-relaxed text-default"
+              class="flex gap-3 text-body leading-relaxed text-default"
             >
-              <span class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-elevated text-[11px] font-semibold tabular-nums text-muted">{{ index + 1 }}</span>
+              <span class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary tabular-nums">{{ index + 1 }}</span>
               <span class="min-w-0">{{ step }}</span>
             </li>
           </ol>
-        </div>
+        </section>
 
         <UFormField
           label="Note"
@@ -894,6 +912,7 @@ const UNIT_UI = { base: 'px-1.5' }
           <UTextarea
             v-model="form.note"
             :rows="2"
+            autoresize
             class="w-full"
           />
         </UFormField>
@@ -901,17 +920,24 @@ const UNIT_UI = { base: 'px-1.5' }
 
       <div
         v-else
-        class="flex flex-col gap-2"
+        class="flex flex-col gap-4"
       >
-        <USkeleton class="h-4 w-2/3" />
-        <USkeleton class="h-4 w-1/2" />
+        <ShellSkeleton
+          variant="card"
+          :count="2"
+        />
+        <ShellSkeleton
+          variant="rows"
+          :count="3"
+          :class="GROUP"
+        />
       </div>
     </template>
 
     <!-- Only ever one obvious action: with edits pending it is saving them,
          otherwise it is putting this on a day -->
     <template #footer>
-      <div class="flex w-full flex-wrap items-center gap-2">
+      <div class="flex w-full items-center gap-2">
         <UButton
           icon="i-lucide-trash-2"
           color="error"
@@ -924,12 +950,9 @@ const UNIT_UI = { base: 'px-1.5' }
         />
         <span
           v-if="dirty"
-          class="flex items-center gap-1.5 text-[11px] text-warning"
+          class="flex items-center gap-1 text-xs font-semibold text-warning"
         >
-          <UIcon
-            name="i-lucide-pencil-line"
-            class="size-3.5"
-          />
+          <span class="size-1.5 rounded-full bg-warning" />
           Unsaved
         </span>
         <div class="ml-auto flex gap-2">
@@ -937,15 +960,14 @@ const UNIT_UI = { base: 'px-1.5' }
             label="Add to diary"
             icon="i-lucide-calendar-plus"
             :color="dirty ? 'neutral' : 'primary'"
-            :variant="dirty || planning ? 'subtle' : 'solid'"
+            :variant="dirty || planning ? 'soft' : 'solid'"
             :disabled="!full"
             @click="startPlanning"
           />
           <UButton
             label="Save"
-            icon="i-lucide-save"
             :color="dirty ? 'primary' : 'neutral'"
-            :variant="dirty ? 'solid' : 'subtle'"
+            :variant="dirty ? 'solid' : 'soft'"
             :loading="saving"
             :disabled="!full || !form.title.trim()"
             @click="save"

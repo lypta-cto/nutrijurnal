@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * A form in a bottom sheet: title, the fields scrolling in the middle, and
- * the buttons pinned at the bottom where the thumb already is. The submit
+ * the buttons pinned at the bottom where the thumb already is — Cancel quiet
+ * on the left, the one thing the sheet is for filling the rest. The submit
  * button belongs to the form through `form="form-sheet"`, so Enter in a
  * field submits too.
  */
@@ -59,11 +60,12 @@ function cancel() {
 
     <template #footer>
       <slot name="footer">
-        <div class="flex w-full justify-end gap-2">
+        <div class="flex w-full gap-2">
           <UButton
             :label="cancelLabel"
             color="neutral"
-            variant="outline"
+            variant="ghost"
+            size="lg"
             :disabled="loading"
             @click="cancel"
           />
@@ -71,6 +73,8 @@ function cancel() {
             type="submit"
             form="form-sheet"
             :label="submitLabel"
+            size="lg"
+            class="flex-1 justify-center"
             :loading="loading"
             :disabled="disabled"
           />

@@ -115,10 +115,6 @@ async function download(format: 'pdf' | 'csv') {
     exporting.value = false
   }
 }
-
-const NATIVE_INPUT = 'rounded-md border border-default bg-default px-2 py-1.5 text-sm tabular-nums text-default focus:outline-primary'
-
-const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium transition-colors'
 </script>
 
 <template>
@@ -129,26 +125,33 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
     description="A period, day by day — a PDF to print or a CSV for a spreadsheet."
   >
     <template #body>
-      <div class="flex flex-col gap-3">
-        <div class="grid grid-cols-2 gap-1">
+      <div class="flex flex-col gap-4">
+        <div
+          class="grid grid-cols-2 gap-2"
+          role="radiogroup"
+          aria-label="Period"
+        >
           <button
             v-for="entry in PERIODS"
             :key="entry.value"
             type="button"
-            :class="[PERIOD_BUTTON, period === entry.value ? 'bg-primary/10 text-primary' : 'bg-elevated/60 text-muted hover:text-default']"
+            role="radio"
+            class="app-chip h-11"
+            :aria-checked="period === entry.value"
             @click="period = entry.value"
           >
             {{ entry.label }}
           </button>
           <button
             type="button"
-            class="col-span-2 flex items-center justify-center gap-1"
-            :class="[PERIOD_BUTTON, period === 'custom' ? 'bg-primary/10 text-primary' : 'bg-elevated/60 text-muted hover:text-default']"
+            role="radio"
+            class="app-chip col-span-2 h-11"
+            :aria-checked="period === 'custom'"
             @click="period = 'custom'"
           >
             <UIcon
               name="i-lucide-calendar-range"
-              class="size-3.5"
+              class="size-4"
             />
             Pick the dates
           </button>
@@ -156,42 +159,49 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
 
         <div
           v-if="period === 'custom'"
-          class="grid grid-cols-2 gap-2"
+          class="grid grid-cols-2 gap-3"
         >
-          <label>
-            <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-dimmed">From</span>
+          <UFormField label="From">
             <input
               v-model="customFrom"
               type="date"
               :max="customTo || undefined"
-              :class="[NATIVE_INPUT, 'w-full']"
+              class="app-field"
               aria-label="First day of the export"
             >
-          </label>
-          <label>
-            <span class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-dimmed">To</span>
+          </UFormField>
+          <UFormField label="To">
             <input
               v-model="customTo"
               type="date"
               :min="customFrom || undefined"
-              :class="[NATIVE_INPUT, 'w-full']"
+              class="app-field"
               aria-label="Last day of the export"
             >
-          </label>
+          </UFormField>
         </div>
 
         <p
           v-if="rangeProblem"
-          class="text-xs text-error"
+          class="flex items-center gap-2 rounded-tile bg-error/10 px-3.5 py-2.5 text-sm text-error"
+          role="alert"
         >
+          <UIcon
+            name="i-lucide-circle-alert"
+            class="size-4 shrink-0"
+          />
           {{ rangeProblem }}
         </p>
         <p
           v-else
-          class="text-xs tabular-nums text-muted"
+          class="flex items-center gap-2 rounded-tile bg-elevated/70 px-3.5 py-2.5 text-sm text-default tabular-nums"
         >
+          <UIcon
+            name="i-lucide-calendar"
+            class="size-4 shrink-0 text-muted"
+          />
           {{ dayShort(range.from) }} → {{ dayShort(range.to) }}
-          <span class="text-dimmed">· {{ rangeDays }} {{ rangeDays === 1 ? 'day' : 'days' }}</span>
+          <span class="ml-auto text-muted">{{ rangeDays }} {{ rangeDays === 1 ? 'day' : 'days' }}</span>
         </p>
       </div>
     </template>
@@ -200,6 +210,7 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
         <UButton
           label="PDF"
           icon="i-lucide-file-down"
+          size="lg"
           class="flex-1 justify-center"
           :loading="exporting"
           :disabled="Boolean(rangeProblem)"
@@ -209,7 +220,8 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
           label="CSV"
           icon="i-lucide-table"
           color="neutral"
-          variant="subtle"
+          variant="soft"
+          size="lg"
           class="flex-1 justify-center"
           :loading="exporting"
           :disabled="Boolean(rangeProblem)"

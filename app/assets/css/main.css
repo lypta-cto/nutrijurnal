@@ -248,10 +248,12 @@
 
 /*
  * iOS zooms the page into any field set below 16 px and leaves it zoomed.
- * Unlayered on purpose, so it wins over the text-xs/text-sm a dense row asks for.
+ * Unlayered on purpose, so it wins over the text-xs/text-sm a dense row asks
+ * for — but only ever raises the size: a field set large on purpose (the
+ * amount, the quick kcal) keeps its own.
  */
 @media (pointer: coarse) {
-  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [class*="text-lg"], [class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]),
   select,
   textarea {
     font-size: max(1rem, 1em);

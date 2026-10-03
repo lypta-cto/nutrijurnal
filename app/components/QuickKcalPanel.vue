@@ -54,21 +54,30 @@ function submit() {
     class="flex flex-col gap-4"
     @submit.prevent="submit"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1">
       <UButton
         icon="i-lucide-arrow-left"
         color="neutral"
         variant="ghost"
         square
+        class="-ml-2.5"
         aria-label="Back to the list"
         @click="emit('back')"
       />
-      <p class="font-semibold text-highlighted">
-        Quick kcal
-      </p>
+      <div class="min-w-0 flex-1">
+        <p class="text-headline font-semibold text-highlighted">
+          Quick kcal
+        </p>
+        <p class="text-xs text-muted">
+          For a plate nobody can weigh — counted as one serving.
+        </p>
+      </div>
     </div>
 
-    <UFormField label="Kcal">
+    <UFormField
+      label="Kcal"
+      help="Protein, carbs and fat below are optional — the kcal is enough."
+    >
       <UInput
         v-model.number="numbers.kcal"
         type="number"
@@ -78,18 +87,31 @@ function submit() {
         autofocus
         :placeholder="fromMacros ? String(fromMacros) : '350'"
         class="w-full"
-        :ui="{ base: 'tabular-nums text-2xl font-semibold' }"
-      />
+        :ui="{ base: 'tabular-nums text-2xl font-bold', trailing: 'pointer-events-none' }"
+      >
+        <template #trailing>
+          <span class="text-sm font-semibold text-dimmed">kcal</span>
+        </template>
+      </UInput>
     </UFormField>
 
-    <div class="grid grid-cols-3 gap-2">
+    <div
+      class="grid grid-cols-3 gap-3"
+      role="group"
+      aria-label="Macros, if the label has them"
+    >
       <UFormField
         v-for="bar in MACRO_BARS"
         :key="bar.key"
-        :label="`${bar.label} g`"
-        hint="optional"
-        :ui="{ hint: 'text-[10px]' }"
+        :ui="{ label: 'flex items-center gap-1.5' }"
       >
+        <template #label>
+          <span
+            class="size-2 rounded-full"
+            :class="bar.dot"
+          />
+          {{ bar.label }}
+        </template>
         <UInput
           v-model.number="numbers[bar.key]"
           type="number"
@@ -97,8 +119,12 @@ function submit() {
           min="0"
           placeholder="—"
           class="w-full"
-          :ui="{ base: 'tabular-nums' }"
-        />
+          :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+        >
+          <template #trailing>
+            <span class="text-xs text-dimmed">g</span>
+          </template>
+        </UInput>
       </UFormField>
     </div>
 

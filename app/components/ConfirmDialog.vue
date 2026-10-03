@@ -13,46 +13,48 @@ const icon = computed(() =>
     :open="state.open"
     :title="state.title"
     :description="state.description"
-    :ui="{ overlay: 'z-[60]', content: 'z-[60] max-w-md', header: 'hidden' }"
+    :ui="{ overlay: 'z-[60]', content: 'z-[60] max-w-sm', header: 'hidden' }"
     @update:open="value => !value && respond(false)"
   >
     <template #content>
-      <div class="p-5">
-        <div class="flex items-start gap-4">
-          <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-            :class="color === 'error' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'"
-          >
-            <UIcon
-              :name="icon"
-              class="size-5"
-            />
-          </span>
+      <div class="flex flex-col items-center gap-3 px-5 pt-6 pb-5 text-center">
+        <span
+          class="flex size-12 shrink-0 items-center justify-center rounded-full"
+          :class="color === 'error' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'"
+        >
+          <UIcon
+            :name="icon"
+            class="size-6"
+          />
+        </span>
 
-          <div class="min-w-0 pt-0.5">
-            <p class="font-semibold text-highlighted">
-              {{ state.title }}
-            </p>
-            <p
-              v-if="state.description"
-              class="mt-1 text-sm text-muted"
-            >
-              {{ state.description }}
-            </p>
-          </div>
+        <div class="min-w-0">
+          <p class="text-headline font-semibold text-highlighted">
+            {{ state.title }}
+          </p>
+          <p
+            v-if="state.description"
+            class="mt-1 text-sm text-muted"
+          >
+            {{ state.description }}
+          </p>
         </div>
 
-        <div class="mt-6 flex justify-end gap-2">
-          <UButton
-            :label="state.cancelLabel ?? 'Cancel'"
-            color="neutral"
-            variant="outline"
-            @click="respond(false)"
-          />
+        <div class="mt-3 flex w-full flex-col gap-2">
           <UButton
             :label="state.confirmLabel ?? 'Confirm'"
             :color="color"
+            size="lg"
+            block
             @click="respond(true)"
+          />
+          <UButton
+            :label="state.cancelLabel ?? 'Cancel'"
+            color="neutral"
+            variant="ghost"
+            size="lg"
+            block
+            @click="respond(false)"
           />
         </div>
       </div>

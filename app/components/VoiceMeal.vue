@@ -211,41 +211,33 @@ const dictationNote = computed(() => {
   <div class="flex flex-col gap-4">
     <!-- Ready: the one big button, and what will happen -->
     <template v-if="stage === 'ready'">
-      <div
-        class="grid grid-cols-2 gap-1 self-center rounded-xl bg-elevated p-1"
-        role="radiogroup"
-        aria-label="Dictation language"
-      >
-        <UButton
-          v-for="entry in DICTATION_LANGUAGES"
-          :key="entry.value"
-          :label="entry.label"
-          size="xs"
-          role="radio"
-          :aria-checked="language === entry.value"
-          class="justify-center rounded-lg px-3"
-          :color="language === entry.value ? 'primary' : 'neutral'"
-          :variant="language === entry.value ? 'solid' : 'ghost'"
-          @click="language = entry.value"
-        />
-      </div>
+      <ShellSegmented
+        v-model="language"
+        label="Dictation language"
+        size="sm"
+        :options="DICTATION_LANGUAGES"
+        class="w-56 self-center"
+      />
 
-      <div class="flex flex-col items-center gap-3 py-2 text-center">
-        <UButton
-          icon="i-lucide-mic"
-          size="xl"
-          class="size-20 justify-center rounded-full"
-          :ui="{ leadingIcon: 'size-8' }"
+      <div class="flex flex-col items-center gap-4 py-3 text-center">
+        <button
+          type="button"
+          class="flex size-24 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-fab ring-8 ring-primary/10 outline-none transition-transform duration-120 ease-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary enabled:active:scale-95 disabled:opacity-50 motion-reduce:transition-none dark:from-primary-400 dark:to-primary-600"
           :disabled="!supported"
           aria-label="Start recording"
           @click="begin"
-        />
+        >
+          <UIcon
+            name="i-lucide-mic"
+            class="size-10"
+          />
+        </button>
         <p class="max-w-xs text-sm text-muted">
           <template v-if="!supported">
             This browser can't record audio. Type what you ate instead.
           </template>
           <template v-else>
-            Tap and say it: <span class="text-default">“200 g chicken and rice for lunch”</span>.
+            Tap and say it: <span class="font-medium text-default">“200 g chicken and rice for lunch”</span>.
           </template>
         </p>
       </div>
@@ -264,7 +256,6 @@ const dictationNote = computed(() => {
         icon="i-lucide-keyboard"
         color="neutral"
         variant="ghost"
-        size="sm"
         class="self-center"
         @click="typeInstead"
       />
@@ -273,31 +264,40 @@ const dictationNote = computed(() => {
     <!-- Recording: the one thing that matters is that it is on -->
     <div
       v-else-if="stage === 'recording'"
-      class="flex flex-col items-center gap-4 py-2 text-center"
+      class="flex flex-col items-center gap-5 py-3 text-center"
       role="status"
     >
-      <div class="flex items-center gap-2">
-        <span class="size-2.5 shrink-0 animate-pulse rounded-full bg-error" />
-        <span class="text-2xl font-semibold tabular-nums text-error">{{ clockOf(seconds) }}</span>
+      <div class="relative flex size-24 items-center justify-center">
+        <span
+          class="absolute inset-0 rounded-full bg-error/15 motion-safe:animate-ping"
+          aria-hidden="true"
+        />
+        <span class="relative flex size-24 flex-col items-center justify-center rounded-full bg-error/10 ring-1 ring-error/25">
+          <span class="size-2.5 rounded-full bg-error motion-safe:animate-pulse" />
+          <span class="mt-1 text-xl font-bold text-error tabular-nums">{{ clockOf(seconds) }}</span>
+        </span>
       </div>
       <p
-        class="min-h-10 max-w-xs text-sm"
+        class="min-h-10 max-w-xs text-body"
         :class="transcript ? 'text-default' : 'text-dimmed'"
       >
         {{ transcript || (canTranscribe ? 'Listening…' : 'Recording — dictation is not available here.') }}
       </p>
-      <div class="flex items-center gap-3">
+      <div class="flex w-full gap-2">
         <UButton
           label="Discard"
           icon="i-lucide-x"
           color="neutral"
           variant="ghost"
+          size="lg"
           @click="discard"
         />
         <UButton
           label="Done"
           icon="i-lucide-square"
           color="error"
+          size="lg"
+          class="flex-1 justify-center"
           @click="finish"
         />
       </div>
@@ -315,11 +315,11 @@ const dictationNote = computed(() => {
 
       <div
         v-if="take"
-        class="flex items-center gap-2 text-xs text-muted"
+        class="flex items-center gap-2 self-start rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary tabular-nums"
       >
         <UIcon
           name="i-lucide-audio-lines"
-          class="size-4 text-primary"
+          class="size-4"
         />
         Recording kept · {{ clockOf(take.seconds) }}
       </div>
@@ -349,33 +349,21 @@ const dictationNote = computed(() => {
         @click="read"
       />
 
-      <div
-        class="grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1"
-        role="radiogroup"
-        aria-label="Meal"
-      >
-        <UButton
-          v-for="entry in SLOTS"
-          :key="entry.value"
-          :label="entry.label"
-          size="sm"
-          role="radio"
-          :aria-checked="slot === entry.value"
-          class="justify-center rounded-lg"
-          :color="slot === entry.value ? 'primary' : 'neutral'"
-          :variant="slot === entry.value ? 'solid' : 'ghost'"
-          @click="slot = entry.value"
-        />
-      </div>
+      <ShellSegmented
+        v-model="slot"
+        label="Meal"
+        size="sm"
+        :options="SLOTS.map(entry => ({ value: entry.value, label: entry.label }))"
+      />
 
       <div
         v-if="items.length"
-        class="flex flex-col divide-y divide-default rounded-xl border border-default"
+        class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
       >
         <div
           v-for="item in items"
           :key="item.key"
-          class="grid grid-cols-[4.5rem_minmax(0,1fr)_auto_1.75rem] items-center gap-2 px-3 py-2"
+          class="grid grid-cols-[4.5rem_minmax(0,1fr)_auto_2rem] items-center gap-3 py-2.5 pr-2 pl-3"
         >
           <UInput
             v-model.number="item.quantity"
@@ -388,40 +376,44 @@ const dictationNote = computed(() => {
             :aria-label="`Amount of ${item.label}`"
           />
           <span class="flex min-w-0 flex-col">
-            <span class="truncate text-sm font-medium text-highlighted">{{ item.label }}</span>
-            <span class="text-[11px] text-muted">{{ amountLabel(Number(item.quantity) || 0, item.unit) }}</span>
+            <span class="truncate text-body font-semibold text-highlighted">{{ item.label }}</span>
+            <span class="text-caption text-muted tabular-nums">{{ amountLabel(Number(item.quantity) || 0, item.unit) }}</span>
           </span>
-          <span class="text-xs font-medium tabular-nums text-default">{{ formatKcal(macrosOfItem(item).kcal) }}</span>
+          <span class="flex flex-col items-end leading-tight tabular-nums">
+            <span class="text-sm font-semibold text-highlighted">{{ formatKcal(macrosOfItem(item).kcal) }}</span>
+            <span class="text-caption text-muted">kcal</span>
+          </span>
           <UButton
             icon="i-lucide-x"
-            size="xs"
+            size="sm"
             color="neutral"
             variant="ghost"
             square
+            class="app-hit text-dimmed"
             :aria-label="`Remove ${item.label}`"
             @click="drop(item)"
           />
         </div>
-        <div class="flex items-baseline justify-between px-3 py-2 text-xs">
-          <span class="text-muted">Total</span>
-          <span class="font-semibold tabular-nums text-highlighted">{{ formatKcal(totals.kcal) }} kcal</span>
+        <div class="flex items-baseline justify-between bg-elevated/50 px-3 py-2.5">
+          <span class="text-sm font-semibold text-default">Total</span>
+          <span class="text-sm font-bold text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }} kcal</span>
         </div>
       </div>
 
       <div
         v-if="unknown.length"
-        class="flex flex-col gap-1.5 rounded-xl bg-warning/10 px-3 py-2"
+        class="flex flex-col gap-1 rounded-tile bg-warning/10 px-3.5 py-3"
       >
-        <span class="text-[11px] font-semibold uppercase tracking-wide text-warning">Not recognised</span>
+        <span class="app-eyebrow text-warning">Not recognised</span>
         <div
           v-for="chunk in unknown"
           :key="chunk"
-          class="flex items-center gap-2 text-sm"
+          class="flex items-center gap-2"
         >
-          <span class="min-w-0 flex-1 truncate text-default">{{ chunk }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-default">{{ chunk }}</span>
           <UButton
             label="Keep as written"
-            size="xs"
+            size="sm"
             color="neutral"
             variant="ghost"
             @click="keepAsWritten(chunk)"
@@ -431,7 +423,7 @@ const dictationNote = computed(() => {
 
       <p
         v-if="!items.length && !unknown.length && !reading && words.trim()"
-        class="text-xs text-muted"
+        class="text-sm text-muted"
       >
         Tap “Read it again” to find the foods — or save the words as they are and count them later.
       </p>
@@ -440,13 +432,15 @@ const dictationNote = computed(() => {
         <UButton
           label="Discard"
           color="neutral"
-          variant="outline"
+          variant="ghost"
+          size="lg"
           :disabled="saving"
           @click="discard"
         />
         <UButton
           :label="items.length ? `Add to ${slotLabel(slot)}` : 'Save for later'"
           icon="i-lucide-check"
+          size="lg"
           class="flex-1 justify-center"
           :loading="saving"
           :disabled="!canSave"

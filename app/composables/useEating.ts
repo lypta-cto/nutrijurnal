@@ -585,13 +585,10 @@ export const MEAL_COLUMNS = 'grid items-center gap-x-3 grid-cols-[2.75rem_minmax
 export const ITEM_COLUMNS = 'grid items-center gap-x-2 gap-y-1 grid-cols-[3.75rem_6rem_minmax(0,1fr)_2rem]'
 
 /**
- * The drafted-items table inside the meal form: amount, unit and name on the
- * line, the macros right under them in a fixed grid of their own.
+ * The plate inside the meal form, read the way Today reads an open meal:
+ * the name across with ✕ at the end, then amount · unit · what it comes to.
  */
-export const DRAFT_COLUMNS = 'grid items-center gap-x-2 grid-cols-[3.5rem_4.5rem_minmax(0,1fr)_1.75rem]'
-
-/** The macro strip under a drafted row, and the heading that sits over it */
-export const DRAFT_MACRO_COLUMNS = 'grid gap-x-2 grid-cols-[2.75rem_2.75rem_2.75rem_4rem] text-right tabular-nums'
+export const DRAFT_COLUMNS = 'grid items-center gap-x-2 gap-y-1 grid-cols-[3.75rem_6rem_minmax(0,1fr)_2rem]'
 
 /** "4 servings", "12 pieces" — what the whole recipe makes */
 export function servingsLabel(recipe: Pick<Recipe, 'servings' | 'serving_unit'>): string {

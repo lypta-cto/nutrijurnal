@@ -39,6 +39,12 @@ const PORTIONS: { unit: Unit, label: string, hint: string }[] = [
   { unit: 'slice', label: 'Slice', hint: 'one slice of bread' }
 ]
 
+/** What the numbers below are per: 100 g of a solid, 100 ml of a drink */
+const BASE_UNITS: { value: 'g' | 'ml', label: string }[] = [
+  { value: 'g', label: 'Grams' },
+  { value: 'ml', label: 'Millilitres' }
+]
+
 const form = reactive({
   name: '',
   brand: '',
@@ -78,11 +84,11 @@ watch(open, (isOpen) => {
 }, { immediate: true })
 
 // One colour per macro, the same as the scoreboard and every diary row
-const macroFields: { key: 'kcal' | 'protein' | 'carbs' | 'fat', label: string, dot: string }[] = [
-  { key: 'kcal', label: 'kcal', dot: 'bg-emerald-500' },
-  { key: 'protein', label: 'Protein', dot: 'bg-sky-500' },
-  { key: 'carbs', label: 'Carbs', dot: 'bg-violet-500' },
-  { key: 'fat', label: 'Fat', dot: 'bg-amber-500' }
+const macroFields: { key: 'kcal' | 'protein' | 'carbs' | 'fat', label: string, unit: string, dot: string }[] = [
+  { key: 'kcal', label: 'Kcal', unit: 'kcal', dot: 'bg-kcal' },
+  { key: 'protein', label: 'Protein', unit: 'g', dot: 'bg-protein' },
+  { key: 'carbs', label: 'Carbs', unit: 'g', dot: 'bg-carbs' },
+  { key: 'fat', label: 'Fat', unit: 'g', dot: 'bg-fat' }
 ]
 
 const payload = computed<FoodPayload>(() => {
@@ -174,81 +180,96 @@ async function remove() {
   >
     <template #body>
       <div
-        class="flex flex-col gap-4"
+        class="flex flex-col gap-5"
         @keydown.meta.enter.prevent="save"
         @keydown.ctrl.enter.prevent="save"
       >
-        <UFormField label="Name">
-          <UInput
-            v-model="form.name"
-            placeholder="What it is called on the packet"
-            class="w-full"
-            autofocus
-          />
-        </UFormField>
-        <UFormField
-          label="Brand"
-          hint="optional"
-        >
-          <UInput
-            v-model="form.brand"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Measured in"
-          :hint="`macros below are per 100 ${form.base_unit}`"
-        >
-          <div class="flex w-max items-center gap-0.5 rounded-lg bg-elevated/70 p-0.5">
-            <button
-              v-for="unit in (['g', 'ml'] as const)"
-              :key="unit"
-              type="button"
-              class="rounded-md px-4 py-1.5 text-xs font-medium transition-colors"
-              :class="form.base_unit === unit ? 'bg-default text-highlighted shadow-sm' : 'text-muted hover:text-default'"
-              :aria-pressed="form.base_unit === unit"
-              @click="form.base_unit = unit"
-            >
-              {{ unit }}
-            </button>
-          </div>
-        </UFormField>
-
-        <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-4">
+          <UFormField label="Name">
+            <UInput
+              v-model="form.name"
+              placeholder="What it is called on the packet"
+              class="w-full"
+              autofocus
+            />
+          </UFormField>
           <UFormField
-            v-for="field in macroFields"
-            :key="field.key"
+            label="Brand"
+            hint="optional"
           >
-            <template #label>
-              <span class="flex items-center gap-1.5">
+            <UInput
+              v-model="form.brand"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+
+        <section
+          class="flex flex-col gap-3"
+          aria-labelledby="food-form-per-100"
+        >
+          <div class="flex items-center gap-3 px-1">
+            <h3
+              id="food-form-per-100"
+              class="app-eyebrow min-w-0 flex-1"
+            >
+              Per 100 {{ form.base_unit }}
+            </h3>
+            <ShellSegmented
+              v-model="form.base_unit"
+              label="Measured in"
+              size="sm"
+              :options="BASE_UNITS"
+              class="w-52 shrink-0"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField
+              v-for="field in macroFields"
+              :key="field.key"
+              :ui="{ label: 'flex items-center gap-1.5' }"
+            >
+              <template #label>
                 <span
                   class="size-2 rounded-full"
                   :class="field.dot"
                 />
                 {{ field.label }}
-              </span>
-            </template>
-            <UInput
-              v-model.number="form[field.key]"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="0.1"
-              class="w-full"
-              :ui="{ base: 'tabular-nums text-right' }"
-            />
-          </UFormField>
-        </div>
+              </template>
+              <UInput
+                v-model.number="form[field.key]"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.1"
+                class="w-full"
+                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+              >
+                <template #trailing>
+                  <span class="text-xs text-dimmed">{{ field.unit }}</span>
+                </template>
+              </UInput>
+            </UFormField>
+          </div>
+        </section>
 
-        <div class="flex flex-col gap-2">
-          <span class="text-[10px] font-semibold uppercase tracking-wide text-dimmed">Portions — grams each</span>
+        <section
+          class="flex flex-col gap-3"
+          aria-labelledby="food-form-portions"
+        >
+          <h3
+            id="food-form-portions"
+            class="app-eyebrow px-1"
+          >
+            Portions — grams each
+          </h3>
           <div class="grid grid-cols-2 gap-3">
             <UFormField
               v-for="portion in PORTIONS"
               :key="portion.unit"
               :label="portion.label"
-              :hint="portion.hint"
+              :help="portion.hint"
             >
               <UInput
                 v-model.number="portions[portion.unit]"
@@ -258,22 +279,28 @@ async function remove() {
                 step="1"
                 placeholder="—"
                 class="w-full"
-                :ui="{ base: 'tabular-nums' }"
-              />
+                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+              >
+                <template #trailing>
+                  <span class="text-xs text-dimmed">g</span>
+                </template>
+              </UInput>
             </UFormField>
           </div>
-        </div>
+        </section>
 
         <p
           v-if="barcode"
-          class="flex items-center gap-1.5 text-xs text-muted"
+          class="flex items-start gap-2 rounded-tile bg-elevated/70 px-3.5 py-3 text-xs text-muted"
         >
           <UIcon
             name="i-lucide-barcode"
-            class="size-3.5"
+            class="mt-px size-4 shrink-0 text-toned"
           />
-          <span class="tabular-nums">{{ barcode }}</span>
-          <span class="text-dimmed">— saved with the food, so the next scan finds it</span>
+          <span>
+            <span class="font-semibold text-default tabular-nums">{{ barcode }}</span>
+            — saved with the food, so the next scan finds it.
+          </span>
         </p>
       </div>
     </template>
@@ -282,28 +309,31 @@ async function remove() {
       <div class="flex w-full items-center gap-2">
         <UButton
           v-if="editing"
-          label="Remove"
           icon="i-lucide-trash-2"
           color="error"
           variant="ghost"
+          square
+          size="lg"
+          aria-label="Remove the food"
           :disabled="saving"
           @click="remove"
         />
-        <div class="ml-auto flex gap-2">
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="outline"
-            :disabled="saving"
-            @click="open = false"
-          />
-          <UButton
-            :label="editing ? 'Save food' : 'Add food'"
-            :loading="saving"
-            :disabled="!payload.name"
-            @click="save"
-          />
-        </div>
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          :disabled="saving"
+          @click="open = false"
+        />
+        <UButton
+          :label="editing ? 'Save food' : 'Add food'"
+          size="lg"
+          class="flex-1 justify-center"
+          :loading="saving"
+          :disabled="!payload.name"
+          @click="save"
+        />
       </div>
     </template>
   </UDrawer>

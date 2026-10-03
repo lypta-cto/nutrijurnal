@@ -3,12 +3,10 @@ import type { Food, Macros, Meal, MealItemPayload, MealTab, Recipe, ScanResult, 
 import {
   DRAFT_COLUMNS,
   SLOTS,
-  DRAFT_MACRO_COLUMNS,
   UNIT_ITEMS,
   amountLabel,
   formatGrams,
   formatKcal,
-  formatMacro,
   gramsFor,
   macrosFromFood,
   macrosOf,
@@ -285,11 +283,11 @@ const direct = reactive({
   fat: undefined as number | undefined
 })
 
-const DIRECT_FIELDS: { key: 'kcal' | 'protein' | 'carbs' | 'fat', label: string, dot: string }[] = [
-  { key: 'kcal', label: 'kcal', dot: 'bg-emerald-500' },
-  { key: 'protein', label: 'Protein g', dot: 'bg-sky-500' },
-  { key: 'carbs', label: 'Carbs g', dot: 'bg-violet-500' },
-  { key: 'fat', label: 'Fat g', dot: 'bg-amber-500' }
+const DIRECT_FIELDS: { key: 'kcal' | 'protein' | 'carbs' | 'fat', label: string, unit: string, dot: string }[] = [
+  { key: 'kcal', label: 'Kcal', unit: 'kcal', dot: 'bg-kcal' },
+  { key: 'protein', label: 'Protein', unit: 'g', dot: 'bg-protein' },
+  { key: 'carbs', label: 'Carbs', unit: 'g', dot: 'bg-carbs' },
+  { key: 'fat', label: 'Fat', unit: 'g', dot: 'bg-fat' }
 ]
 
 function addDirect() {
@@ -692,11 +690,11 @@ async function save() {
   }
 }
 
-const NATIVE_INPUT = 'w-full rounded-md border border-default bg-default px-2 py-1.5 text-sm text-default focus:outline-primary'
-
 /** The amount cell reads like a ledger number, not like a form field */
-const AMOUNT_UI = { base: 'tabular-nums px-1.5 text-right' }
-const UNIT_UI = { base: 'px-1.5' }
+const AMOUNT_UI = { base: 'tabular-nums px-2 text-right' }
+
+/** A list inside the sheet: a group of rows with hairlines, no card around it */
+const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default'
 </script>
 
 <template>
@@ -718,7 +716,7 @@ const UNIT_UI = { base: 'px-1.5' }
         <input
           v-model="form.day"
           type="date"
-          :class="NATIVE_INPUT"
+          class="app-field"
           aria-label="Day"
         >
       </UFormField>
@@ -729,7 +727,7 @@ const UNIT_UI = { base: 'px-1.5' }
         <input
           v-model="form.at"
           type="time"
-          :class="NATIVE_INPUT"
+          class="app-field"
           aria-label="Time"
         >
       </UFormField>
@@ -737,24 +735,12 @@ const UNIT_UI = { base: 'px-1.5' }
         label="Meal"
         class="col-span-2"
       >
-        <div
-          class="grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1"
-          role="radiogroup"
-          aria-label="Meal"
-        >
-          <UButton
-            v-for="entry in SLOTS"
-            :key="entry.value"
-            :label="entry.label"
-            size="sm"
-            role="radio"
-            :aria-checked="form.slot === entry.value"
-            class="justify-center rounded-lg"
-            :color="form.slot === entry.value ? 'primary' : 'neutral'"
-            :variant="form.slot === entry.value ? 'solid' : 'ghost'"
-            @click="form.slot = entry.value"
-          />
-        </div>
+        <ShellSegmented
+          v-model="form.slot"
+          label="Meal"
+          size="sm"
+          :options="SLOTS.map(entry => ({ value: entry.value, label: entry.label }))"
+        />
       </UFormField>
       <UFormField
         label="Name"
@@ -770,19 +756,24 @@ const UNIT_UI = { base: 'px-1.5' }
     </div>
 
     <!-- Five ways in -->
-    <div class="grid grid-cols-5 gap-0.5 rounded-lg bg-elevated/70 p-0.5">
+    <div
+      class="grid grid-cols-5 gap-1 rounded-tile bg-elevated p-1"
+      role="group"
+      aria-label="How to add"
+    >
       <button
         v-for="entry in TABS"
         :key="entry.value"
         type="button"
-        class="flex flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[11px] font-medium transition-colors"
-        :class="tab === entry.value ? 'bg-default text-highlighted shadow-sm' : 'text-muted hover:text-default'"
+        class="flex min-w-0 flex-col items-center gap-0.5 rounded-xl py-2 text-caption font-semibold outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
+        :class="tab === entry.value ? 'bg-default text-highlighted shadow-card ring-1 ring-default' : 'text-muted active:bg-default/60'"
         :aria-pressed="tab === entry.value"
         @click="tab = entry.value"
       >
         <UIcon
           :name="entry.icon"
-          class="size-4"
+          class="size-5"
+          :class="tab === entry.value ? 'text-primary' : ''"
         />
         {{ entry.label }}
       </button>
@@ -791,7 +782,7 @@ const UNIT_UI = { base: 'px-1.5' }
     <!-- SEARCH -->
     <div
       v-if="tab === 'search'"
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-3"
     >
       <UInput
         v-model="searchQuery"
@@ -803,21 +794,22 @@ const UNIT_UI = { base: 'px-1.5' }
       />
       <div
         v-if="results.length && !pending"
-        class="flex max-h-72 flex-col divide-y divide-default overflow-y-auto rounded-lg border border-default"
+        class="max-h-72 overflow-y-auto"
+        :class="GROUP"
       >
         <button
           v-for="food in results"
           :key="food.id"
           type="button"
-          class="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-elevated/60"
+          class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
           @click="choose(food)"
         >
           <span class="flex min-w-0 flex-1 flex-col">
-            <span class="flex min-w-0 items-baseline gap-2">
-              <span class="truncate text-sm font-medium text-highlighted">{{ food.name }}</span>
+            <span class="flex min-w-0 items-center gap-2">
+              <span class="truncate text-body font-semibold text-highlighted">{{ food.name }}</span>
               <span
                 v-if="food.mine"
-                class="shrink-0 rounded-md bg-elevated px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-dimmed"
+                class="shrink-0 rounded-full bg-elevated px-2 py-0.5 text-micro font-semibold tracking-wide text-muted uppercase"
               >Mine</span>
             </span>
             <span
@@ -825,31 +817,34 @@ const UNIT_UI = { base: 'px-1.5' }
               class="truncate text-xs text-muted"
             >{{ food.brand }}</span>
           </span>
-          <span class="shrink-0 text-right text-xs tabular-nums text-muted">
-            <span class="font-medium text-highlighted">{{ formatKcal(food.kcal) }}</span> kcal
-            <span class="block text-[10px] text-dimmed">per 100 {{ food.base_unit }}</span>
+          <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
+            <span class="text-body font-semibold text-highlighted">{{ formatKcal(food.kcal) }}</span>
+            <span class="text-caption text-muted">/100 {{ food.base_unit }}</span>
           </span>
         </button>
       </div>
-      <div
+      <ShellEmpty
         v-else-if="searchQuery.trim() && !searching && !pending"
-        class="flex flex-wrap items-center gap-2 rounded-lg bg-elevated/50 px-3 py-2 text-sm"
+        compact
+        icon="i-lucide-search-x"
+        title="Not in the pantry yet"
+        description="Add it once and it is yours."
+        class="rounded-tile bg-elevated/60"
       >
-        <span class="min-w-0 flex-1 text-muted">Not in the pantry yet.</span>
         <UButton
           label="New food"
           icon="i-lucide-plus"
-          size="xs"
+          size="sm"
           variant="soft"
           @click="createFoodFor(searchQuery.trim())"
         />
-      </div>
+      </ShellEmpty>
     </div>
 
     <!-- TYPE -->
     <div
       v-else-if="tab === 'type'"
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-3"
     >
       <UTextarea
         v-model="quickText"
@@ -860,11 +855,13 @@ const UNIT_UI = { base: 'px-1.5' }
         :disabled="parsing"
         @keydown.enter.exact.prevent="parseQuick"
       />
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-muted">
+      <div class="flex items-start gap-3">
+        <p class="text-xs text-muted">
           Read finds the foods in the line — they land below, editable.
-          <template v-if="!filling">Or save it as written and count it later.</template>
-        </span>
+          <template v-if="!filling">
+            Or save it as written and count it later.
+          </template>
+        </p>
         <UButton
           label="Read"
           icon="i-lucide-wand-sparkles"
@@ -880,18 +877,18 @@ const UNIT_UI = { base: 'px-1.5' }
       <!-- What it could not place -->
       <div
         v-if="unresolved.length"
-        class="flex flex-col gap-1.5 rounded-lg bg-amber-400/10 px-3 py-2"
+        class="flex flex-col gap-1 rounded-tile bg-warning/10 px-3.5 py-3"
       >
-        <span class="text-[10px] font-semibold uppercase tracking-wide text-warning">Not recognised</span>
+        <span class="app-eyebrow text-warning">Not recognised</span>
         <div
           v-for="chunk in unresolved"
           :key="chunk"
-          class="flex flex-wrap items-center gap-2 text-sm"
+          class="flex flex-wrap items-center gap-x-2 gap-y-1"
         >
-          <span class="min-w-0 flex-1 truncate text-default">{{ chunk }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-default">{{ chunk }}</span>
           <UButton
             label="Keep as written"
-            size="xs"
+            size="sm"
             color="neutral"
             variant="ghost"
             @click="keepAsWritten(chunk)"
@@ -899,7 +896,7 @@ const UNIT_UI = { base: 'px-1.5' }
           <UButton
             label="New food"
             icon="i-lucide-plus"
-            size="xs"
+            size="sm"
             variant="soft"
             @click="createFoodFor(chunk)"
           />
@@ -910,7 +907,7 @@ const UNIT_UI = { base: 'px-1.5' }
     <!-- RECIPE -->
     <div
       v-else-if="tab === 'recipe'"
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-3"
     >
       <template v-if="!picked">
         <UInput
@@ -919,61 +916,70 @@ const UNIT_UI = { base: 'px-1.5' }
           placeholder="Search your recipes…"
           class="w-full"
         />
-        <p
+        <ShellSkeleton
           v-if="recipesLoading"
-          class="text-xs text-muted"
-        >
-          Looking…
-        </p>
-        <p
+          variant="rows"
+          :count="2"
+          :class="GROUP"
+        />
+        <ShellEmpty
           v-else-if="!recipes.length"
-          class="text-xs text-muted"
-        >
-          {{ recipeQuery ? 'Nothing found.' : 'No recipes yet — write your first one in the Library.' }}
-        </p>
+          compact
+          icon="i-lucide-book-open"
+          :title="recipeQuery ? 'Nothing found' : 'No recipes yet'"
+          :description="recipeQuery ? 'Try another word from its name.' : 'Write your first one in the Library.'"
+          class="rounded-tile bg-elevated/60"
+        />
         <div
           v-else
-          class="flex max-h-64 flex-col divide-y divide-default overflow-y-auto rounded-lg border border-default"
+          class="max-h-64 overflow-y-auto"
+          :class="GROUP"
         >
           <button
             v-for="recipe in recipes"
             :key="recipe.id"
             type="button"
-            class="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-elevated/60"
+            class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
             @click="pickRecipe(recipe)"
           >
             <span class="flex min-w-0 flex-1 flex-col">
-              <span class="truncate text-sm font-medium text-highlighted">{{ recipe.title }}</span>
-              <span class="truncate text-[11px] text-muted">
+              <span class="truncate text-body font-semibold text-highlighted">{{ recipe.title }}</span>
+              <span class="truncate text-xs text-muted">
                 <template v-if="recipe.subtitle">{{ recipe.subtitle }} · </template>{{ servingsLabel(recipe) }}
               </span>
             </span>
-            <span class="w-14 shrink-0 text-right text-xs font-medium tabular-nums text-highlighted">
-              {{ formatKcal(!recipe.items.length && recipe.stated ? recipe.stated.kcal : recipe.kcal) }}
+            <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
+              <span class="text-body font-semibold text-highlighted">{{ formatKcal(!recipe.items.length && recipe.stated ? recipe.stated.kcal : recipe.kcal) }}</span>
+              <span class="text-caption text-muted">kcal</span>
             </span>
           </button>
         </div>
       </template>
 
       <template v-else>
-        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-elevated/50 px-3 py-2">
-          <UIcon
-            name="i-lucide-book-open"
-            class="size-4 shrink-0 text-muted"
-          />
-          <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ picked.title }}</span>
-          <span class="shrink-0 text-[11px] tabular-nums text-dimmed">makes {{ servingsLabel(picked) }}</span>
+        <div class="flex items-center gap-3 rounded-tile bg-elevated/70 py-2.5 pr-2 pl-3.5">
+          <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
+            <UIcon
+              name="i-lucide-book-open"
+              class="size-4.5"
+            />
+          </span>
+          <span class="flex min-w-0 flex-1 flex-col">
+            <span class="truncate text-body font-semibold text-highlighted">{{ picked.title }}</span>
+            <span class="text-xs text-muted tabular-nums">makes {{ servingsLabel(picked) }}</span>
+          </span>
           <UButton
             icon="i-lucide-x"
-            size="xs"
+            size="sm"
             color="neutral"
             variant="ghost"
             square
+            class="app-hit"
             aria-label="Pick another recipe"
             @click="clearRecipe"
           />
         </div>
-        <div class="flex flex-wrap items-end gap-3">
+        <div class="grid grid-cols-[7rem_minmax(0,1fr)] items-end gap-3">
           <UFormField
             :label="picked.serving_unit === 'piece' ? 'Pieces eaten' : 'Servings eaten'"
             :hint="`of ${picked.servings}`"
@@ -984,11 +990,11 @@ const UNIT_UI = { base: 'px-1.5' }
               inputmode="decimal"
               min="0.25"
               step="0.25"
-              class="w-28"
+              class="w-full"
               :ui="AMOUNT_UI"
             />
           </UFormField>
-          <p class="pb-1 text-[11px] text-muted">
+          <p class="pb-1 text-xs text-muted">
             Corrections below go onto this meal only — the recipe stays as it is.
           </p>
         </div>
@@ -998,7 +1004,7 @@ const UNIT_UI = { base: 'px-1.5' }
     <!-- SCAN -->
     <div
       v-else-if="tab === 'scan'"
-      class="flex flex-col gap-2"
+      class="flex flex-col gap-3"
     >
       <BarcodeScanner
         v-if="!scan || scan.food"
@@ -1010,7 +1016,8 @@ const UNIT_UI = { base: 'px-1.5' }
         label="Scan another"
         icon="i-lucide-scan-barcode"
         color="neutral"
-        variant="subtle"
+        variant="soft"
+        size="lg"
         block
         @click="rescan"
       />
@@ -1018,9 +1025,9 @@ const UNIT_UI = { base: 'px-1.5' }
       <!-- No food behind the barcode: say so, and offer to add it once -->
       <div
         v-if="scan && !scan.food"
-        class="flex flex-col gap-2 rounded-lg bg-amber-400/10 p-3"
+        class="flex flex-col gap-2 rounded-tile bg-warning/10 px-3.5 py-3"
       >
-        <p class="flex items-start gap-1.5 text-sm text-default">
+        <p class="flex items-start gap-2 text-sm text-default">
           <UIcon
             name="i-lucide-circle-help"
             class="mt-0.5 size-4 shrink-0 text-warning"
@@ -1029,7 +1036,7 @@ const UNIT_UI = { base: 'px-1.5' }
         </p>
         <p
           v-if="scan.barcode"
-          class="flex items-center gap-1.5 text-xs text-muted"
+          class="flex items-center gap-1.5 pl-6 text-xs text-muted"
         >
           <UIcon
             name="i-lucide-barcode"
@@ -1041,9 +1048,9 @@ const UNIT_UI = { base: 'px-1.5' }
           v-if="scan.barcode"
           label="Add it from the label"
           icon="i-lucide-plus"
-          size="xs"
+          size="sm"
           variant="soft"
-          class="self-start"
+          class="ml-6 self-start"
           @click="createScannedFood"
         />
       </div>
@@ -1061,19 +1068,18 @@ const UNIT_UI = { base: 'px-1.5' }
           class="w-full"
         />
       </UFormField>
-      <div class="grid grid-cols-4 gap-2">
+      <div class="grid grid-cols-2 gap-3">
         <UFormField
           v-for="field in DIRECT_FIELDS"
           :key="field.key"
+          :ui="{ label: 'flex items-center gap-1.5' }"
         >
           <template #label>
-            <span class="flex items-center gap-1 text-xs">
-              <span
-                class="size-2 rounded-full"
-                :class="field.dot"
-              />
-              {{ field.label }}
-            </span>
+            <span
+              class="size-2 rounded-full"
+              :class="field.dot"
+            />
+            {{ field.label }}
           </template>
           <UInput
             v-model.number="direct[field.key]"
@@ -1083,14 +1089,18 @@ const UNIT_UI = { base: 'px-1.5' }
             step="1"
             placeholder="—"
             class="w-full"
-            :ui="AMOUNT_UI"
-          />
+            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="text-xs text-dimmed">{{ field.unit }}</span>
+            </template>
+          </UInput>
         </UFormField>
       </div>
       <UButton
-        label="Add"
+        label="Put it on the plate"
         icon="i-lucide-plus"
-        size="sm"
+        variant="soft"
         class="self-end"
         :disabled="!direct.kcal || direct.kcal <= 0"
         @click="addDirect"
@@ -1100,43 +1110,36 @@ const UNIT_UI = { base: 'px-1.5' }
     <!-- A food picked from the pantry or off a barcode, waiting for its amount -->
     <div
       v-if="pending && (tab === 'search' || tab === 'scan')"
-      class="flex flex-col gap-2 rounded-lg bg-elevated/50 p-3 ring-1 ring-success/30 ring-inset"
+      class="flex flex-col gap-3 rounded-tile bg-primary/6 p-3.5 border border-primary/20"
     >
       <div class="flex items-center gap-2">
         <UIcon
           name="i-lucide-badge-check"
-          class="size-4 shrink-0 text-success"
+          class="size-5 shrink-0 text-primary"
         />
-        <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ pending.name }}</span>
-        <span
-          v-if="pending.brand"
-          class="shrink-0 truncate text-xs text-muted"
-        >{{ pending.brand }}</span>
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="truncate text-body font-semibold text-highlighted">{{ pending.name }}</span>
+          <span class="flex items-baseline gap-2 text-caption text-muted">
+            <span
+              v-if="pending.brand"
+              class="truncate"
+            >{{ pending.brand }} ·</span>
+            <span class="shrink-0 tabular-nums">{{ formatKcal(pending.kcal) }} kcal / 100 {{ pending.base_unit }}</span>
+          </span>
+        </span>
         <UButton
           icon="i-lucide-x"
-          size="xs"
+          size="sm"
           color="neutral"
           variant="ghost"
           square
+          class="app-hit"
           aria-label="Pick another food"
           @click="pending = null"
         />
       </div>
 
-      <div class="flex items-baseline gap-2 text-[11px]">
-        <span class="text-dimmed">per 100 {{ pending.base_unit }}</span>
-        <span
-          class="ml-auto"
-          :class="DRAFT_MACRO_COLUMNS"
-        >
-          <span class="text-sky-500">{{ formatMacro(pending.protein) }}</span>
-          <span class="text-violet-500">{{ formatMacro(pending.carbs) }}</span>
-          <span class="text-amber-500">{{ formatMacro(pending.fat) }}</span>
-          <span class="text-muted">{{ formatKcal(pending.kcal) }}</span>
-        </span>
-      </div>
-
-      <div class="flex items-end gap-2">
+      <div class="grid grid-cols-[5rem_7rem_minmax(0,1fr)] items-end gap-2">
         <UFormField label="How much">
           <UInput
             v-model.number="pendingQuantity"
@@ -1144,7 +1147,7 @@ const UNIT_UI = { base: 'px-1.5' }
             inputmode="decimal"
             min="0"
             step="1"
-            class="w-24"
+            class="w-full"
             :ui="AMOUNT_UI"
           />
         </UFormField>
@@ -1152,168 +1155,158 @@ const UNIT_UI = { base: 'px-1.5' }
           v-model="pendingUnit"
           :items="pendingUnits"
           value-key="value"
-          class="w-28"
+          class="w-full"
           aria-label="Unit"
         />
         <UButton
           label="Add"
           icon="i-lucide-plus"
-          class="ml-auto"
+          class="justify-center"
           @click="addPending"
         />
       </div>
 
       <div
         v-if="pendingMacros"
-        class="flex items-baseline gap-2 border-t border-default pt-2 text-[11px]"
+        class="flex items-baseline justify-between gap-2 border-t border-primary/15 pt-2.5"
       >
-        <span class="font-medium text-default">on the plate</span>
-        <span
-          class="ml-auto"
-          :class="DRAFT_MACRO_COLUMNS"
-        >
-          <span class="text-sky-500">{{ formatMacro(pendingMacros.protein) }}</span>
-          <span class="text-violet-500">{{ formatMacro(pendingMacros.carbs) }}</span>
-          <span class="text-amber-500">{{ formatMacro(pendingMacros.fat) }}</span>
-          <span class="font-semibold text-emerald-500">{{ formatKcal(pendingMacros.kcal) }}</span>
-        </span>
+        <ShellMacroLine
+          :macros="pendingMacros"
+          :kcal="false"
+          size="xs"
+        />
+        <span class="text-sm font-bold text-highlighted tabular-nums">{{ formatKcal(pendingMacros.kcal) }} kcal</span>
       </div>
     </div>
 
-    <!-- The plate, as it will be saved. Every tab lands here, on one grid:
-         amount, unit and name on the line, the macros right under them in
-         fixed columns so the whole table reads down. -->
-    <div
+    <!-- The plate, as it will be saved. Every tab lands here: the name across,
+         then amount · unit · what it comes to, the kcal down one column. -->
+    <section
       v-if="fromRecipe || tab !== 'recipe' || drafted.length"
-      class="flex flex-col overflow-hidden rounded-lg border border-default"
+      class="flex flex-col gap-2"
+      aria-labelledby="meal-form-plate"
     >
-      <div class="flex items-center gap-2 bg-elevated/50 px-3 py-1.5">
-        <span class="text-[10px] font-semibold uppercase tracking-wide text-dimmed">On the plate</span>
-        <span class="rounded-full bg-elevated px-2 py-0.5 text-[11px] font-semibold tabular-nums text-default">{{ drafted.length }}</span>
-        <span
-          class="ml-auto text-[10px] font-semibold uppercase tracking-wide text-dimmed"
-          :class="DRAFT_MACRO_COLUMNS"
+      <h3
+        id="meal-form-plate"
+        class="flex items-center gap-2 px-1"
+      >
+        <span class="app-eyebrow">On the plate</span>
+        <span class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums">{{ drafted.length }}</span>
+      </h3>
+
+      <div :class="GROUP">
+        <p
+          v-if="!drafted.length"
+          class="px-4 py-3.5 text-sm text-muted"
         >
-          <span>P</span>
-          <span>C</span>
-          <span>F</span>
-          <span>kcal</span>
-        </span>
-      </div>
+          {{ fromRecipe ? 'This recipe is counted by its stated numbers.' : 'Nothing on it yet — add a food above.' }}
+        </p>
 
-      <p
-        v-if="!drafted.length"
-        class="px-3 py-3 text-xs text-muted"
-      >
-        {{ fromRecipe ? 'This recipe is counted by its stated numbers.' : 'Nothing on it yet.' }}
-      </p>
-
-      <div
-        v-for="row in drafted"
-        :key="row.key"
-        class="border-t border-default px-3 py-1.5"
-        :class="DRAFT_COLUMNS"
-      >
-        <UInput
-          v-model.number="row.entry.quantity"
-          type="number"
-          inputmode="decimal"
-          min="0"
-          step="0.1"
-          size="xs"
-          class="w-full"
-          :ui="AMOUNT_UI"
-          :aria-label="`Amount of ${row.entry.label}`"
-        />
-        <span
-          v-if="row.direct"
-          class="px-1.5 text-xs text-muted"
-        >{{ unitLabel('serving', row.entry.quantity) }}</span>
-        <USelect
-          v-else
-          v-model="row.entry.unit"
-          :items="UNIT_ITEMS"
-          value-key="value"
-          size="xs"
-          class="w-full"
-          :ui="UNIT_UI"
-          :aria-label="`Unit for ${row.entry.label}`"
-        />
-        <UInput
-          v-model="row.entry.label"
-          size="xs"
-          variant="none"
-          placeholder="Name"
-          class="w-full"
-          :ui="{ root: 'w-full', base: 'px-0 text-sm text-highlighted' }"
-          :aria-label="`Name of ${row.entry.label}`"
-        />
-        <UButton
-          icon="i-lucide-x"
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          square
-          class="text-dimmed hover:text-error"
-          :aria-label="`Remove ${row.entry.label}`"
-          @click="removeRow(row)"
-        />
-
-        <!-- The numbers for this line, under it and right-aligned -->
-        <span class="col-span-4 flex items-baseline gap-2 text-[11px]">
-          <span class="min-w-0 flex-1 truncate text-dimmed">
-            <template v-if="row.scaled">→ {{ amountLabel(row.scaled.quantity, row.scaled.unit) }} · {{ formatGrams(row.scaled.grams) }}</template>
-            <template v-else-if="row.direct">typed in</template>
-            <template v-else-if="row.grams !== null">{{ formatGrams(row.grams) }}</template>
-            <template v-else>no weight</template>
-            <template v-if="row.optional"> · optional</template>
-          </span>
+        <div
+          v-for="row in drafted"
+          :key="row.key"
+          class="px-3 py-2.5"
+          :class="DRAFT_COLUMNS"
+        >
+          <UInput
+            v-model="row.entry.label"
+            variant="none"
+            placeholder="Name"
+            class="col-span-3 min-w-0"
+            :ui="{ root: 'w-full', base: 'px-1 py-1 text-body font-medium text-highlighted' }"
+            :aria-label="`Name of ${row.entry.label}`"
+          />
+          <UButton
+            icon="i-lucide-x"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            square
+            class="app-hit justify-self-end text-dimmed"
+            :aria-label="`Remove ${row.entry.label}`"
+            @click="removeRow(row)"
+          />
+          <UInput
+            v-model.number="row.entry.quantity"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.1"
+            size="sm"
+            class="w-full"
+            :ui="AMOUNT_UI"
+            :aria-label="`Amount of ${row.entry.label}`"
+          />
           <span
-            class="ml-auto"
-            :class="DRAFT_MACRO_COLUMNS"
-          >
-            <template v-if="row.macros">
-              <span class="text-sky-500">{{ formatMacro(row.macros.protein) }}</span>
-              <span class="text-violet-500">{{ formatMacro(row.macros.carbs) }}</span>
-              <span class="text-amber-500">{{ formatMacro(row.macros.fat) }}</span>
-              <span class="font-medium text-highlighted">{{ formatKcal(row.macros.kcal) }}</span>
-            </template>
-            <template v-else>
-              <span class="text-dimmed">—</span>
-              <span class="text-dimmed">—</span>
-              <span class="text-dimmed">—</span>
-              <span class="text-dimmed">—</span>
-            </template>
+            v-if="row.direct"
+            class="px-2 text-sm text-muted"
+          >{{ unitLabel('serving', row.entry.quantity) }}</span>
+          <USelect
+            v-else
+            v-model="row.entry.unit"
+            :items="UNIT_ITEMS"
+            value-key="value"
+            size="sm"
+            class="w-full"
+            :aria-label="`Unit for ${row.entry.label}`"
+          />
+          <!-- What this line comes to, right-aligned under the kcal column -->
+          <span class="col-span-2 flex min-w-0 flex-col items-end gap-0.5 text-right">
+            <span class="text-xs font-semibold text-highlighted tabular-nums">
+              <template v-if="row.macros">{{ formatKcal(row.macros.kcal) }} kcal</template>
+              <span
+                v-else
+                class="text-dimmed"
+              >—</span><span
+                v-if="row.grams !== null && !row.direct"
+                class="font-normal text-dimmed"
+              > · {{ formatGrams(row.grams) }}</span>
+            </span>
+            <ShellMacroLine
+              v-if="row.macros"
+              :macros="row.macros"
+              :kcal="false"
+              class="justify-end"
+            />
           </span>
-        </span>
-      </div>
+          <!-- Only when there is more to say than the grams above -->
+          <span
+            v-if="row.scaled || row.direct || row.optional || row.grams === null"
+            class="col-span-4 truncate px-1 text-caption text-dimmed tabular-nums"
+          >
+            <template v-if="row.scaled">→ {{ amountLabel(row.scaled.quantity, row.scaled.unit) }} on the plate</template>
+            <template v-else-if="row.direct">typed in</template>
+            <template v-else-if="row.grams === null">no weight</template>
+            <template v-if="row.optional">{{ row.scaled || row.direct || row.grams === null ? ' · ' : '' }}optional</template>
+          </span>
+        </div>
 
-      <!-- What the plate comes to, in the same columns as every line -->
-      <div
-        v-if="draftedTotals"
-        class="flex items-baseline gap-2 border-t border-default bg-elevated/30 px-3 py-1.5 text-[11px]"
-      >
-        <span class="font-medium text-default">
-          {{ fromRecipe ? 'The whole plate' : 'Total' }}
-        </span>
-        <span
-          class="ml-auto"
-          :class="DRAFT_MACRO_COLUMNS"
+        <!-- What the plate comes to -->
+        <div
+          v-if="draftedTotals"
+          class="flex items-center justify-between gap-3 bg-elevated/60 px-4 py-3"
         >
-          <span class="text-sky-500">{{ formatMacro(draftedTotals.protein) }}</span>
-          <span class="text-violet-500">{{ formatMacro(draftedTotals.carbs) }}</span>
-          <span class="text-amber-500">{{ formatMacro(draftedTotals.fat) }}</span>
-          <span class="font-semibold text-emerald-500">{{ formatKcal(draftedTotals.kcal) }}</span>
-        </span>
-      </div>
+          <span class="text-sm font-semibold text-default">
+            {{ fromRecipe ? 'The whole plate' : 'Total' }}
+          </span>
+          <span class="flex flex-col items-end gap-0.5">
+            <span class="text-body font-bold text-highlighted tabular-nums">{{ formatKcal(draftedTotals.kcal) }} kcal</span>
+            <ShellMacroLine
+              :macros="draftedTotals"
+              :kcal="false"
+              class="justify-end"
+            />
+          </span>
+        </div>
 
-      <p
-        v-if="!fromRecipe && unpriced > 0"
-        class="border-t border-default px-3 py-1.5 text-[11px] text-muted"
-      >
-        {{ unpriced }} {{ unpriced === 1 ? 'item counts' : 'items count' }} for nothing — no food behind {{ unpriced === 1 ? 'it' : 'them' }} yet.
-      </p>
-    </div>
+        <p
+          v-if="!fromRecipe && unpriced > 0"
+          class="px-4 py-2.5 text-xs text-muted"
+        >
+          {{ unpriced }} {{ unpriced === 1 ? 'item counts' : 'items count' }} for nothing — no food behind {{ unpriced === 1 ? 'it' : 'them' }} yet.
+        </p>
+      </div>
+    </section>
 
     <UFormField
       label="Note"
@@ -1322,6 +1315,7 @@ const UNIT_UI = { base: 'px-1.5' }
       <UTextarea
         v-model="form.note"
         :rows="2"
+        autoresize
         placeholder="Ate out, guessed the oil…"
         class="w-full"
       />
@@ -1336,31 +1330,30 @@ const UNIT_UI = { base: 'px-1.5' }
 
     <template #footer>
       <div class="flex w-full items-center gap-2">
-        <span
-          v-if="canSave"
-          class="text-xs tabular-nums text-muted"
+        <UButton
+          label="Cancel"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          :disabled="saving"
+          @click="open = false"
+        />
+        <UButton
+          type="submit"
+          form="form-sheet"
+          size="lg"
+          class="flex-1 justify-center"
+          :loading="saving"
+          :disabled="!canSave"
         >
-          <template v-if="draftedTotals">{{ formatKcal(draftedTotals.kcal) }} kcal</template>
-          <template v-else-if="noteOnly">words only — numbers later</template>
-        </span>
-        <div class="ml-auto flex gap-2">
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="outline"
-            :disabled="saving"
-            @click="open = false"
-          />
-          <UButton
-            type="submit"
-            form="form-sheet"
-            :label="filling
-              ? (filling.items.length ? 'Save' : 'Count it')
-              : noteOnly ? 'Write it down' : 'Add meal'"
-            :loading="saving"
-            :disabled="!canSave"
-          />
-        </div>
+          {{ filling
+            ? (filling.items.length ? 'Save' : 'Count it')
+            : noteOnly ? 'Write it down' : 'Add meal' }}
+          <span
+            v-if="draftedTotals && canSave"
+            class="font-medium opacity-75 tabular-nums"
+          >· {{ formatKcal(draftedTotals.kcal) }} kcal</span>
+        </UButton>
       </div>
     </template>
   </FormSheet>

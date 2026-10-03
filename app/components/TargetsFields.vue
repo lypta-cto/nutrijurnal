@@ -11,10 +11,10 @@ const targets = defineModel<Targets>({ required: true })
 
 // The same colour per macro as the scoreboard and every diary row
 const FIELDS: { key: keyof Targets, label: string, unit: string, dot: string }[] = [
-  { key: 'target_kcal', label: 'Energy', unit: 'kcal', dot: 'bg-emerald-500' },
-  { key: 'target_protein', label: 'Protein', unit: 'g', dot: 'bg-sky-500' },
-  { key: 'target_carbs', label: 'Carbs', unit: 'g', dot: 'bg-violet-500' },
-  { key: 'target_fat', label: 'Fat', unit: 'g', dot: 'bg-amber-500' }
+  { key: 'target_kcal', label: 'Energy', unit: 'kcal', dot: 'bg-kcal' },
+  { key: 'target_protein', label: 'Protein', unit: 'g', dot: 'bg-protein' },
+  { key: 'target_carbs', label: 'Carbs', unit: 'g', dot: 'bg-carbs' },
+  { key: 'target_fat', label: 'Fat', unit: 'g', dot: 'bg-fat' }
 ]
 
 /** An emptied number input hands back '' or NaN — both mean "no target" */
@@ -34,20 +34,19 @@ function suggest() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-4">
     <div class="grid grid-cols-2 gap-3">
       <UFormField
         v-for="field in FIELDS"
         :key="field.key"
+        :ui="{ label: 'flex items-center gap-1.5' }"
       >
         <template #label>
-          <span class="flex items-center gap-1.5">
-            <span
-              class="size-2 rounded-full"
-              :class="field.dot"
-            />
-            {{ field.label }}
-          </span>
+          <span
+            class="size-2 rounded-full"
+            :class="field.dot"
+          />
+          {{ field.label }}
         </template>
         <UInput
           :model-value="targets[field.key] ?? undefined"
@@ -61,7 +60,7 @@ function suggest() {
           @update:model-value="value => set(field.key, value)"
         >
           <template #trailing>
-            <span class="text-xs text-dimmed">{{ field.unit }}</span>
+            <span class="text-sm text-dimmed">{{ field.unit }}</span>
           </template>
         </UInput>
       </UFormField>
@@ -70,9 +69,9 @@ function suggest() {
     <UButton
       label="Split the kcal into macros"
       icon="i-lucide-wand-sparkles"
-      size="xs"
+      size="sm"
       color="neutral"
-      variant="ghost"
+      variant="soft"
       class="self-start"
       :disabled="!targets.target_kcal"
       title="30 % protein, 40 % carbs, 30 % fat — a starting point to adjust"

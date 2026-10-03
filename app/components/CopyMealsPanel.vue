@@ -77,31 +77,43 @@ async function copy() {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1">
       <UButton
         icon="i-lucide-arrow-left"
         color="neutral"
         variant="ghost"
         square
+        class="-ml-2.5"
         aria-label="Back to the list"
         @click="emit('back')"
       />
-      <p class="font-semibold text-highlighted">
-        Copy from another day
-      </p>
+      <div class="min-w-0 flex-1">
+        <p class="text-headline font-semibold text-highlighted">
+          Copy from another day
+        </p>
+        <p class="text-xs text-muted">
+          Tick what was eaten again — it lands in the same meals.
+        </p>
+      </div>
     </div>
 
-    <div class="flex items-center gap-1">
+    <!-- The day to copy from: a step either way, or tap the date to pick one -->
+    <div class="flex items-center gap-2 rounded-full bg-elevated p-1">
       <UButton
         icon="i-lucide-chevron-left"
         color="neutral"
         variant="ghost"
         square
+        class="rounded-full"
         aria-label="The day before"
         @click="source = shiftDay(source, -1)"
       />
-      <label class="relative flex-1 cursor-pointer text-center">
-        <span class="text-sm font-medium text-highlighted">{{ dayLabel(source) }}</span>
+      <label class="relative flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-default text-sm font-semibold text-highlighted shadow-card has-focus-visible:ring-2 has-focus-visible:ring-primary">
+        <UIcon
+          name="i-lucide-calendar"
+          class="size-4 text-muted"
+        />
+        {{ dayLabel(source) }}
         <input
           :value="source"
           type="date"
@@ -115,56 +127,62 @@ async function copy() {
         color="neutral"
         variant="ghost"
         square
+        class="rounded-full"
         aria-label="The day after"
         @click="source = shiftDay(source, 1)"
       />
     </div>
 
-    <div
+    <ShellSkeleton
       v-if="loading"
-      class="flex flex-col gap-2"
-    >
-      <USkeleton
-        v-for="index in 3"
-        :key="index"
-        class="h-10 w-full"
-      />
-    </div>
-    <UEmpty
+      variant="rows"
+      :count="3"
+      class="overflow-hidden rounded-tile border border-default"
+    />
+    <ShellEmpty
       v-else-if="!meals.length"
       icon="i-lucide-calendar-x"
       title="Nothing written down that day"
-      description="Pick another day with the arrows or tap the date."
-      variant="naked"
-      size="sm"
+      description="Step to another day with the arrows, or tap the date."
     />
     <div
       v-else
-      class="flex flex-col gap-3"
+      class="flex flex-col gap-4"
     >
-      <div
+      <section
         v-for="group in grouped"
         :key="group.value"
-        class="flex flex-col gap-1"
+        class="flex flex-col gap-2"
       >
-        <span class="text-[11px] font-semibold uppercase tracking-wide text-dimmed">{{ group.plural }}</span>
-        <label
-          v-for="meal in group.meals"
-          :key="meal.id"
-          class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 active:bg-elevated"
-        >
-          <UCheckbox
-            :model-value="chosen.has(meal.id)"
-            :aria-label="`Copy ${meal.title}`"
-            @update:model-value="value => toggle(meal, value)"
+        <h3 class="app-eyebrow flex items-center gap-1.5 px-1">
+          <UIcon
+            :name="group.icon"
+            class="size-3.5"
           />
-          <span class="flex min-w-0 flex-1 flex-col">
-            <span class="truncate text-sm font-medium text-highlighted">{{ meal.title }}</span>
-            <span class="truncate text-[11px] text-muted">{{ meal.items.map(item => item.label).join(', ') || 'No items yet' }}</span>
-          </span>
-          <span class="shrink-0 text-xs font-medium tabular-nums text-default">{{ formatKcal(meal.kcal) }}</span>
-        </label>
-      </div>
+          {{ group.plural }}
+        </h3>
+        <div class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default">
+          <label
+            v-for="meal in group.meals"
+            :key="meal.id"
+            class="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-2.5 active:bg-elevated/70"
+          >
+            <UCheckbox
+              :model-value="chosen.has(meal.id)"
+              :aria-label="`Copy ${meal.title}`"
+              @update:model-value="value => toggle(meal, value)"
+            />
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate text-body font-semibold text-highlighted">{{ meal.title }}</span>
+              <span class="truncate text-xs text-muted">{{ meal.items.map(item => item.label).join(', ') || 'No items yet' }}</span>
+            </span>
+            <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
+              <span class="text-body font-semibold text-highlighted">{{ formatKcal(meal.kcal) }}</span>
+              <span class="text-caption text-muted">kcal</span>
+            </span>
+          </label>
+        </div>
+      </section>
     </div>
 
     <UButton

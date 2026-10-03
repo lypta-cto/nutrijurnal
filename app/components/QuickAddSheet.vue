@@ -426,293 +426,317 @@ const description = computed(() => {
     :ui="{ ...SHEET_UI, body: 'overflow-y-auto app-safe-bottom' }"
   >
     <template #body>
-      <VoiceMeal
-        v-if="panel === 'voice'"
-        :day="day"
-        :meal-slot="slot"
-        @saved="onSaved"
-      />
-
-      <FoodAmountPanel
-        v-else-if="panel === 'amount' && picked"
-        :key="picked.id"
-        :food="picked"
-        :meal-slot="slot"
-        :adding="adding"
-        @add="onAmount"
-        @back="panel = 'list'"
-      />
-
-      <QuickKcalPanel
-        v-else-if="panel === 'kcal'"
-        :meal-slot="slot"
-        :adding="adding"
-        @add="onKcal"
-        @back="panel = 'list'"
-      />
-
-      <div
-        v-else-if="panel === 'scan'"
-        class="flex flex-col gap-3"
+      <Transition
+        name="panel"
+        mode="out-in"
       >
-        <div class="flex items-center gap-2">
-          <UButton
-            icon="i-lucide-arrow-left"
-            color="neutral"
-            variant="ghost"
-            square
-            aria-label="Back to the list"
-            @click="panel = 'list'"
-          />
-          <p class="font-semibold text-highlighted">
-            Scan a barcode
-          </p>
-        </div>
-
-        <div
-          v-if="scanMiss"
-          class="flex flex-col gap-3"
-        >
-          <UAlert
-            color="warning"
-            variant="subtle"
-            icon="i-lucide-circle-help"
-            :title="scanMiss.barcode ? `No food for ${scanMiss.barcode} yet` : 'No barcode found'"
-            :description="scanMiss.message ?? undefined"
-          />
-          <UButton
-            v-if="scanMiss.barcode"
-            label="Add it from the label"
-            icon="i-lucide-plus"
-            size="lg"
-            block
-            @click="labelFormOpen = true"
-          />
-          <UButton
-            label="Scan another"
-            icon="i-lucide-scan-barcode"
-            color="neutral"
-            variant="subtle"
-            block
-            @click="scanAgain"
-          />
-        </div>
-        <BarcodeScanner
-          v-else
-          :key="scannerKey"
-          @result="onScan"
+        <VoiceMeal
+          v-if="panel === 'voice'"
+          key="voice"
+          :day="day"
+          :meal-slot="slot"
+          @saved="onSaved"
         />
 
-        <FoodForm
-          v-model:open="labelFormOpen"
-          :barcode="scanMiss?.barcode ?? null"
-          @saved="onLabelFood"
+        <FoodAmountPanel
+          v-else-if="panel === 'amount' && picked"
+          :key="`amount-${picked.id}`"
+          :food="picked"
+          :meal-slot="slot"
+          :adding="adding"
+          @add="onAmount"
+          @back="panel = 'list'"
         />
-      </div>
 
-      <CopyMealsPanel
-        v-else-if="panel === 'copy'"
-        :day="day"
-        @copied="onCopied"
-        @back="panel = 'list'"
-      />
+        <QuickKcalPanel
+          v-else-if="panel === 'kcal'"
+          key="kcal"
+          :meal-slot="slot"
+          :adding="adding"
+          @add="onKcal"
+          @back="panel = 'list'"
+        />
 
-      <div
-        v-else
-        class="flex flex-col gap-4"
-      >
-        <!-- Which slot it goes into -->
         <div
-          class="grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1"
-          role="radiogroup"
-          aria-label="Meal"
+          v-else-if="panel === 'scan'"
+          key="scan"
+          class="flex flex-col gap-4"
         >
-          <UButton
-            v-for="entry in SLOTS"
-            :key="entry.value"
-            :label="entry.label"
-            size="sm"
-            role="radio"
-            :aria-checked="slot === entry.value"
-            class="justify-center rounded-lg"
-            :color="slot === entry.value ? 'primary' : 'neutral'"
-            :variant="slot === entry.value ? 'solid' : 'ghost'"
-            @click="slot = entry.value"
-          />
-        </div>
-
-        <UInput
-          ref="searchInput"
-          v-model="query"
-          icon="i-lucide-search"
-          size="lg"
-          placeholder="Search foods — egg, oats, banana…"
-          class="w-full"
-          :loading="searching"
-          enterkeyhint="search"
-        >
-          <template
-            v-if="query"
-            #trailing
-          >
+          <div class="flex items-center gap-1">
             <UButton
-              icon="i-lucide-x"
-              size="xs"
+              icon="i-lucide-arrow-left"
               color="neutral"
-              variant="link"
-              aria-label="Clear the search"
-              @click="query = ''"
+              variant="ghost"
+              square
+              class="-ml-2.5"
+              aria-label="Back to the list"
+              @click="panel = 'list'"
             />
-          </template>
-        </UInput>
+            <p class="text-headline font-semibold text-highlighted">
+              Scan a barcode
+            </p>
+          </div>
 
-        <!-- Search results -->
-        <template v-if="query.trim()">
           <div
-            v-if="results.length"
-            class="-mx-2 flex flex-col divide-y divide-default"
+            v-if="scanMiss"
+            class="flex flex-col gap-3"
           >
-            <FoodRow
-              v-for="food in results"
-              :key="food.id"
-              :food="food"
-              @pick="pick"
-              @star="toggleStar"
+            <UAlert
+              color="warning"
+              variant="subtle"
+              icon="i-lucide-circle-help"
+              :title="scanMiss.barcode ? `No food for ${scanMiss.barcode} yet` : 'No barcode found'"
+              :description="scanMiss.message ?? undefined"
+            />
+            <UButton
+              v-if="scanMiss.barcode"
+              label="Add it from the label"
+              icon="i-lucide-plus"
+              size="lg"
+              block
+              @click="labelFormOpen = true"
+            />
+            <UButton
+              label="Scan another"
+              icon="i-lucide-scan-barcode"
+              color="neutral"
+              variant="soft"
+              size="lg"
+              block
+              @click="scanAgain"
             />
           </div>
-          <UEmpty
-            v-else-if="!searching"
-            icon="i-lucide-search-x"
-            title="Not in the pantry yet"
-            description="Add it once from the label, or log just the kcal."
-            variant="naked"
-            size="sm"
-            :actions="[
-              { label: 'Just the kcal', icon: 'i-lucide-flame', color: 'neutral', variant: 'subtle', onClick: () => { panel = 'kcal' } },
-              { label: 'Scan it', icon: 'i-lucide-scan-barcode', color: 'neutral', variant: 'subtle', onClick: () => { scanMiss = null; panel = 'scan' } }
-            ]"
+          <BarcodeScanner
+            v-else
+            :key="scannerKey"
+            @result="onScan"
           />
-        </template>
 
-        <template v-else>
-          <!-- Every other way in -->
-          <div class="grid grid-cols-6 gap-1">
-            <button
-              v-for="way in WAYS"
-              :key="way.label"
-              type="button"
-              class="flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium text-muted transition-colors active:bg-elevated"
-              @click="chooseWay(way)"
+          <FoodForm
+            v-model:open="labelFormOpen"
+            :barcode="scanMiss?.barcode ?? null"
+            @saved="onLabelFood"
+          />
+        </div>
+
+        <CopyMealsPanel
+          v-else-if="panel === 'copy'"
+          key="copy"
+          :day="day"
+          @copied="onCopied"
+          @back="panel = 'list'"
+        />
+
+        <div
+          v-else
+          key="list"
+          class="flex flex-col gap-4"
+        >
+          <!-- Which slot it goes into -->
+          <ShellSegmented
+            v-model="slot"
+            label="Meal"
+            size="sm"
+            :options="SLOTS.map(entry => ({ value: entry.value, label: entry.label }))"
+          />
+
+          <UInput
+            ref="searchInput"
+            v-model="query"
+            icon="i-lucide-search"
+            size="lg"
+            placeholder="Search foods — egg, oats, banana…"
+            class="w-full"
+            :loading="searching"
+            enterkeyhint="search"
+          >
+            <template
+              v-if="query"
+              #trailing
             >
-              <span class="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <UButton
+                icon="i-lucide-x"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                square
+                class="-mr-1.5 rounded-full"
+                aria-label="Clear the search"
+                @click="query = ''"
+              />
+            </template>
+          </UInput>
+
+          <!-- Search results -->
+          <template v-if="query.trim()">
+            <div
+              v-if="results.length"
+              class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+            >
+              <FoodRow
+                v-for="food in results"
+                :key="food.id"
+                :food="food"
+                @pick="pick"
+                @star="toggleStar"
+              />
+            </div>
+            <ShellSkeleton
+              v-else-if="searching"
+              variant="rows"
+              :count="3"
+              class="overflow-hidden rounded-tile border border-default"
+            />
+            <ShellEmpty
+              v-else
+              icon="i-lucide-search-x"
+              title="Not in the pantry yet"
+              description="Add it once from the label, or write down just the kcal."
+            >
+              <UButton
+                label="Just the kcal"
+                icon="i-lucide-flame"
+                color="neutral"
+                variant="soft"
+                @click="panel = 'kcal'"
+              />
+              <UButton
+                label="Scan it"
+                icon="i-lucide-scan-barcode"
+                color="neutral"
+                variant="soft"
+                @click="scanMiss = null; panel = 'scan'"
+              />
+            </ShellEmpty>
+          </template>
+
+          <template v-else>
+            <!-- Every other way in -->
+            <div class="grid grid-cols-6 gap-1">
+              <button
+                v-for="way in WAYS"
+                :key="way.label"
+                type="button"
+                class="app-press flex min-w-0 flex-col items-center gap-1.5 rounded-tile py-1.5 text-caption font-semibold text-toned outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-elevated/70"
+                @click="chooseWay(way)"
+              >
+                <span class="flex size-11 items-center justify-center rounded-tile bg-primary/10 text-primary">
+                  <UIcon
+                    :name="way.icon"
+                    class="size-5"
+                  />
+                </span>
+                {{ way.label }}
+              </button>
+            </div>
+
+            <!-- Yesterday's same meal, once more -->
+            <button
+              v-if="repeatable.length"
+              type="button"
+              class="app-press flex items-center gap-3 rounded-tile bg-primary/8 px-3.5 py-3 text-left border border-primary/15 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset disabled:opacity-60"
+              :disabled="repeating"
+              @click="repeatYesterday"
+            >
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
                 <UIcon
-                  :name="way.icon"
+                  :name="repeating ? 'i-lucide-loader-circle' : 'i-lucide-repeat'"
                   class="size-5"
+                  :class="repeating && 'animate-spin'"
                 />
               </span>
-              {{ way.label }}
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="text-body font-semibold text-highlighted">Repeat yesterday's {{ slotLabel(slot).toLowerCase() }}</span>
+                <span class="truncate text-xs text-muted">{{ repeatable.map(meal => meal.title).join(', ') }}</span>
+              </span>
+              <span class="flex shrink-0 flex-col items-end leading-tight tabular-nums">
+                <span class="text-body font-semibold text-highlighted">{{ formatKcal(repeatKcal) }}</span>
+                <span class="text-caption text-muted">kcal</span>
+              </span>
             </button>
-          </div>
 
-          <!-- Yesterday's same meal, once more -->
-          <button
-            v-if="repeatable.length"
-            type="button"
-            class="flex items-center gap-3 rounded-xl border border-default px-3 py-2.5 text-left transition-colors active:bg-elevated"
-            :disabled="repeating"
-            @click="repeatYesterday"
-          >
-            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
-              <UIcon
-                :name="repeating ? 'i-lucide-loader-circle' : 'i-lucide-repeat'"
-                class="size-4"
-                :class="repeating && 'animate-spin'"
-              />
-            </span>
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="text-sm font-medium text-highlighted">Repeat yesterday's {{ slotLabel(slot).toLowerCase() }}</span>
-              <span class="truncate text-[11px] text-muted">{{ repeatable.map(meal => meal.title).join(', ') }}</span>
-            </span>
-            <span class="shrink-0 text-xs font-medium tabular-nums text-default">{{ formatKcal(repeatKcal) }}</span>
-          </button>
-
-          <div
-            v-if="listsLoading && !favourites.length && !recent.length"
-            class="flex flex-col gap-2"
-          >
-            <USkeleton
-              v-for="index in 4"
-              :key="index"
-              class="h-11 w-full"
+            <ShellSkeleton
+              v-if="listsLoading && !favourites.length && !recent.length"
+              variant="rows"
+              :count="4"
+              class="overflow-hidden rounded-tile border border-default"
             />
-          </div>
 
-          <section
-            v-if="favourites.length"
-            class="flex flex-col"
-          >
-            <h3 class="flex items-center gap-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-dimmed">
-              <UIcon
-                name="i-lucide-star"
-                class="size-3"
-              />
-              Starred
-            </h3>
-            <TransitionGroup
-              tag="div"
-              name="list"
-              class="-mx-2 flex flex-col divide-y divide-default"
+            <section
+              v-if="favourites.length"
+              class="flex flex-col gap-2"
+              aria-labelledby="quick-add-starred"
             >
-              <FoodRow
-                v-for="food in favourites"
-                :key="food.id"
-                :food="food"
-                quick
-                :busy="againBusy === food.id"
-                @pick="pick"
-                @star="toggleStar"
-                @again="again"
-              />
-            </TransitionGroup>
-          </section>
+              <h3
+                id="quick-add-starred"
+                class="app-eyebrow flex items-center gap-1.5 px-1"
+              >
+                <UIcon
+                  name="i-lucide-star"
+                  class="size-3.5"
+                />
+                Starred
+              </h3>
+              <TransitionGroup
+                tag="div"
+                name="list"
+                class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+              >
+                <FoodRow
+                  v-for="food in favourites"
+                  :key="food.id"
+                  :food="food"
+                  quick
+                  :busy="againBusy === food.id"
+                  @pick="pick"
+                  @star="toggleStar"
+                  @again="again"
+                />
+              </TransitionGroup>
+            </section>
 
-          <section
-            v-if="recent.length"
-            class="flex flex-col"
-          >
-            <h3 class="flex items-center gap-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-dimmed">
-              <UIcon
-                name="i-lucide-history"
-                class="size-3"
-              />
-              Recent
-            </h3>
-            <TransitionGroup
-              tag="div"
-              name="list"
-              class="-mx-2 flex flex-col divide-y divide-default"
+            <section
+              v-if="recent.length"
+              class="flex flex-col gap-2"
+              aria-labelledby="quick-add-recent"
             >
-              <FoodRow
-                v-for="food in recent"
-                :key="food.id"
-                :food="food"
-                quick
-                :busy="againBusy === food.id"
-                @pick="pick"
-                @star="toggleStar"
-                @again="again"
-              />
-            </TransitionGroup>
-          </section>
+              <h3
+                id="quick-add-recent"
+                class="app-eyebrow flex items-center gap-1.5 px-1"
+              >
+                <UIcon
+                  name="i-lucide-history"
+                  class="size-3.5"
+                />
+                Recent
+              </h3>
+              <TransitionGroup
+                tag="div"
+                name="list"
+                class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+              >
+                <FoodRow
+                  v-for="food in recent"
+                  :key="food.id"
+                  :food="food"
+                  quick
+                  :busy="againBusy === food.id"
+                  @pick="pick"
+                  @star="toggleStar"
+                  @again="again"
+                />
+              </TransitionGroup>
+            </section>
 
-          <p
-            v-if="!listsLoading && !favourites.length && !recent.length"
-            class="text-center text-xs text-muted"
-          >
-            Search for a food to start. What you eat often shows up here, ready to add again in one tap.
-          </p>
-        </template>
-      </div>
+            <ShellEmpty
+              v-if="!listsLoading && !favourites.length && !recent.length"
+              icon="i-lucide-search"
+              title="Your usual foods land here"
+              description="Search for a food to start. What you eat often shows up here, ready to add again in one tap."
+            />
+          </template>
+        </div>
+      </Transition>
     </template>
   </UDrawer>
 

@@ -91,20 +91,21 @@ function submit() {
     class="flex flex-col gap-4"
     @submit.prevent="submit"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1">
       <UButton
         icon="i-lucide-arrow-left"
         color="neutral"
         variant="ghost"
         square
+        class="-ml-2.5"
         aria-label="Back to the list"
         @click="emit('back')"
       />
       <div class="min-w-0 flex-1">
-        <p class="truncate font-semibold text-highlighted">
+        <p class="truncate text-headline font-semibold text-highlighted">
           {{ food.name }}
         </p>
-        <p class="truncate text-xs text-muted">
+        <p class="truncate text-xs text-muted tabular-nums">
           <template v-if="food.brand">
             {{ food.brand }} ·
           </template>{{ formatKcal(food.kcal) }} kcal per 100 {{ food.base_unit }}
@@ -112,20 +113,25 @@ function submit() {
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-1.5">
-      <UButton
+    <!-- The amounts people actually eat in, one tap each -->
+    <div
+      class="flex flex-wrap gap-2"
+      role="group"
+      aria-label="Common amounts"
+    >
+      <button
         v-for="entry in presets"
         :key="`${entry.quantity}${entry.unit}`"
-        :label="amountLabel(entry.quantity, entry.unit)"
-        size="xs"
-        :color="amount === entry.quantity && unit === entry.unit ? 'primary' : 'neutral'"
-        :variant="amount === entry.quantity && unit === entry.unit ? 'soft' : 'outline'"
-        class="rounded-full tabular-nums"
+        type="button"
+        class="app-chip tabular-nums"
+        :aria-pressed="amount === entry.quantity && unit === entry.unit"
         @click="choose(entry)"
-      />
+      >
+        {{ amountLabel(entry.quantity, entry.unit) }}
+      </button>
     </div>
 
-    <div class="grid grid-cols-[minmax(0,1fr)_8rem] gap-2">
+    <div class="grid grid-cols-[minmax(0,1fr)_8.5rem] gap-3">
       <UFormField label="Amount">
         <UInput
           v-model.number="quantity"
@@ -135,7 +141,7 @@ function submit() {
           step="any"
           size="lg"
           class="w-full"
-          :ui="{ base: 'tabular-nums text-lg' }"
+          :ui="{ base: 'tabular-nums text-lg font-semibold' }"
         />
       </UFormField>
       <UFormField label="Unit">
@@ -149,19 +155,29 @@ function submit() {
       </UFormField>
     </div>
 
-    <div class="flex items-center gap-3 rounded-xl bg-elevated/60 px-3 py-2.5">
-      <div class="flex flex-col">
-        <span class="text-2xl font-semibold leading-none tabular-nums text-highlighted">{{ macros ? formatKcal(macros.kcal) : '—' }}</span>
-        <span class="text-[11px] text-muted">kcal<template v-if="grams !== null && unit !== 'g' && unit !== 'ml'"> · {{ formatMacro(grams) }} g</template></span>
+    <!-- What that comes to, live, before anything is written down -->
+    <div
+      class="flex items-center gap-4 rounded-tile bg-elevated/70 px-4 py-3.5"
+      aria-live="polite"
+    >
+      <div class="flex shrink-0 flex-col">
+        <span class="text-[1.75rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ macros ? formatKcal(macros.kcal) : '—' }}</span>
+        <span class="mt-1 text-caption text-muted tabular-nums">kcal<template v-if="grams !== null && unit !== 'g' && unit !== 'ml'"> · {{ formatMacro(grams) }} g</template></span>
       </div>
-      <div class="ml-auto grid grid-cols-3 gap-3 text-right">
+      <div class="ml-auto grid grid-cols-3 gap-3">
         <span
           v-for="bar in MACRO_BARS"
           :key="bar.key"
-          class="flex flex-col text-[11px]"
+          class="flex flex-col"
         >
-          <span class="text-muted">{{ bar.label }}</span>
-          <span class="font-medium tabular-nums text-default">{{ macros ? formatMacro(macros[bar.key]) : '—' }} g</span>
+          <span class="flex items-center gap-1 text-caption font-semibold text-muted">
+            <span
+              class="size-1.5 rounded-full"
+              :class="bar.dot"
+            />
+            {{ bar.label }}
+          </span>
+          <span class="text-sm font-semibold text-highlighted tabular-nums">{{ macros ? formatMacro(macros[bar.key]) : '—' }} g</span>
         </span>
       </div>
     </div>
