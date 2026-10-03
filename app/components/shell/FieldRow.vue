@@ -14,7 +14,8 @@
  * The input goes in the default slot with `variant="none"` and
  * `FIELD_ROW_INPUT` (app/utils/field-row.ts) as its `ui`, so it takes the row's
  * type and leaves the frame to the row. `dot` is a macro's colour mark;
- * `wide` gives the value the room a name needs rather than a number's.
+ * `wide` gives the value the room a name needs rather than a number's;
+ * `hint` is a footnote under the label — what "a scoop" means here.
  */
 withDefaults(defineProps<{
   label: string
@@ -23,10 +24,13 @@ withDefaults(defineProps<{
   dot?: string
   /** Text rather than a number: the value takes the rest of the row */
   wide?: boolean
+  /** A quiet line under the label */
+  hint?: string
 }>(), {
   unit: undefined,
   dot: undefined,
-  wide: false
+  wide: false,
+  hint: undefined
 })
 
 defineSlots<{
@@ -44,9 +48,15 @@ defineSlots<{
       aria-hidden="true"
     />
     <span
-      class="truncate text-body text-default"
-      :class="wide ? 'shrink-0' : 'min-w-0 flex-1'"
-    >{{ label }}</span>
+      class="flex flex-col"
+      :class="[wide ? 'shrink-0' : 'min-w-0 flex-1', hint ? 'py-2' : '']"
+    >
+      <span class="truncate text-body text-default">{{ label }}</span>
+      <span
+        v-if="hint"
+        class="truncate text-footnote text-muted"
+      >{{ hint }}</span>
+    </span>
     <span
       class="flex items-center justify-end"
       :class="wide ? 'min-w-0 flex-1' : 'w-28 shrink-0'"

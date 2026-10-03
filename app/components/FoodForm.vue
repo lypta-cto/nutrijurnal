@@ -181,32 +181,40 @@ async function remove() {
   >
     <template #body>
       <div
-        class="flex flex-col gap-5"
+        class="flex flex-col gap-6"
         @keydown.meta.enter.prevent="save"
         @keydown.ctrl.enter.prevent="save"
       >
-        <div class="flex flex-col gap-4">
-          <UFormField label="Name">
+        <!-- Health's way: each value on its own row, the label left and what
+             is typed right-aligned against its unit -->
+        <div class="app-card app-divide flex flex-col overflow-hidden">
+          <ShellFieldRow
+            label="Name"
+            wide
+          >
             <UInput
               v-model="form.name"
-              placeholder="What it is called on the packet"
-              class="w-full"
+              placeholder="As on the packet"
               autofocus
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
             />
-          </UFormField>
-          <UFormField
+          </ShellFieldRow>
+          <ShellFieldRow
             label="Brand"
-            hint="optional"
+            wide
           >
             <UInput
               v-model="form.brand"
-              class="w-full"
+              placeholder="Optional"
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
             />
-          </UFormField>
+          </ShellFieldRow>
         </div>
 
         <section
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-1.5"
           aria-labelledby="food-form-per-100"
         >
           <div class="flex items-center gap-3 pl-4">
@@ -225,34 +233,25 @@ async function remove() {
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField
+          <div class="app-card app-divide flex flex-col overflow-hidden">
+            <ShellFieldRow
               v-for="field in macroFields"
               :key="field.key"
-              :ui="{ label: 'flex items-center gap-1.5' }"
+              :label="field.label"
+              :unit="field.unit"
+              :dot="field.dot"
             >
-              <template #label>
-                <span
-                  class="size-2 rounded-full"
-                  :class="field.dot"
-                />
-                {{ field.label }}
-              </template>
               <DecimalInput
                 v-model="form[field.key]"
-                class="w-full"
-                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-              >
-                <template #trailing>
-                  <span class="text-footnote text-muted">{{ field.unit }}</span>
-                </template>
-              </DecimalInput>
-            </UFormField>
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+              />
+            </ShellFieldRow>
           </div>
         </section>
 
         <section
-          class="flex flex-col gap-3"
+          class="flex flex-col gap-1.5"
           aria-labelledby="food-form-portions"
         >
           <h3
@@ -261,24 +260,21 @@ async function remove() {
           >
             Portions — grams each
           </h3>
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField
+          <div class="app-card app-divide flex flex-col overflow-hidden">
+            <ShellFieldRow
               v-for="portion in PORTIONS"
               :key="portion.unit"
               :label="portion.label"
-              :help="portion.hint"
+              :hint="portion.hint"
+              unit="g"
             >
               <DecimalInput
                 v-model="portions[portion.unit]"
                 placeholder="—"
-                class="w-full"
-                :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-              >
-                <template #trailing>
-                  <span class="text-footnote text-muted">g</span>
-                </template>
-              </DecimalInput>
-            </UFormField>
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+              />
+            </ShellFieldRow>
           </div>
         </section>
 

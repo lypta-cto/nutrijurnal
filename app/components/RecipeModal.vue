@@ -656,55 +656,64 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
           </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-          <UFormField label="Title">
+        <!-- The recipe's own facts as one group, Health's way: each on a
+             row, the value right-aligned against its unit -->
+        <div :class="GROUP">
+          <ShellFieldRow
+            label="Title"
+            wide
+          >
             <UInput
               v-model="form.title"
-              class="w-full"
+              placeholder="Required"
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
             />
-          </UFormField>
-          <UFormField
+          </ShellFieldRow>
+          <ShellFieldRow
             label="Subtitle"
-            hint="optional"
+            wide
           >
             <UInput
               v-model="form.subtitle"
-              class="w-full"
+              placeholder="Optional"
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
             />
-          </UFormField>
-
-          <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-end gap-3">
-            <UFormField label="Minutes">
-              <UInput
-                v-model.number="form.minutes"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                step="5"
-                placeholder="—"
-                class="w-full"
-                :ui="{ base: 'tabular-nums' }"
-              />
-            </UFormField>
-            <UFormField label="Makes">
-              <div class="flex items-center gap-2">
-                <DecimalInput
-                  v-model="form.servings"
-                  class="w-16 shrink-0"
-                  :ui="{ base: 'tabular-nums text-center px-2' }"
-                  aria-label="How many it makes"
-                />
-                <!-- What the batch divides into. Twelve muffins are pieces; one
-                     pot of stew that feeds four is servings. -->
-                <ShellSegmented
-                  v-model="form.serving_unit"
-                  label="What it divides into"
-                  size="sm"
-                  :options="SERVING_UNITS.map(unit => ({ value: unit.value, label: unit.label }))"
-                  class="min-w-0 flex-1"
-                />
-              </div>
-            </UFormField>
+          </ShellFieldRow>
+          <ShellFieldRow
+            label="Minutes"
+            unit="min"
+          >
+            <UInput
+              v-model.number="form.minutes"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              step="5"
+              placeholder="—"
+              variant="none"
+              :ui="FIELD_ROW_INPUT"
+            />
+          </ShellFieldRow>
+          <!-- What the batch divides into. Twelve muffins are pieces; one
+               pot of stew that feeds four is servings. -->
+          <div class="flex min-h-11 min-w-0 items-center gap-3 px-4 py-1.5">
+            <span class="min-w-0 flex-1 truncate text-body text-default">Makes</span>
+            <DecimalInput
+              v-model="form.servings"
+              variant="none"
+              class="w-12 shrink-0"
+              :ui="FIELD_ROW_INPUT"
+              aria-label="How many it makes"
+            />
+            <ShellSegmented
+              v-model="form.serving_unit"
+              label="What it divides into"
+              size="sm"
+              :options="SERVING_UNITS.map(unit => ({ value: unit.value, label: unit.label }))"
+              class="w-44 shrink-0"
+            />
           </div>
         </div>
 
@@ -724,7 +733,6 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
               label="Paste"
               icon="i-lucide-clipboard-list"
               size="sm"
-              :color="pasting ? 'primary' : 'neutral'"
               :variant="pasting ? 'soft' : 'ghost'"
               class="ml-auto"
               :aria-pressed="pasting"
@@ -879,7 +887,6 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
               :label="editingSteps ? 'Done' : 'Edit'"
               :icon="editingSteps ? 'i-lucide-check' : 'i-lucide-pencil-line'"
               size="sm"
-              color="neutral"
               variant="ghost"
               class="ml-auto"
               @click="editingSteps = !editingSteps"
