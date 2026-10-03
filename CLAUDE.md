@@ -43,9 +43,17 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
   `#toolbar`) + body. Use it for every signed-in page.
 - `app/composables/useEating.ts` — the diary's types, formatters and API calls; state in
   `useState` so pages, sheet and forms agree. `useQuickAdd.ts` — the "+" contract:
-  `open(kind?: 'search' | 'scan' | 'voice' | 'quick' | 'recipe')`, `close()`, `savedAt`.
-- `app/components/MealForm.vue` — the one place a meal is written (tabs Search · Type ·
-  Recipe · Scan · Kcal). Don't build a second one; open it on the right tab.
+  `open(kind?: 'search' | 'scan' | 'voice' | 'quick' | 'recipe', { slot? })`, `close()`,
+  `savedAt`. `useBody.ts` (water, weight, progress), `useReminders.ts` + `usePush.ts`
+  (reminders), `useBarcodeScanner.ts`, `useHaptics.ts`, `useReducedMotion.ts`.
+- `app/components/QuickAddSheet.vue` — fast logging in the sheet itself (search, starred
+  and recent foods, amount panel, quick kcal, copy, scanner, voice). `MealForm.vue` is the
+  full form (and the editor): open it on a tab rather than building another.
+- Forms are bottom sheets: `FormSheet.vue`, or a `UDrawer` with `:ui="SHEET_UI"`
+  (`app/utils/sheet.ts`). Destructive actions don't confirm — the toast carries Undo.
+- Charts are hand-rolled SVG in `app/components/chart/` (`ChartColumns`, `ChartLine`,
+  `ChartSplit`); colours from tokens (`MACRO_BARS.fill`, `CHART_COLORS`).
+- PWA: `pwa` in `nuxt.config.ts` (@vite-pwa/nuxt), `public/push-sw.js` for notifications.
 - `app/middleware/auth.global.ts` — session restore, public routes, Google callback,
   and the redirect to `/onboarding` until `user.onboarded_at` is set.
 
@@ -54,7 +62,8 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 - Design: `app/assets/css/main.css`, `app/app.config.ts`, `app/layouts/**`,
   `app/components/shell/**`, `public/icons/**`, `public/favicon.svg`, `public/logo.svg`.
 - Features: `nuxt.config.ts`, `package.json` + lockfile, `app/plugins/**`, PWA manifest +
-  service worker, backend feature modules and migrations.
+  service worker (`public/push-sw.js`), `app/assets/css/motion.css`, backend feature
+  modules and migrations.
 - Tester: backend `tests/**`, frontend test files and vitest config.
 - PWA icon paths (design makes them, the manifest references them):
   `public/icons/icon-192.png`, `icon-512.png`, `maskable-512.png`,
