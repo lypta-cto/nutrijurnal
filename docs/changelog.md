@@ -4,6 +4,17 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Redesign, part 3 — a visual pass.** The four rings on Today are 180 px with 8 px
+  strokes 2 px apart, so a four-digit "kcal left" no longer runs into the fat ring; a
+  meal's mic and chevron stay on its name's last line instead of wrapping alone; the
+  water glasses are plain glyphs with 44 px targets rather than a second row of grey
+  tiles; a reminder's glyph is grey and its weekdays are quiet chips (new
+  `.app-chip-quiet`), so the switch is the row's only accent; Chrome's clock glyph sits
+  close, so a reminder's time no longer clips; sign-in and sign-up lose the red
+  required asterisks; a few empty states and hints say it plainly ("No recipes yet",
+  "No recent foods yet", "every day"). Checked on the sign-in screens at 375, 768 and
+  1280 px in both themes and on template-faithful sketches of Today and Settings — the
+  signed-in screens themselves were not opened (no session).
 - **Redesign, part 2 — every screen.** Today, the "+" sheet and its panels, every form
   sheet, Library, Progress, Settings, sign-in and onboarding are restyled onto the new
   system: grouped lists with small-caps headers instead of bordered boxes and stacked

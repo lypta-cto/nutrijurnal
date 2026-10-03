@@ -319,8 +319,9 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
 | `.app-divide` | inset hairlines between a container's children (`--app-divide-inset`, 16 px by default; a `ShellListRow` with an icon sets 52 px) |
 | `.app-rule-t` / `.app-rule-b` | one inset hairline above / below an element |
 | `.app-group-title` | a grouped section header: footnote, uppercase, muted |
-| `.app-field` | a native date or time `<input>` dressed as a `UInput` (44 px, grey fill, accent focus ring) |
-| `.app-chip` | one choice among a few, or a shortcut — an amount, a period, a weekday: a grey capsule, the chosen one filled with the accent (`aria-pressed` / `aria-checked`) |
+| `.app-field` | a native date or time `<input>` dressed as a `UInput` (44 px, grey fill, accent focus ring); Chrome's clock and calendar glyph sits close, so a compact time field never clips "08:30" |
+| `.app-chip` | one choice among a few, or a shortcut — an amount, a period: a grey capsule, the chosen one filled with the accent (`aria-pressed` / `aria-checked`) |
+| `.app-chip-quiet` | with `.app-chip`, for a choice repeated on every row of a list (a reminder's weekdays): the chosen ones a grey fill with the strong text, the rest plain dimmed letters — seven accent discs a row would turn the list green |
 | `.app-hit` | a small control keeps its looks but gets a 44 px hit area |
 | `.app-press` | press feedback (0.98) for anything tappable that isn't a `UButton` or a row |
 | `.app-eyebrow` | the small uppercase line over a page title |
@@ -367,6 +368,14 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
 - **Notes** (`UAlert`, `soft` or `subtle`) are a grey well with ordinary text; only the
   glyph — and an error's title — carries the colour that says why (app.config). Never a
   tinted box.
+- **No required asterisk.** The forms that would carry one (sign-in, sign-up) need
+  every field, so a red star says nothing; a missing value is named under its field.
+- **A glyph after a title that wraps** (a meal's mic and chevron) is glued to the last
+  word with a word joiner in a `whitespace-nowrap` span, so a chevron never sits alone on
+  a line of its own.
+- **Colour repeated down a list is noise.** Something every row has — a reminder's
+  glyph, its weekdays — is grey; the accent is left for the one control per row that
+  says "on" (the switch).
 - **Fields keep one size at every width.** Nuxt UI shrinks field text from 768 px up; the
   column is a phone everywhere, so app.config undoes that, and a field set large on
   purpose (the amount, the quick kcal) says `fixed`.
@@ -384,12 +393,14 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
   says the same. The bar carries an accent "Today" (on another day) and "⋯" (targets,
   export). The week strip: seven small kcal rings, the chosen day on a grey fill, today's
   letter in the accent. The day's rings in a plain card — kcal left in the middle, eaten
-  and target either side, all in `font-rounded` — then one card per meal slot: a header
+  and target either side, all in `font-rounded`; the four rings are 180 px with 8 px
+  strokes 2 px apart, which leaves a 104 px hole a four-digit number at 34 px clears
+  (172 / 9 / 3 left 82 px, and "1 572" ran into the fat ring) — then one card per meal slot: a header
   (glyph, name, kcal, an accent "Repeat" and "+"), and rows of time (footnote) · name
   (regular, two lines) over its macro line · kcal · ⋯. "Fill in" is accent text. A meal
   opens onto its items on a faint well. Swipe actions are solid (red delete, accent copy).
-  Water: the glasses as grey tiles with a teal glyph when drunk, "Goal reached" as plain
-  teal words. Weight: the number in `font-rounded`, the week's change as plain muted
+  Water: the glasses as plain glyphs (44 px targets, no tiles) — teal when drunk,
+  dimmed when not — over one row of grey buttons; "Goal reached" as plain teal words. Weight: the number in `font-rounded`, the week's change as plain muted
   text. A day that didn't load is a compact `ShellEmpty` with Try again.
 - **The "+" sheet** — the slot as a small segmented control, the search field, the six
   ways in as a row of equal accent buttons (a contact card's message · call · mail),
@@ -409,7 +420,9 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
 - **Settings** — iOS Settings: the profile group first (avatar, name, email, the name
   inline), then grouped lists with small-caps headers and footnotes — daily targets (with
   the calculator as a row), water, reminders, appearance (the theme as a segmented
-  control), your data, account; delete account is the one red row. No eyebrow.
+  control), your data, account; delete account is the one red row. No eyebrow. A
+  reminder is a muted glyph, its name, the time and a switch, with its weekdays as
+  quiet chips under them; the switch is the only accent in the row.
 - **Sign-in, sign-up, onboarding** — the auth layout: a large title, grey fields, one
   accent button; the demo is a plain secondary button under a rule. The goal calculator
   (onboarding and Settings) is checkmark lists for activity and goal, the day as one big
@@ -437,7 +450,8 @@ canvas); dark `#000000`.
 
 ## Rules of thumb
 
-- One accent. Colour must answer a question; if it doesn't, it's grey.
+- One accent. Colour must answer a question; if it doesn't, it's grey. If the same
+  coloured thing repeats on every row, it has stopped answering one.
 - Numbers: `tabular-nums`, thin-space thousands (`formatKcal`), the unit smaller and
   muted after the number. Every number has context — "of 2 300", "left".
 - Hierarchy by type weight and grey layers, not by boxes, borders or shadows.
