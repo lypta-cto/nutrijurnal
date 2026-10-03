@@ -76,10 +76,13 @@ const firstLoad = computed(() => props.loading && !props.meals)
           <span class="text-caption2 text-muted">kcal</span>
         </div>
 
+        <!-- Four rings leave a 104 px hole: room for a four-digit number at
+             34 px without touching the fat ring (172 / 9 / 3 left 82) -->
         <ShellMacroRing
           :tracks="tracks"
-          :size="172"
-          :thickness="9"
+          :size="180"
+          :thickness="8"
+          :gap="2"
         >
           <span
             class="font-rounded text-[2.125rem] leading-none font-bold tabular-nums"
