@@ -96,7 +96,6 @@ async function removeAvatar() {
       <UButton
         icon="i-lucide-camera"
         size="xs"
-        color="neutral"
         variant="solid"
         square
         class="app-hit absolute -right-1 -bottom-1 rounded-full ring-2 ring-(--app-cell)"

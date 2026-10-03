@@ -461,7 +461,7 @@ async function confirmDelete() {
         icon="i-lucide-upload"
         tone="neutral"
         title="Import a diary"
-        subtitle="A Nutrijurnal backup (.json) or a diary export (.csv). Nothing already here is added twice."
+        subtitle="A Nutrijurnal backup (.json) or a diary CSV — nothing is added twice."
         :chevron="false"
         :disabled="importing"
         @click="importInput?.click()"

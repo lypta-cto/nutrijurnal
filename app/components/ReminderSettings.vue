@@ -150,6 +150,13 @@ const addItems = computed(() => [REMINDER_PRESETS.map(preset => ({
   onSelect: () => void add(preset.payload)
 }))])
 
+/** The status glyph's colour — the words stay in the ordinary text colours */
+const STATUS_TONES = {
+  neutral: 'text-muted',
+  warning: 'text-warning',
+  info: 'text-info'
+} as const
+
 /** What stands between this device and a notification, in plain words */
 const status = computed<{ title: string, description: string, icon: string, color: 'neutral' | 'warning' | 'info' } | null>(() => {
   switch (push.state.value) {
@@ -201,14 +208,27 @@ const status = computed<{ title: string, description: string, icon: string, colo
         variant="text"
         :count="2"
       />
-      <UAlert
+      <!-- A row of the group like the others, not a grey box inside it:
+           only the glyph carries the colour that says why -->
+      <div
         v-else-if="status"
-        :title="status.title"
-        :description="status.description"
-        :icon="status.icon"
-        :color="status.color"
-        variant="soft"
-      />
+        class="flex items-start gap-3"
+        role="status"
+      >
+        <span
+          class="flex w-6 shrink-0 justify-center pt-px"
+          :class="STATUS_TONES[status.color]"
+        >
+          <UIcon
+            :name="status.icon"
+            class="size-5.5"
+          />
+        </span>
+        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="text-body text-default">{{ status.title }}</span>
+          <span class="text-footnote text-pretty text-muted">{{ status.description }}</span>
+        </span>
+      </div>
       <div
         v-else-if="push.state.value === 'off'"
         class="flex items-center gap-3"
@@ -269,18 +289,25 @@ const status = computed<{ title: string, description: string, icon: string, colo
       :count="3"
     />
 
-    <ShellEmpty
+    <!-- Nothing set yet: the one thing to do is an accent row of the group,
+         the way Settings offers "Split the kcal into macros" -->
+    <button
       v-else-if="!reminders.length"
-      icon="i-lucide-bell-plus"
-      title="No reminders yet"
-      description="Breakfast, lunch, dinner, two for water and an evening summary — change any of them after."
+      type="button"
+      class="flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-120 ease-soft [--app-divide-inset:3.25rem] focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
+      @click="addSuggested"
     >
-      <UButton
-        label="Add the usual set"
-        icon="i-lucide-plus"
-        @click="addSuggested"
-      />
-    </ShellEmpty>
+      <span class="flex w-6 shrink-0 justify-center text-primary">
+        <UIcon
+          name="i-lucide-bell-plus"
+          class="size-5.5"
+        />
+      </span>
+      <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span class="text-body text-primary">Add the usual set</span>
+        <span class="text-footnote text-pretty text-muted">Breakfast, lunch, dinner, two for water and an evening summary — change any of them after.</span>
+      </span>
+    </button>
 
     <TransitionGroup
       v-else
