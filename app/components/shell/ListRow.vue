@@ -2,18 +2,19 @@
 import { NuxtLink } from '#components'
 
 /**
- * One tappable row: a tinted icon (or anything in #leading), a title with a
- * line under it, a value on the right and a chevron. At least 56 px tall —
- * the whole row is the target. A link with `to`, a button otherwise (emits
- * `click`); `plain` makes a plain row for one that holds its own control
- * (a switch, a select) in #trailing.
+ * One row of a list, as an iOS cell draws it: a plain glyph, a title in body
+ * type (regular, not bold), a quiet line under it, a value or a control on the
+ * right and a chevron. At least 44 px tall — the whole row is the target, and
+ * it highlights grey while pressed rather than shrinking. A link with `to`, a
+ * button otherwise (emits `click`); `plain` makes a plain row for one that
+ * holds its own control (a switch, a select) in #trailing.
  *
- * For menus, settings and the ways into the diary. Lists of numbers that must
- * line up down a column keep the page's shared grid instead.
+ * Rows go inside a ShellList (or a flush ShellCard), which draws the hairlines
+ * between them; a row with a glyph starts its hairline where its text starts.
  *
  *   <ShellListRow icon="i-lucide-scan-barcode" title="Scan barcode"
  *                 subtitle="A photo of the packet" @click="…" />
- *   <ShellListRow plain icon="i-lucide-moon" tone="neutral" title="Theme" :chevron="false">
+ *   <ShellListRow plain icon="i-lucide-moon" title="Theme" :chevron="false">
  *     <template #trailing><USelect … /></template>
  *   </ShellListRow>
  */
@@ -23,8 +24,8 @@ const props = withDefaults(defineProps<{
   title: string
   subtitle?: string
   icon?: string
-  /** The icon tile's colour — a macro's own, or the brand's; `error` also
-   *  turns the title red, for the one row that destroys something */
+  /** The glyph's colour — muted (`neutral`), the accent, a macro's ink;
+   *  `error` also turns the title red, for the one row that destroys something */
   tone?: Tone
   to?: string
   /** A plain row, not a button — for rows that carry their own control */
@@ -44,7 +45,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ click: [event: MouseEvent] }>()
 
 defineSlots<{
-  /** Replaces the icon tile — an avatar, a ring */
+  /** Replaces the glyph — an avatar, a ring */
   leading?: () => unknown
   /** Replaces the subtitle line — a ShellMacroLine, say */
   subtitle?: () => unknown
@@ -52,15 +53,16 @@ defineSlots<{
   trailing?: () => unknown
 }>()
 
+// A glyph is a mark, not a tile: colour only where the row means something
 const TONES: Record<Tone, string> = {
-  primary: 'bg-primary/10 text-primary',
-  neutral: 'bg-elevated text-toned',
-  kcal: 'bg-kcal/15 text-kcal-ink',
-  protein: 'bg-protein/15 text-protein-ink',
-  carbs: 'bg-carbs/15 text-carbs-ink',
-  fat: 'bg-fat/15 text-fat-ink',
-  warning: 'bg-warning/12 text-warning',
-  error: 'bg-error/10 text-error'
+  primary: 'text-primary',
+  neutral: 'text-muted',
+  kcal: 'text-kcal-ink',
+  protein: 'text-protein-ink',
+  carbs: 'text-carbs-ink',
+  fat: 'text-fat-ink',
+  warning: 'text-warning',
+  error: 'text-error'
 }
 
 const tag = computed(() => (props.plain ? 'div' : props.to ? NuxtLink : 'button'))
@@ -73,39 +75,40 @@ const interactive = computed(() => !props.plain)
     :to="plain ? undefined : to"
     :type="interactive && !to ? 'button' : undefined"
     :disabled="interactive && !to ? disabled : undefined"
-    class="flex min-h-14 w-full min-w-0 items-center gap-3 px-4 py-3 text-left"
-    :class="interactive ? 'app-press outline-none hover:bg-elevated/40 focus-visible:bg-elevated/60 active:bg-elevated/70 disabled:pointer-events-none disabled:opacity-60' : ''"
+    class="relative flex min-h-11 w-full min-w-0 items-center gap-3 px-4 py-2.5 text-left"
+    :class="interactive ? 'outline-none transition-colors duration-120 ease-soft hover:bg-elevated/50 focus-visible:bg-elevated active:bg-accented disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none' : ''"
+    :style="icon || $slots.leading ? { '--app-divide-inset': '3.25rem' } : undefined"
     @click="(event: MouseEvent) => interactive && emit('click', event)"
   >
     <slot name="leading">
       <span
         v-if="icon"
-        class="flex size-10 shrink-0 items-center justify-center rounded-xl"
+        class="flex w-6 shrink-0 items-center justify-center"
         :class="TONES[tone]"
       >
         <UIcon
           :name="icon"
-          class="size-5"
+          class="size-5.5"
         />
       </span>
     </slot>
 
     <span class="flex min-w-0 flex-1 flex-col gap-0.5">
       <span
-        class="truncate text-body font-semibold"
-        :class="tone === 'error' ? 'text-error' : 'text-highlighted'"
+        class="truncate text-body"
+        :class="tone === 'error' ? 'text-error' : 'text-default'"
       >{{ title }}</span>
       <slot name="subtitle">
         <span
           v-if="subtitle"
-          class="line-clamp-2 text-xs text-muted"
+          class="line-clamp-2 text-footnote text-muted"
         >{{ subtitle }}</span>
       </slot>
     </span>
 
     <span
       v-if="$slots.trailing"
-      class="flex shrink-0 items-center gap-2 text-right"
+      class="flex shrink-0 items-center gap-2 text-right text-body text-muted"
     >
       <slot name="trailing" />
     </span>
@@ -113,7 +116,7 @@ const interactive = computed(() => !props.plain)
     <UIcon
       v-if="chevron && interactive"
       name="i-lucide-chevron-right"
-      class="size-4 shrink-0 text-dimmed"
+      class="size-4.5 shrink-0 text-dimmed"
     />
   </component>
 </template>

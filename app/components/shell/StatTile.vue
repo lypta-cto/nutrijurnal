@@ -3,19 +3,21 @@ import { formatKcal } from '~/composables/useEating'
 
 /**
  * One number with its label and its context — an average, what's left, the
- * days written down. The label sits on top in small muted type, the value is
- * big and tabular with its unit smaller after it, a hint goes underneath.
+ * days written down. The label on top in small muted type, the value big,
+ * rounded (SF Pro Rounded where there is one) and tabular with its unit
+ * smaller after it, a hint underneath. Flat: a cell on the canvas, no tint.
  *
  *   <div class="grid grid-cols-2 gap-3">
- *     <ShellStatTile label="Average" :value="2140" unit="kcal" hint="5 of 7 days" tone="brand" />
+ *     <ShellStatTile label="Average" :value="2140" unit="kcal" hint="5 of 7 days" />
  *     <ShellStatTile label="Protein" :value="`${formatMacro(avg.protein)}`" unit="g" macro="protein" />
  *   </div>
  *
  * Numbers are rounded with thin-space thousands; pass a string to format it
  * yourself (one decimal on a small macro), null for "—", or fill #value (a
  * CountUp) and keep `value` for deciding whether there is one. `macro` adds
- * its colour dot. `tone`: `card` stands on the canvas, `well` sits inside a card,
- * `brand` / `warning` tint the one tile that matters most.
+ * its colour dot. `tone`: `card` stands on the canvas, `well` sits inside a
+ * card, `warning` turns the number clay; `brand` is still accepted and looks
+ * like `card`.
  */
 type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
 
@@ -37,11 +39,12 @@ const props = withDefaults(defineProps<{
   size: 'md'
 })
 
+// Only the number carries a state's colour; the tile itself stays neutral
 const TONES = {
-  card: 'bg-default ring-1 ring-default shadow-card',
-  well: 'bg-elevated/70',
-  brand: 'bg-primary-50 ring-1 ring-primary-100 dark:bg-primary-950/50 dark:ring-primary-900/70',
-  warning: 'bg-warning/8 ring-1 ring-warning/20'
+  card: 'bg-cell',
+  well: 'bg-elevated',
+  brand: 'bg-cell',
+  warning: 'bg-cell'
 } as const
 
 defineSlots<{
@@ -68,10 +71,10 @@ const empty = computed(() => shown.value === '—')
 
 <template>
   <div
-    class="flex min-w-0 flex-col gap-1 rounded-tile p-3.5"
+    class="flex min-w-0 flex-col gap-1 rounded-card p-3.5"
     :class="TONES[tone]"
   >
-    <span class="flex min-w-0 items-center gap-1.5 text-caption font-semibold text-muted">
+    <span class="flex min-w-0 items-center gap-1.5 text-footnote font-medium text-muted">
       <span
         v-if="macro"
         class="size-2 shrink-0 rounded-full"
@@ -80,16 +83,16 @@ const empty = computed(() => shown.value === '—')
       <UIcon
         v-else-if="icon"
         :name="icon"
-        class="size-3.5 shrink-0"
+        class="size-4 shrink-0"
       />
       <span class="truncate">{{ label }}</span>
     </span>
 
     <span class="flex min-w-0 items-baseline gap-1">
       <span
-        class="truncate font-bold tabular-nums tracking-tight"
+        class="truncate font-rounded font-semibold tabular-nums"
         :class="[
-          size === 'lg' ? 'text-[2rem] leading-none' : 'text-2xl leading-tight',
+          size === 'lg' ? 'text-[2.125rem] leading-none' : 'text-[1.625rem] leading-tight',
           empty ? 'text-dimmed' : tone === 'warning' ? 'text-warning' : 'text-highlighted'
         ]"
       ><slot
@@ -98,13 +101,13 @@ const empty = computed(() => shown.value === '—')
       >{{ shown }}</slot><template v-else>{{ shown }}</template></span>
       <span
         v-if="unit && !empty"
-        class="shrink-0 text-xs font-semibold text-muted"
+        class="shrink-0 text-subheadline font-medium text-muted"
       >{{ unit }}</span>
     </span>
 
     <span
       v-if="hint"
-      class="line-clamp-2 text-caption text-muted"
+      class="line-clamp-2 text-footnote text-muted"
     >{{ hint }}</span>
   </div>
 </template>

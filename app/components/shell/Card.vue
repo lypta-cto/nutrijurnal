@@ -2,16 +2,18 @@
 import { NuxtLink } from '#components'
 
 /**
- * The card every screen is built of: white on the cream canvas, a soft radius
- * and a hairline. One level of card per region — inside it, use hairlines and
- * `bg-elevated` wells, not more cards.
+ * A surface for a region that holds more than a plain list: the day's rings,
+ * a chart, a form, a meal slot whose header carries buttons. White on the grey
+ * canvas (#1c1c1e on black), a small radius, no border, no shadow. One level
+ * of surface per region — inside it, use hairlines and `bg-elevated` wells,
+ * never another card. A list of rows on its own is a ShellList instead.
  *
  * Two kinds of body:
  *  - padded (default) for content: a ring, a form, a paragraph;
- *  - `flush` for a list: rows run edge to edge with hairlines between them.
- *    The page lays its rows out on one shared grid, so values line up.
+ *  - `flush` for rows: edge to edge, inset hairlines between them. The page
+ *    lays its rows out on one shared grid, so values line up.
  *
- * The optional header is one line: icon · title · count pill · quiet hint, and
+ * The optional header is one line: glyph · title · count · quiet hint, and
  * #actions on the right. `isEmpty` swaps the body for `empty` (or #empty) and
  * `loading` + `isEmpty` for a skeleton — a list card never collapses to nothing.
  * A card with a header and no body at all (no default slot, not empty, not
@@ -26,15 +28,15 @@ import { NuxtLink } from '#components'
 const props = withDefaults(defineProps<{
   title?: string
   icon?: string
-  /** The icon's colour — muted, unless the card is about water (`text-info`) and the like */
+  /** The glyph's colour — muted, unless the card is about water (`text-info`) and the like */
   iconClass?: string
-  /** A small pill after the title */
+  /** A number after the title, in plain muted figures */
   count?: number | string | null
   /** Quiet words after the count */
   hint?: string
   /** Rows edge to edge with hairlines, instead of a padded body */
   flush?: boolean
-  /** `brand`: a soft green wash for the one card that leads a screen; `muted`: a sunken well */
+  /** `muted`: a sunken grey well. `brand` is still accepted and looks like `default` */
   tone?: 'default' | 'brand' | 'muted'
   /** The whole card is a link (then don't put buttons in it) */
   to?: string
@@ -68,10 +70,12 @@ const slots = defineSlots<{
   footer?: () => unknown
 }>()
 
+// Colour is for meaning, not for marking the card that matters most: `brand`
+// stays as a name so callers keep working, and looks like every other card
 const TONES = {
-  default: 'bg-default border-default shadow-card',
-  brand: 'bg-linear-to-br from-primary-50 via-default to-default border-primary-100 shadow-card dark:from-primary-950/60 dark:via-default dark:border-primary-900/60',
-  muted: 'bg-elevated/70 border-transparent shadow-none'
+  default: 'bg-cell',
+  brand: 'bg-cell',
+  muted: 'bg-elevated'
 } as const
 
 const hasHeader = computed(() => Boolean(props.title || slots.header || slots.actions))
@@ -83,34 +87,34 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
   <component
     :is="to ? NuxtLink : 'section'"
     :to="to"
-    class="flex min-w-0 flex-col overflow-hidden rounded-card border"
-    :class="[TONES[tone], to ? 'app-press outline-none focus-visible:ring-2 focus-visible:ring-primary' : '']"
+    class="flex min-w-0 flex-col overflow-hidden rounded-card"
+    :class="[TONES[tone], to ? 'outline-none transition-colors duration-120 ease-soft focus-visible:ring-2 focus-visible:ring-primary active:bg-accented motion-reduce:transition-none' : '']"
   >
     <header
       v-if="hasHeader"
-      class="flex min-h-14 items-center gap-2 px-4"
-      :class="!hasBody ? 'py-2' : flush ? 'pt-3 pb-2.5' : 'pt-3'"
+      class="flex min-h-11 items-center gap-2 px-4"
+      :class="!hasBody ? 'py-1.5' : flush ? 'pt-2.5 pb-2' : 'pt-3'"
     >
       <slot name="header">
         <UIcon
           v-if="icon"
           :name="icon"
-          class="size-4.5 shrink-0"
+          class="size-5 shrink-0"
           :class="iconClass"
         />
         <h2
           v-if="title"
-          class="truncate text-headline font-semibold text-highlighted"
+          class="truncate text-headline text-highlighted"
         >
           {{ title }}
         </h2>
         <span
           v-if="hasCount"
-          class="shrink-0 rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold tabular-nums text-toned"
+          class="shrink-0 text-subheadline text-muted tabular-nums"
         >{{ count }}</span>
         <span
           v-if="hint"
-          class="truncate text-xs text-muted"
+          class="truncate text-subheadline text-muted"
         >{{ hint }}</span>
       </slot>
 
@@ -124,7 +128,7 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
 
     <div
       v-if="loading && isEmpty"
-      :class="flush && hasHeader ? 'border-t border-default' : ''"
+      :class="flush && hasHeader ? 'app-rule-t' : ''"
     >
       <ShellSkeleton
         variant="rows"
@@ -134,10 +138,10 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
 
     <div
       v-else-if="isEmpty"
-      :class="flush && hasHeader ? 'border-t border-default' : ''"
+      :class="flush && hasHeader ? 'app-rule-t' : ''"
     >
       <slot name="empty">
-        <p class="px-4 py-3.5 text-sm text-muted">
+        <p class="px-4 py-3 text-subheadline text-muted">
           {{ empty ?? 'Nothing here yet.' }}
         </p>
       </slot>
@@ -145,8 +149,8 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
 
     <div
       v-else-if="flush && $slots.default"
-      class="flex min-h-0 flex-1 flex-col divide-y divide-default"
-      :class="hasHeader ? 'border-t border-default' : ''"
+      class="app-divide flex min-h-0 flex-1 flex-col"
+      :class="hasHeader ? 'app-rule-t' : ''"
     >
       <slot />
     </div>
@@ -161,7 +165,7 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
 
     <footer
       v-if="$slots.footer"
-      class="border-t border-default px-4 py-2.5"
+      class="app-rule-t px-4 py-2.5"
     >
       <slot name="footer" />
     </footer>

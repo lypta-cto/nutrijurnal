@@ -69,9 +69,9 @@ const width = computed(() => {
   >
     <div
       class="flex min-w-0"
-      :class="compact ? 'flex-col text-caption' : 'items-baseline gap-1.5 text-xs'"
+      :class="compact ? 'flex-col text-caption' : 'items-baseline gap-1.5 text-footnote'"
     >
-      <span class="flex min-w-0 items-center gap-1.5 font-semibold text-default">
+      <span class="flex min-w-0 items-center gap-1.5 font-medium text-default">
         <span
           class="size-2 shrink-0 rounded-full"
           :class="over ? 'bg-warning' : look.dot"
