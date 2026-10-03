@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * The Nutrijurnal mark: the day's ring, three quarters closed, with a leaf
- * growing where the day starts. The paths are the ones scripts/make-icons.py
- * writes into public/logo.svg — change the mark there, then copy them here.
+ * The Nutrijurnal mark: an apple whose top-right corner folds over like a
+ * page — food and a journal in one shape. The path is the one
+ * scripts/make-icons.py traces from scripts/logo-source.png and writes into
+ * public/logo.svg; change the mark there, then copy the path here.
  *
  * One colour, no gradient: `brand` (the default) draws it in the accent and
  * follows the theme; `mono` draws it in `currentColor`, for a coloured tile or
@@ -21,27 +22,15 @@ withDefaults(defineProps<{
 <template>
   <!-- Cropped to the mark itself, so a size-6 mark is as big as it can be -->
   <svg
-    viewBox="4 2 40 40"
-    fill="none"
+    viewBox="0 0 663 748"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
+    preserveAspectRatio="xMidYMid meet"
   >
-    <circle
-      cx="24"
-      cy="25.5"
-      r="13"
-      stroke-width="6.5"
-      :class="tone === 'mono' ? 'stroke-current opacity-30' : 'stroke-primary opacity-20'"
-    />
     <path
-      d="M24 12.5A13 13 0 1 1 11 25.5"
-      stroke-width="6.5"
-      stroke-linecap="round"
-      :class="tone === 'mono' ? 'stroke-current' : 'stroke-primary'"
-    />
-    <path
-      d="M25 11.5C25.29 5.94 32.16 2.37 37.5 5C36.13 10 29.25 13.57 25 11.5Z"
+      fill-rule="evenodd"
       :class="tone === 'mono' ? 'fill-current' : 'fill-primary'"
+      d="M211.5,743.3C164.4,739.0 116.3,703.1 74.8,641.2C31.4,576.5 4.0,490.1 4.0,418.3C4.0,379.3 11.3,348.4 28.5,314.5C54.6,262.9 95.1,224.8 143.4,206.3C179.0,192.7 219.4,191.4 259.0,202.5C263.7,203.8 270.9,206.1 275.0,207.5C286.6,211.5 300.8,215.0 305.5,215.0C311.7,215.0 316.4,213.0 331.7,203.9C357.5,188.6 375.4,181.7 396.7,179.0C403.0,178.2 404.8,178.3 406.7,179.5L409.0,181.0L409.0,275.8C409.0,356.6 409.2,371.4 410.5,376.3C414.5,391.8 424.7,403.3 439.3,408.9C443.0,410.3 455.4,410.6 548.2,411.0L653.0,411.5L655.7,414.3C658.5,417.1 658.5,417.1 658.3,430.3C657.9,467.8 646.1,519.2 627.4,565.3C607.5,614.3 579.4,658.1 546.9,691.0C514.3,723.9 482.6,740.6 447.0,743.5C430.7,744.8 409.0,741.2 382.4,732.6C362.5,726.2 351.6,723.9 337.0,723.3C316.8,722.4 306.1,724.2 278.3,733.1C250.4,742.0 230.4,745.0 211.5,743.3ZM462.6,378.0C457.3,376.6 453.3,373.5 451.0,369.0C449.0,365.2 449.0,362.8 449.0,272.5C449.0,180.8 449.0,180.0 451.0,178.0C453.6,175.4 458.0,176.0 466.7,180.1C472.1,182.7 478.2,188.5 522.7,233.8C634.2,347.1 648.1,361.5 650.0,365.6C652.5,370.7 652.5,373.5 650.0,376.0C648.1,377.9 646.7,378.0 610.2,378.0C589.5,378.0 548.6,378.2 519.5,378.5C486.2,378.8 465.1,378.6 462.6,378.0ZM261.5,173.9C195.0,167.1 147.1,136.0 120.5,82.5C110.7,62.7 104.7,42.1 102.5,20.9C101.7,13.3 102.3,10.4 105.0,9.0C108.2,7.3 131.8,4.9 152.0,4.3C209.5,2.6 250.1,15.9 280.6,46.4C308.6,74.3 323.8,114.5 324.0,160.6C324.0,171.9 323.3,173.1 315.4,174.1C307.6,175.1 271.6,174.9 261.5,173.9Z"
     />
   </svg>
 </template>

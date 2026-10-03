@@ -430,20 +430,24 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
 
 ## The mark and the icons
 
-The mark is the day's ring — three quarters closed — with a leaf growing where the day
-starts: the same ring Today fills, and, read small, a fruit with a leaf. One colour:
-the accent on light, the light accent on dark, white on the accent tile. No gradient.
+The mark is Luka's logo: an apple whose top-right corner folds over like a page — food
+and a journal in one shape. One colour: the accent inside the app (it follows the theme),
+green on a cream tile for the icons, a lighter green on a near-black tile in dark mode.
+No gradient.
 
-`scripts/make-icons.py` holds the geometry and writes `public/logo.svg`,
-`public/favicon.svg` and `public/icons/` (`icon-192.png`, `icon-512.png` rounded tiles;
-`maskable-512.png` full bleed with the mark inside the 80 % safe circle;
-`apple-touch-icon.png` 180 × 180, opaque). Re-run it after changing the mark:
+`scripts/logo-source.png` is the drawing it all comes from (black on cream).
+`scripts/make-icons.py` traces it into a vector and writes `public/logo.svg`,
+`public/favicon.svg` and `public/icons/` (`icon-192.png`, `icon-512.png` cream tiles;
+`maskable-512.png` with the mark inside the 80 % safe circle; `apple-touch-icon.png`
+180 × 180, opaque). Re-run it after changing the source:
 
 ```bash
-../nutrijurnal-back/.venv/bin/python scripts/make-icons.py
+python3 -m venv /tmp/icons && /tmp/icons/bin/pip install pillow numpy potracer
+/tmp/icons/bin/python scripts/make-icons.py
 ```
 
-`components/shell/LogoMark.vue` carries the same paths for use inside the app.
+It prints the traced path; `components/shell/LogoMark.vue` carries the same path for use
+inside the app.
 
 PWA colours for the manifest and `<meta name="theme-color">`: `#f2f2f7` (the light
 canvas); dark `#000000`.
