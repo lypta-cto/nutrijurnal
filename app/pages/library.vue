@@ -2,7 +2,6 @@
 import type { Food, Recipe } from '~/composables/useEating'
 import {
   formatKcal,
-  formatMacro,
   perServing,
   readPastedDish,
   servingsLabel,
@@ -200,63 +199,43 @@ async function toggleStar(food: Food) {
   }
 }
 
-const SEGMENT = 'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
-const SEGMENT_ON = 'bg-default text-highlighted shadow-sm'
-const SEGMENT_OFF = 'text-muted hover:text-default'
+/** The "+" in the bar adds to whichever shelf is showing */
+function addNew() {
+  if (tab.value === 'recipes') {
+    newOpen.value = true
+  } else {
+    openFood(null)
+  }
+}
+
+const TABS: { value: Tab, label: string, icon: string }[] = [
+  { value: 'recipes', label: 'Recipes', icon: 'i-lucide-book-open' },
+  { value: 'foods', label: 'Foods', icon: 'i-lucide-apple' }
+]
 </script>
 
 <template>
-  <AppPage title="Library">
+  <AppPage
+    title="Library"
+    eyebrow="Your foods and recipes"
+  >
     <template #actions>
       <UButton
-        v-if="tab === 'recipes'"
-        label="Recipe"
+        :label="tab === 'recipes' ? 'Recipe' : 'Food'"
         icon="i-lucide-plus"
         size="sm"
-        @click="newOpen = true"
-      />
-      <UButton
-        v-else
-        label="Food"
-        icon="i-lucide-plus"
-        size="sm"
-        @click="openFood(null)"
+        class="app-hit"
+        @click="addNew"
       />
     </template>
 
     <template #toolbar>
-      <div class="flex flex-col gap-2">
-        <div
-          class="flex items-center gap-0.5 rounded-xl bg-elevated/70 p-0.5"
-          role="tablist"
-        >
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="tab === 'recipes'"
-            :class="[SEGMENT, tab === 'recipes' ? SEGMENT_ON : SEGMENT_OFF]"
-            @click="tab = 'recipes'"
-          >
-            <UIcon
-              name="i-lucide-book-open"
-              class="size-3.5"
-            />
-            Recipes
-          </button>
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="tab === 'foods'"
-            :class="[SEGMENT, tab === 'foods' ? SEGMENT_ON : SEGMENT_OFF]"
-            @click="tab = 'foods'"
-          >
-            <UIcon
-              name="i-lucide-carrot"
-              class="size-3.5"
-            />
-            Foods
-          </button>
-        </div>
+      <div class="flex flex-col gap-2.5">
+        <ShellSegmented
+          v-model="tab"
+          label="Shelf"
+          :options="TABS"
+        />
 
         <UInput
           v-if="tab === 'recipes'"
@@ -264,6 +243,7 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
           icon="i-lucide-search"
           placeholder="Search your recipes…"
           class="w-full"
+          :ui="{ base: 'bg-default' }"
         />
         <div
           v-else
@@ -274,74 +254,149 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
             icon="i-lucide-search"
             placeholder="Search foods…"
             class="min-w-0 flex-1"
+            :ui="{ base: 'bg-default' }"
           />
-          <USwitch
-            v-model="onlyMine"
-            label="Mine"
-          />
+          <button
+            type="button"
+            class="app-chip h-11"
+            :aria-pressed="onlyMine"
+            @click="onlyMine = !onlyMine"
+          >
+            <UIcon
+              name="i-lucide-user-round"
+              class="size-4"
+            />
+            Mine
+          </button>
         </div>
       </div>
     </template>
 
     <!-- RECIPES -->
-    <SheetCard
+    <ShellCard
       v-if="tab === 'recipes'"
+      flush
       title="Recipes"
       icon="i-lucide-book-open"
       :count="recipes.length || null"
       hint="the whole dish"
       :loading="recipesLoading"
       :is-empty="!recipes.length"
-      :empty="recipeQuery ? 'No recipe by that name.' : 'No recipes yet — write the first one: a name is enough, or paste a dish with its numbers.'"
     >
+      <template #empty>
+        <ShellEmpty
+          v-if="recipeQuery"
+          compact
+          icon="i-lucide-search-x"
+          title="No recipe by that name"
+          description="Try another word from it."
+        />
+        <ShellEmpty
+          v-else
+          icon="i-lucide-chef-hat"
+          title="Your cookbook starts here"
+          description="A name is enough — or paste a dish with its numbers, and it can go on any day."
+        >
+          <UButton
+            label="New recipe"
+            icon="i-lucide-plus"
+            @click="newOpen = true"
+          />
+        </ShellEmpty>
+      </template>
+
       <button
         v-for="recipe in recipes"
         :key="recipe.id"
         type="button"
-        class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-elevated/60"
+        class="flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
         @click="show(recipe)"
       >
-        <span class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate text-sm font-medium text-highlighted">{{ recipe.title }}</span>
-          <span class="flex min-w-0 flex-wrap gap-x-2 text-[11px] tabular-nums">
-            <span class="text-dimmed">
+        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="line-clamp-2 text-body font-semibold break-words text-highlighted">{{ recipe.title }}</span>
+          <span class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span class="text-caption text-muted tabular-nums">
               <template v-if="recipe.minutes">{{ recipe.minutes }} min · </template>{{ servingsLabel(recipe) }}
             </span>
-            <span class="text-sky-500">P {{ formatMacro(recipe.protein) }}</span>
-            <span class="text-violet-500">C {{ formatMacro(recipe.carbs) }}</span>
-            <span class="text-amber-500">F {{ formatMacro(recipe.fat) }}</span>
+            <ShellMacroLine
+              v-if="recipe.items.length"
+              :macros="recipe"
+              :kcal="false"
+            />
+            <span
+              v-else-if="recipe.stated"
+              class="rounded-full bg-elevated px-1.5 text-micro font-semibold tracking-wide text-muted uppercase"
+            >as stated</span>
             <span
               v-if="statedGap(recipe) && recipe.stated"
-              class="text-warning"
+              class="rounded-full bg-warning/12 px-1.5 text-caption font-semibold text-warning tabular-nums"
             >stated {{ formatKcal(recipe.stated.kcal) }}</span>
           </span>
         </span>
-        <span class="shrink-0 text-right tabular-nums">
-          <span class="block text-sm font-medium text-highlighted">{{ formatKcal(kcalOf(recipe)) }}</span>
+        <span class="flex w-16 shrink-0 flex-col items-end leading-tight tabular-nums">
+          <span class="text-body font-semibold text-highlighted">{{ formatKcal(kcalOf(recipe)) }}</span>
           <span
             v-if="recipe.servings > 1 && perServing(recipe) && recipe.items.length"
-            class="block text-[10px] text-dimmed"
+            class="text-caption text-muted"
           >{{ formatKcal(perServing(recipe)!.kcal) }} each</span>
+          <span
+            v-else
+            class="text-caption text-muted"
+          >kcal</span>
         </span>
         <UIcon
           name="i-lucide-chevron-right"
           class="size-4 shrink-0 text-dimmed"
         />
       </button>
-    </SheetCard>
+    </ShellCard>
 
     <!-- FOODS -->
-    <SheetCard
+    <ShellCard
       v-else
+      flush
       title="Foods"
-      icon="i-lucide-carrot"
+      icon="i-lucide-apple"
       :count="foods.length || null"
       hint="per 100 g or ml"
       :loading="foodsLoading"
       :is-empty="!foods.length"
-      :empty="onlyMine ? 'You haven\'t added any foods yet — scan a packet or add one by hand.' : 'No foods match — add one and it is yours from then on.'"
     >
-      <TransitionGroup name="list">
+      <template #empty>
+        <ShellEmpty
+          v-if="onlyMine"
+          icon="i-lucide-scan-barcode"
+          title="None of your own yet"
+          description="Scan a packet from the + button, or add a food by hand — it is yours from then on."
+        >
+          <UButton
+            label="Add food"
+            icon="i-lucide-plus"
+            @click="openFood(null)"
+          />
+        </ShellEmpty>
+        <ShellEmpty
+          v-else
+          compact
+          icon="i-lucide-search-x"
+          title="No foods match"
+          description="Add it once and it is yours."
+        >
+          <UButton
+            label="Add"
+            icon="i-lucide-plus"
+            size="sm"
+            variant="soft"
+            @click="openFood(null)"
+          />
+        </ShellEmpty>
+      </template>
+
+      <TransitionGroup
+        tag="div"
+        name="list"
+        class="flex flex-col divide-y divide-default"
+      >
         <FoodRow
           v-for="food in foods"
           :key="food.id"
@@ -350,7 +405,7 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
           @star="toggleStar"
         />
       </TransitionGroup>
-    </SheetCard>
+    </ShellCard>
 
     <!-- A recipe of one's own: a name, or a dish copied off a label -->
     <UDrawer
@@ -370,22 +425,35 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
           @keydown.meta.enter.prevent="create"
           @keydown.ctrl.enter.prevent="create"
         />
-        <p class="mt-2 text-xs text-dimmed">
-          The first line is the name. A line with kcal is taken as the dish's
-          stated numbers. Anything after that is read as ingredients.
-        </p>
+        <ul class="mt-3 flex flex-col gap-1.5 text-xs text-muted">
+          <li class="flex gap-2">
+            <span class="mt-1.5 size-1 shrink-0 rounded-full bg-(--ui-text-dimmed)" />
+            The first line is the name.
+          </li>
+          <li class="flex gap-2">
+            <span class="mt-1.5 size-1 shrink-0 rounded-full bg-(--ui-text-dimmed)" />
+            A line with kcal is taken as the dish's stated numbers.
+          </li>
+          <li class="flex gap-2">
+            <span class="mt-1.5 size-1 shrink-0 rounded-full bg-(--ui-text-dimmed)" />
+            Anything after that is read as ingredients.
+          </li>
+        </ul>
       </template>
       <template #footer>
-        <div class="flex w-full justify-end gap-2">
+        <div class="flex w-full gap-2">
           <UButton
             label="Cancel"
             color="neutral"
-            variant="outline"
+            variant="ghost"
+            size="lg"
             :disabled="creating"
             @click="newOpen = false"
           />
           <UButton
             label="Create"
+            size="lg"
+            class="flex-1 justify-center"
             :loading="creating"
             :disabled="!newTitle.trim()"
             @click="create"
