@@ -744,8 +744,8 @@ async function save() {
 /** The amount cell reads like a ledger number, not like a form field */
 const AMOUNT_UI = { base: 'tabular-nums px-2 text-right' }
 
-/** A list inside the sheet: a group of rows with hairlines, no card around it */
-const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default'
+/** A list inside the sheet: an inset group, hairlines between its rows */
+const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
 </script>
 
 <template>
@@ -810,29 +810,13 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
       </UFormField>
     </div>
 
-    <!-- Five ways in -->
-    <div
-      class="grid grid-cols-5 gap-1 rounded-tile bg-elevated p-1"
-      role="group"
-      aria-label="How to add"
-    >
-      <button
-        v-for="entry in TABS"
-        :key="entry.value"
-        type="button"
-        class="flex min-w-0 flex-col items-center gap-0.5 rounded-xl py-2 text-caption font-semibold outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
-        :class="tab === entry.value ? 'bg-default text-highlighted shadow-card ring-1 ring-default dark:bg-accented' : 'text-muted active:bg-default/60'"
-        :aria-pressed="tab === entry.value"
-        @click="tab = entry.value"
-      >
-        <UIcon
-          :name="entry.icon"
-          class="size-5"
-          :class="tab === entry.value ? 'text-primary' : ''"
-        />
-        {{ entry.label }}
-      </button>
-    </div>
+    <!-- Five ways in, as one segmented control — Health's D · W · M · 6M · Y -->
+    <ShellSegmented
+      v-model="tab"
+      label="How to add"
+      size="sm"
+      :options="TABS.map(entry => ({ value: entry.value, label: entry.label }))"
+    />
 
     <!-- SEARCH -->
     <div
@@ -856,25 +840,19 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           v-for="food in results"
           :key="food.id"
           type="button"
-          class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
+          class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
           @click="choose(food)"
         >
-          <span class="flex min-w-0 flex-1 flex-col">
-            <span class="flex min-w-0 items-center gap-2">
-              <span class="truncate text-body font-semibold text-highlighted">{{ food.name }}</span>
-              <span
-                v-if="food.mine"
-                class="shrink-0 rounded-full bg-elevated px-2 py-0.5 text-micro font-semibold tracking-wide text-muted uppercase"
-              >Mine</span>
-            </span>
+          <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="line-clamp-2 text-body break-words text-highlighted">{{ food.name }}</span>
             <span
-              v-if="food.brand"
-              class="truncate text-xs text-muted"
-            >{{ food.brand }}</span>
+              v-if="food.mine || food.brand"
+              class="truncate text-footnote text-muted"
+            ><template v-if="food.mine">Mine</template><template v-if="food.mine && food.brand"> · </template>{{ food.brand }}</span>
           </span>
           <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
-            <span class="text-body font-semibold text-highlighted">{{ formatKcal(food.kcal) }}</span>
-            <span class="text-caption text-muted">/100 {{ food.base_unit }}</span>
+            <span class="text-body font-medium text-highlighted">{{ formatKcal(food.kcal) }}</span>
+            <span class="text-caption2 text-muted">/100 {{ food.base_unit }}</span>
           </span>
         </button>
       </div>
@@ -884,7 +862,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         icon="i-lucide-wifi-off"
         title="The search didn't load"
         description="Nothing is lost — check the connection and try again."
-        class="rounded-tile bg-elevated/60"
+        class="app-card"
       >
         <UButton
           label="Try again"
@@ -899,7 +877,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         icon="i-lucide-search-x"
         title="Not in the pantry yet"
         description="Add it once and it is yours."
-        class="rounded-tile bg-elevated/60"
+        class="app-card"
       >
         <UButton
           label="New food"
@@ -926,7 +904,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         @keydown.enter.exact.prevent="parseQuick"
       />
       <div class="flex items-start gap-3">
-        <p class="text-xs text-muted">
+        <p class="text-footnote text-muted">
           Read finds the foods in the line — they land below, editable.
           <template v-if="!filling">
             Or save it as written and count it later.
@@ -934,7 +912,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         </p>
         <UButton
           label="Read"
-          icon="i-lucide-wand-sparkles"
+          icon="i-lucide-text-search"
           size="sm"
           variant="soft"
           class="ml-auto shrink-0"
@@ -947,29 +925,30 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
       <!-- What it could not place -->
       <div
         v-if="unresolved.length"
-        class="flex flex-col gap-1 rounded-tile bg-warning/10 px-3.5 py-3"
+        class="flex flex-col"
       >
-        <span class="app-eyebrow text-warning">Not recognised</span>
-        <div
-          v-for="chunk in unresolved"
-          :key="chunk"
-          class="flex flex-wrap items-center gap-x-2 gap-y-1"
-        >
-          <span class="min-w-0 flex-1 truncate text-sm text-default">{{ chunk }}</span>
-          <UButton
-            label="Keep as written"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            @click="keepAsWritten(chunk)"
-          />
-          <UButton
-            label="New food"
-            icon="i-lucide-plus"
-            size="sm"
-            variant="soft"
-            @click="createFoodFor(chunk)"
-          />
+        <span class="app-group-title px-4 pb-1.5">Not recognised</span>
+        <div :class="GROUP">
+          <div
+            v-for="chunk in unresolved"
+            :key="chunk"
+            class="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 py-1.5 pr-2 pl-4"
+          >
+            <span class="min-w-0 flex-1 truncate text-body text-default">{{ chunk }}</span>
+            <UButton
+              label="Keep as written"
+              size="sm"
+              variant="ghost"
+              @click="keepAsWritten(chunk)"
+            />
+            <UButton
+              label="New food"
+              icon="i-lucide-plus"
+              size="sm"
+              variant="soft"
+              @click="createFoodFor(chunk)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -998,7 +977,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           icon="i-lucide-wifi-off"
           title="Your recipes didn't load"
           description="Nothing is lost — check the connection and try again."
-          class="rounded-tile bg-elevated/60"
+          class="app-card"
         >
           <UButton
             label="Try again"
@@ -1013,7 +992,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           icon="i-lucide-book-open"
           :title="recipeQuery ? 'Nothing found' : 'No recipes yet'"
           :description="recipeQuery ? 'Try another word from its name.' : 'Write your first one in the Library.'"
-          class="rounded-tile bg-elevated/60"
+          class="app-card"
         />
         <div
           v-else
@@ -1024,34 +1003,32 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             v-for="recipe in recipes"
             :key="recipe.id"
             type="button"
-            class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
+            class="flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
             @click="pickRecipe(recipe)"
           >
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="truncate text-body font-semibold text-highlighted">{{ recipe.title }}</span>
-              <span class="truncate text-xs text-muted">
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="line-clamp-2 text-body break-words text-highlighted">{{ recipe.title }}</span>
+              <span class="truncate text-footnote text-muted">
                 <template v-if="recipe.subtitle">{{ recipe.subtitle }} · </template>{{ servingsLabel(recipe) }}
               </span>
             </span>
             <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
-              <span class="text-body font-semibold text-highlighted">{{ formatKcal(!recipe.items.length && recipe.stated ? recipe.stated.kcal : recipe.kcal) }}</span>
-              <span class="text-caption text-muted">kcal</span>
+              <span class="text-body font-medium text-highlighted">{{ formatKcal(!recipe.items.length && recipe.stated ? recipe.stated.kcal : recipe.kcal) }}</span>
+              <span class="text-caption2 text-muted">kcal</span>
             </span>
           </button>
         </div>
       </template>
 
       <template v-else>
-        <div class="flex items-center gap-3 rounded-tile bg-elevated/70 py-2.5 pr-2 pl-3.5">
-          <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
-            <UIcon
-              name="i-lucide-book-open"
-              class="size-4.5"
-            />
-          </span>
-          <span class="flex min-w-0 flex-1 flex-col">
-            <span class="truncate text-body font-semibold text-highlighted">{{ picked.title }}</span>
-            <span class="text-xs text-muted tabular-nums">makes {{ servingsLabel(picked) }}</span>
+        <div class="app-card flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4">
+          <UIcon
+            name="i-lucide-book-open"
+            class="size-5.5 shrink-0 text-muted"
+          />
+          <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span class="truncate text-body text-highlighted">{{ picked.title }}</span>
+            <span class="text-footnote text-muted tabular-nums">makes {{ servingsLabel(picked) }}</span>
           </span>
           <UButton
             icon="i-lucide-x"
@@ -1075,7 +1052,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
               :ui="AMOUNT_UI"
             />
           </UFormField>
-          <p class="pb-1 text-xs text-muted">
+          <p class="pb-1 text-footnote text-muted">
             Corrections below go onto this meal only — the recipe stays as it is.
           </p>
         </div>
@@ -1106,9 +1083,9 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
       <!-- No food behind the barcode: say so, and offer to add it once -->
       <div
         v-if="scan && !scan.food"
-        class="flex flex-col gap-2 rounded-tile bg-warning/10 px-3.5 py-3"
+        class="app-card flex flex-col gap-2 px-4 py-3"
       >
-        <p class="flex items-start gap-2 text-sm text-default">
+        <p class="flex items-start gap-2 text-subheadline text-default">
           <UIcon
             name="i-lucide-circle-help"
             class="mt-0.5 size-4 shrink-0 text-warning"
@@ -1117,7 +1094,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         </p>
         <p
           v-if="scan.barcode"
-          class="flex items-center gap-1.5 pl-6 text-xs text-muted"
+          class="flex items-center gap-1.5 pl-6 text-footnote text-muted"
         >
           <UIcon
             name="i-lucide-barcode"
@@ -1169,7 +1146,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
           >
             <template #trailing>
-              <span class="text-xs text-dimmed">{{ field.unit }}</span>
+              <span class="text-footnote text-muted">{{ field.unit }}</span>
             </template>
           </DecimalInput>
         </UFormField>
@@ -1187,16 +1164,12 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
     <!-- A food picked from the pantry or off a barcode, waiting for its amount -->
     <div
       v-if="pending && (tab === 'search' || tab === 'scan')"
-      class="flex flex-col gap-3 rounded-tile bg-primary/6 p-3.5 border border-primary/20"
+      class="app-card flex flex-col gap-3 p-4"
     >
       <div class="flex items-center gap-2">
-        <UIcon
-          name="i-lucide-badge-check"
-          class="size-5 shrink-0 text-primary"
-        />
-        <span class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate text-body font-semibold text-highlighted">{{ pending.name }}</span>
-          <span class="flex items-baseline gap-2 text-caption text-muted">
+        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="truncate text-headline text-highlighted">{{ pending.name }}</span>
+          <span class="flex items-baseline gap-2 text-footnote text-muted">
             <span
               v-if="pending.brand"
               class="truncate"
@@ -1241,14 +1214,14 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
       <div
         v-if="pendingMacros"
-        class="flex items-baseline justify-between gap-2 border-t border-primary/15 pt-2.5"
+        class="app-rule-t -mx-4 flex items-baseline justify-between gap-2 px-4 pt-2.5"
       >
         <ShellMacroLine
           :macros="pendingMacros"
           :kcal="false"
           size="xs"
         />
-        <span class="text-sm font-bold text-highlighted tabular-nums">{{ formatKcal(pendingMacros.kcal) }} kcal</span>
+        <span class="text-subheadline font-semibold text-highlighted tabular-nums">{{ formatKcal(pendingMacros.kcal) }} kcal</span>
       </div>
     </div>
 
@@ -1256,21 +1229,20 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
          then amount · unit · what it comes to, the kcal down one column. -->
     <section
       v-if="fromRecipe || tab !== 'recipe' || drafted.length"
-      class="flex flex-col gap-2"
+      class="flex flex-col"
       aria-labelledby="meal-form-plate"
     >
       <h3
         id="meal-form-plate"
-        class="flex items-center gap-2 px-1"
+        class="app-group-title px-4 pb-1.5 tabular-nums"
       >
-        <span class="app-eyebrow">On the plate</span>
-        <span class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums">{{ drafted.length }}</span>
+        On the plate · {{ drafted.length }}
       </h3>
 
       <div :class="GROUP">
         <p
           v-if="!drafted.length"
-          class="px-4 py-3.5 text-sm text-muted"
+          class="px-4 py-3.5 text-subheadline text-muted"
         >
           {{ fromRecipe ? 'This recipe is counted by its stated numbers.' : 'Nothing on it yet — add a food above.' }}
         </p>
@@ -1286,7 +1258,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             variant="none"
             placeholder="Name"
             class="col-span-3 min-w-0"
-            :ui="{ root: 'w-full', base: 'px-1 py-1 text-body font-medium text-highlighted' }"
+            :ui="{ root: 'w-full', base: 'px-1 py-1 text-body text-highlighted' }"
             :aria-label="`Name of ${row.entry.label}`"
           />
           <UButton
@@ -1308,7 +1280,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           />
           <span
             v-if="row.direct"
-            class="px-2 text-sm text-muted"
+            class="px-2 text-subheadline text-muted"
           >{{ unitLabel('serving', row.entry.quantity) }}</span>
           <USelect
             v-else
@@ -1321,7 +1293,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           />
           <!-- What this line comes to, right-aligned under the kcal column -->
           <span class="col-span-2 flex min-w-0 flex-col items-end gap-0.5 text-right">
-            <span class="text-xs font-semibold text-highlighted tabular-nums">
+            <span class="text-footnote font-medium text-highlighted tabular-nums">
               <template v-if="row.macros">{{ formatKcal(row.macros.kcal) }} kcal</template>
               <span
                 v-else
@@ -1353,13 +1325,13 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         <!-- What the plate comes to -->
         <div
           v-if="draftedTotals"
-          class="flex items-center justify-between gap-3 bg-elevated/60 px-4 py-3"
+          class="flex items-center justify-between gap-3 px-4 py-3"
         >
-          <span class="text-sm font-semibold text-default">
+          <span class="text-subheadline font-semibold text-default">
             {{ fromRecipe ? 'The whole plate' : 'Total' }}
           </span>
           <span class="flex flex-col items-end gap-0.5">
-            <span class="text-body font-bold text-highlighted tabular-nums">{{ formatKcal(draftedTotals.kcal) }} kcal</span>
+            <span class="text-body font-semibold text-highlighted tabular-nums">{{ formatKcal(draftedTotals.kcal) }} kcal</span>
             <ShellMacroLine
               :macros="draftedTotals"
               :kcal="false"
@@ -1370,7 +1342,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
         <p
           v-if="!fromRecipe && unpriced > 0"
-          class="px-4 py-2.5 text-xs text-muted"
+          class="px-4 py-2.5 text-footnote text-muted"
         >
           {{ unpriced }} {{ unpriced === 1 ? 'item counts' : 'items count' }} for nothing — no food behind {{ unpriced === 1 ? 'it' : 'them' }} yet.
         </p>

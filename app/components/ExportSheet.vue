@@ -36,6 +36,9 @@ const PERIODS: { value: Preset, label: string }[] = [
 /** What the backend will hand over in one file; past this it answers 400 */
 const MAX_EXPORT_DAYS = 400
 
+/** The presets, then two dates of one's own */
+const CHOICES: { value: Period, label: string }[] = [...PERIODS, { value: 'custom', label: 'Pick the dates' }]
+
 const period = ref<Period>('week')
 const customFrom = ref('')
 const customTo = ref('')
@@ -123,34 +126,27 @@ async function download(format: 'pdf' | 'csv') {
   >
     <template #body>
       <div class="flex flex-col gap-4">
+        <!-- One of a few, iOS's way: a list with a checkmark on the chosen row -->
         <div
-          class="grid grid-cols-2 gap-2"
+          class="app-card app-divide flex flex-col overflow-hidden"
           role="radiogroup"
           aria-label="Period"
         >
           <button
-            v-for="entry in PERIODS"
+            v-for="entry in CHOICES"
             :key="entry.value"
             type="button"
             role="radio"
-            class="app-chip h-11"
+            class="flex min-h-11 items-center gap-3 px-4 text-left text-body text-default outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
             :aria-checked="period === entry.value"
             @click="period = entry.value"
           >
-            {{ entry.label }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            class="app-chip col-span-2 h-11"
-            :aria-checked="period === 'custom'"
-            @click="period = 'custom'"
-          >
+            <span class="min-w-0 flex-1 truncate">{{ entry.label }}</span>
             <UIcon
-              name="i-lucide-calendar-range"
-              class="size-4"
+              v-if="period === entry.value"
+              name="i-lucide-check"
+              class="size-5 shrink-0 text-primary"
             />
-            Pick the dates
           </button>
         </div>
 
@@ -180,7 +176,7 @@ async function download(format: 'pdf' | 'csv') {
 
         <p
           v-if="rangeProblem"
-          class="flex items-center gap-2 rounded-tile bg-error/10 px-3.5 py-2.5 text-sm text-error"
+          class="flex min-h-11 items-center gap-2 px-4 text-subheadline text-error"
           role="alert"
         >
           <UIcon
@@ -191,14 +187,14 @@ async function download(format: 'pdf' | 'csv') {
         </p>
         <p
           v-else
-          class="flex items-center gap-2 rounded-tile bg-elevated/70 px-3.5 py-2.5 text-sm text-default tabular-nums"
+          class="app-card flex min-h-11 items-center gap-2 px-4 text-body text-default tabular-nums"
         >
           <UIcon
             name="i-lucide-calendar"
             class="size-4 shrink-0 text-muted"
           />
           {{ dayShort(range.from) }} → {{ dayShort(range.to) }}
-          <span class="ml-auto text-muted">{{ rangeDays }} {{ rangeDays === 1 ? 'day' : 'days' }}</span>
+          <span class="ml-auto text-subheadline text-muted">{{ rangeDays }} {{ rangeDays === 1 ? 'day' : 'days' }}</span>
         </p>
       </div>
     </template>

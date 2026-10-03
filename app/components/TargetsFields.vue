@@ -9,6 +9,11 @@ import { splitTargets } from '~/composables/useEating'
  */
 const targets = defineModel<Targets>({ required: true })
 
+defineSlots<{
+  /** Rows after the fields, inside the same group */
+  default?: () => unknown
+}>()
+
 // The same colour per macro as the scoreboard and every diary row
 const FIELDS: { key: keyof Targets, label: string, unit: string, dot: string }[] = [
   { key: 'target_kcal', label: 'Energy', unit: 'kcal', dot: 'bg-kcal' },
@@ -34,48 +39,40 @@ function suggest() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="grid grid-cols-2 gap-3">
-      <UFormField
-        v-for="field in FIELDS"
-        :key="field.key"
-        :ui="{ label: 'flex items-center gap-1.5' }"
-      >
-        <template #label>
-          <span
-            class="size-2 rounded-full"
-            :class="field.dot"
-          />
-          {{ field.label }}
-        </template>
-        <UInput
-          :model-value="targets[field.key] ?? undefined"
-          type="number"
-          inputmode="numeric"
-          min="0"
-          step="1"
-          placeholder="—"
-          class="w-full"
-          :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
-          @update:model-value="value => set(field.key, value)"
-        >
-          <template #trailing>
-            <span class="text-sm text-dimmed">{{ field.unit }}</span>
-          </template>
-        </UInput>
-      </UFormField>
-    </div>
+  <!-- One grouped list, Health's way: the name, the number right-aligned
+       against its unit, and the one shortcut as an accent row under them -->
+  <div class="app-card app-divide flex min-w-0 flex-col overflow-hidden">
+    <ShellFieldRow
+      v-for="field in FIELDS"
+      :key="field.key"
+      :label="field.label"
+      :unit="field.unit"
+      :dot="field.dot"
+    >
+      <UInput
+        :model-value="targets[field.key] ?? undefined"
+        type="number"
+        inputmode="numeric"
+        min="0"
+        step="1"
+        placeholder="—"
+        variant="none"
+        :ui="FIELD_ROW_INPUT"
+        @update:model-value="value => set(field.key, value)"
+      />
+    </ShellFieldRow>
 
-    <UButton
-      label="Split the kcal into macros"
-      icon="i-lucide-wand-sparkles"
-      size="sm"
-      color="neutral"
-      variant="soft"
-      class="self-start"
+    <button
+      type="button"
+      class="flex min-h-11 items-center px-4 text-left text-body text-primary outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented disabled:text-dimmed motion-reduce:transition-none"
       :disabled="!targets.target_kcal"
       title="30 % protein, 40 % carbs, 30 % fat — a starting point to adjust"
       @click="suggest"
-    />
+    >
+      Split the kcal into macros
+    </button>
+
+    <!-- More rows of the same group — Settings adds the calculator here -->
+    <slot />
   </div>
 </template>

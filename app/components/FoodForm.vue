@@ -209,10 +209,10 @@ async function remove() {
           class="flex flex-col gap-3"
           aria-labelledby="food-form-per-100"
         >
-          <div class="flex items-center gap-3 px-1">
+          <div class="flex items-center gap-3 pl-4">
             <h3
               id="food-form-per-100"
-              class="app-eyebrow min-w-0 flex-1"
+              class="app-group-title min-w-0 flex-1"
             >
               Per 100 {{ form.base_unit }}
             </h3>
@@ -244,7 +244,7 @@ async function remove() {
                 :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
               >
                 <template #trailing>
-                  <span class="text-xs text-dimmed">{{ field.unit }}</span>
+                  <span class="text-footnote text-muted">{{ field.unit }}</span>
                 </template>
               </DecimalInput>
             </UFormField>
@@ -257,7 +257,7 @@ async function remove() {
         >
           <h3
             id="food-form-portions"
-            class="app-eyebrow px-1"
+            class="app-group-title px-4"
           >
             Portions — grams each
           </h3>
@@ -275,7 +275,7 @@ async function remove() {
                 :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
               >
                 <template #trailing>
-                  <span class="text-xs text-dimmed">g</span>
+                  <span class="text-footnote text-muted">g</span>
                 </template>
               </DecimalInput>
             </UFormField>
@@ -284,11 +284,11 @@ async function remove() {
 
         <p
           v-if="barcode"
-          class="flex items-start gap-2 rounded-tile bg-elevated/70 px-3.5 py-3 text-xs text-muted"
+          class="app-card flex items-start gap-3 px-4 py-3 text-footnote text-muted"
         >
           <UIcon
             name="i-lucide-barcode"
-            class="mt-px size-4 shrink-0 text-toned"
+            class="mt-px size-4.5 shrink-0 text-muted"
           />
           <span>
             <span class="font-semibold text-default tabular-nums">{{ barcode }}</span>

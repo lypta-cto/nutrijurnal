@@ -537,7 +537,7 @@ const LINE_COLS = 'grid items-center gap-x-2 gap-y-1 grid-cols-[3.75rem_6rem_min
 const AMOUNT_UI = { base: 'tabular-nums px-2 text-right' }
 
 /** A list inside the sheet: a group of rows with hairlines, no card around it */
-const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default'
+const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
 </script>
 
 <template>
@@ -553,43 +553,43 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         class="flex flex-col gap-5"
       >
         <!-- What it comes to, and what was stated for it -->
-        <div class="flex flex-col gap-3 rounded-tile bg-elevated/70 p-4">
+        <div class="app-card flex flex-col gap-3 p-4">
           <div class="flex flex-wrap items-end gap-x-3 gap-y-1">
             <span class="flex items-baseline gap-1.5">
-              <span class="text-[2rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ formatKcal(shown?.kcal ?? full.kcal) }}</span>
-              <span class="text-sm font-semibold text-muted">kcal</span>
+              <span class="font-rounded text-[2.125rem] leading-none font-bold text-highlighted tabular-nums">{{ formatKcal(shown?.kcal ?? full.kcal) }}</span>
+              <span class="text-subheadline text-muted">kcal</span>
             </span>
-            <span class="pb-0.5 text-xs text-muted">for {{ servingsLabel(full) }}</span>
+            <span class="pb-0.5 text-footnote text-muted">for {{ servingsLabel(full) }}</span>
             <span
               v-if="statedOnly"
-              class="mb-0.5 rounded-full bg-default px-2 py-0.5 text-micro font-semibold tracking-wide text-muted uppercase"
-            >as stated</span>
+              class="pb-0.5 text-footnote text-muted"
+            >· as stated</span>
             <span
               v-if="gap && full.stated && !statedOnly"
-              class="mb-0.5 ml-auto rounded-full bg-warning/12 px-2 py-0.5 text-xs font-semibold text-warning tabular-nums"
+              class="ml-auto pb-0.5 text-footnote font-medium text-warning tabular-nums"
               :aria-label="`Stated as ${formatKcal(full.stated.kcal)} kcal; the ingredients add up to ${formatKcal(full.kcal)}`"
             >stated {{ formatKcal(full.stated.kcal) }}</span>
           </div>
           <p
             v-if="each && full.servings > 1"
-            class="-mt-1 text-sm font-semibold text-default tabular-nums"
+            class="-mt-1 text-subheadline text-default tabular-nums"
           >
             {{ formatKcal(each.kcal) }} kcal per {{ full.serving_unit }}
           </p>
-          <div class="grid grid-cols-3 gap-3 border-t border-default pt-3">
+          <div class="app-rule-t -mx-4 grid grid-cols-3 gap-3 px-4 pt-3">
             <span
               v-for="bar in summary"
               :key="bar.key"
               class="flex min-w-0 flex-col"
             >
-              <span class="flex items-center gap-1.5 text-caption font-semibold text-muted">
+              <span class="flex items-center gap-1.5 text-caption text-muted">
                 <span
                   class="size-2 shrink-0 rounded-full"
                   :class="bar.dot"
                 />
                 {{ bar.label }}
               </span>
-              <span class="text-sm font-semibold text-highlighted tabular-nums">{{ formatMacro(bar.value) }} g</span>
+              <span class="text-subheadline font-medium text-highlighted tabular-nums">{{ formatMacro(bar.value) }} g</span>
               <span
                 v-if="bar.per !== null"
                 class="text-caption text-muted tabular-nums"
@@ -601,9 +601,9 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         <!-- Onto a day — right where the eye is when the button is pressed -->
         <div
           v-if="planning"
-          class="grid grid-cols-2 gap-3 rounded-tile bg-primary/6 p-4 border border-primary/20"
+          class="app-card grid grid-cols-2 gap-3 p-4"
         >
-          <span class="app-eyebrow col-span-2 text-primary">Put it on a day</span>
+          <span class="col-span-2 text-headline text-highlighted">Put it on a day</span>
           <UFormField
             label="Day"
             :error="planError ?? false"
@@ -710,22 +710,21 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
         <!-- Ingredients, edited where they stand -->
         <section
-          class="flex flex-col gap-2"
+          class="flex flex-col gap-1.5"
           aria-labelledby="recipe-ingredients"
         >
-          <div class="flex items-center gap-2 px-1">
+          <div class="flex items-center gap-1 pl-4">
             <h3
               id="recipe-ingredients"
-              class="app-eyebrow"
+              class="app-group-title tabular-nums"
             >
-              Ingredients
+              Ingredients · {{ lines.length }}
             </h3>
-            <span class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums">{{ lines.length }}</span>
             <UButton
               label="Paste"
               icon="i-lucide-clipboard-list"
               size="sm"
-              color="neutral"
+              :color="pasting ? 'primary' : 'neutral'"
               :variant="pasting ? 'soft' : 'ghost'"
               class="ml-auto"
               :aria-pressed="pasting"
@@ -735,7 +734,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
               label="Add"
               icon="i-lucide-plus"
               size="sm"
-              variant="soft"
+              variant="ghost"
               @click="addLine"
             />
           </div>
@@ -755,7 +754,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             />
             <UButton
               label="Read"
-              icon="i-lucide-wand-sparkles"
+              icon="i-lucide-text-search"
               type="submit"
               variant="soft"
               :loading="reading"
@@ -775,7 +774,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
                 variant="none"
                 placeholder="Ingredient"
                 class="col-span-3 min-w-0"
-                :ui="{ root: 'w-full', base: 'px-1 py-1 text-body font-medium text-highlighted' }"
+                :ui="{ root: 'w-full', base: 'px-1 py-1 text-body text-highlighted' }"
                 aria-label="Ingredient"
                 @blur="resolveLine(line)"
                 @keydown.enter="resolveLine(line)"
@@ -854,7 +853,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
             <p
               v-if="!lines.length"
-              class="px-4 py-3.5 text-sm text-muted"
+              class="px-4 py-3.5 text-subheadline text-muted"
             >
               No ingredients yet — add the first line, or paste the whole list.
             </p>
@@ -863,20 +862,18 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
         <!-- Steps read as steps; the textarea is one tap away -->
         <section
-          class="flex flex-col gap-2"
+          class="flex flex-col gap-1.5"
           aria-labelledby="recipe-steps"
         >
-          <div class="flex items-center gap-2 px-1">
+          <div class="flex min-h-8 items-center gap-1 pl-4">
             <h3
               id="recipe-steps"
-              class="app-eyebrow"
+              class="app-group-title tabular-nums"
             >
-              Steps
+              Steps<template v-if="stepList.length">
+                · {{ stepList.length }}
+              </template>
             </h3>
-            <span
-              v-if="stepList.length"
-              class="rounded-full bg-elevated px-2 py-0.5 text-caption font-semibold text-toned tabular-nums"
-            >{{ stepList.length }}</span>
             <UButton
               v-if="stepList.length"
               :label="editingSteps ? 'Done' : 'Edit'"
@@ -900,14 +897,14 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           />
           <ol
             v-else
-            class="flex flex-col gap-3 px-1"
+            class="app-card flex flex-col gap-3 px-4 py-3.5"
           >
             <li
               v-for="(step, index) in stepList"
               :key="index"
               class="flex gap-3 text-body leading-relaxed text-default"
             >
-              <span class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary tabular-nums">{{ index + 1 }}</span>
+              <span class="w-5 shrink-0 text-right font-semibold text-muted tabular-nums">{{ index + 1 }}</span>
               <span class="min-w-0">{{ step }}</span>
             </li>
           </ol>
@@ -958,7 +955,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
         />
         <span
           v-if="dirty"
-          class="flex items-center gap-1 text-xs font-semibold text-warning"
+          class="flex items-center gap-1 text-footnote font-medium text-warning"
         >
           <span class="size-1.5 rounded-full bg-warning" />
           Unsaved
