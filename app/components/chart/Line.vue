@@ -75,7 +75,10 @@ const dots = computed(() => {
 
 const last = computed(() => known.value.at(-1) ?? null)
 
-const labelEvery = computed(() => Math.max(1, Math.ceil(props.points.length / Math.max(1, Math.floor(plotWidth.value / 34)))))
+/** Room one axis label needs — a weekday's letter far less than a two-digit
+ *  date, so a week labels every day (a weighing never falls between labels) */
+const labelRoom = computed(() => 14 + 7 * Math.max(1, ...props.points.map(point => point.label.length)))
+const labelEvery = computed(() => Math.max(1, Math.ceil(props.points.length / Math.max(1, Math.floor(plotWidth.value / labelRoom.value)))))
 
 function showsLabel(index: number): boolean {
   const final = props.points.length - 1

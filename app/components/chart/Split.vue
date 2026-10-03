@@ -57,10 +57,16 @@ onMounted(() => requestAnimationFrame(() => {
         <dd class="font-rounded text-title3 text-highlighted tabular-nums">
           {{ row.share }}<span class="text-subheadline font-medium text-muted">%</span>
         </dd>
+        <!-- Grams and the target's share on lines of their own, so the
+             three columns line up instead of wrapping mid-phrase -->
         <dd class="text-caption text-muted tabular-nums">
-          {{ Math.round(row.grams) }} g<template v-if="row.goalShare !== null">
-            · target {{ row.goalShare }}%
-          </template>
+          {{ Math.round(row.grams) }} g
+        </dd>
+        <dd
+          v-if="row.goalShare !== null"
+          class="text-caption text-muted tabular-nums"
+        >
+          target {{ row.goalShare }}%
         </dd>
       </div>
     </dl>

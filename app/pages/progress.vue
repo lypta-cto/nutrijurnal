@@ -362,7 +362,7 @@ const rows = computed(() => {
           <div
             v-for="entry in rows"
             :key="entry.day"
-            class="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem] items-center gap-x-3 gap-y-1 px-4 py-2.5"
+            class="grid grid-cols-[7rem_minmax(0,1fr)_3.5rem] items-center gap-x-3 gap-y-1 px-4 py-2.5"
           >
             <span
               class="truncate text-body"
