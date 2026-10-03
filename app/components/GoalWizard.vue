@@ -349,7 +349,7 @@ const CHOICE = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left ou
               :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
             >
               <template #trailing>
-                <span class="text-sm text-dimmed">cm</span>
+                <span class="text-subheadline text-muted">cm</span>
               </template>
             </DecimalInput>
           </UFormField>
@@ -364,7 +364,7 @@ const CHOICE = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left ou
               :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
             >
               <template #trailing>
-                <span class="text-sm text-dimmed">kg</span>
+                <span class="text-subheadline text-muted">kg</span>
               </template>
             </DecimalInput>
           </UFormField>

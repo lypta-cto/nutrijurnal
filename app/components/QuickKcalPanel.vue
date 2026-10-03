@@ -84,6 +84,7 @@ function submit() {
         inputmode="numeric"
         min="0"
         size="xl"
+        fixed
         autofocus
         :placeholder="fromMacros ? String(fromMacros) : '350'"
         class="w-full"

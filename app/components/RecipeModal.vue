@@ -835,7 +835,7 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
                     v-for="food in choices.get(line.key)"
                     :key="food.id"
                     type="button"
-                    class="app-chip h-7 px-2.5 text-xs"
+                    class="app-chip h-7 px-2.5 text-footnote"
                     @click="pick(line, food)"
                   >
                     {{ food.name }}

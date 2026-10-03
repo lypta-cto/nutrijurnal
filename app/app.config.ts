@@ -11,6 +11,16 @@ const FIELD = 'bg-elevated ring-0 focus-visible:ring-2 focus-visible:ring-inset 
 // Glass for what floats over content (docs/design.md → Materials)
 const GLASS = 'bg-glass backdrop-blur-glass backdrop-saturate-180'
 
+// A note on any surface: the grey fill, no ring, the ordinary text colour
+const NOTE = 'bg-elevated text-default ring-0'
+
+// Nuxt UI shrinks a field's text from 768 px up (a desktop form); the diary is
+// one phone-width column everywhere, so a field keeps its phone size
+const SAME_SIZE_EVERYWHERE = [
+  { fixed: false, size: ['xs', 'sm'] as ('xs' | 'sm')[], class: 'md:text-sm' },
+  { fixed: false, size: ['md', 'lg', 'xl'] as ('md' | 'lg' | 'xl')[], class: 'md:text-base' }
+]
+
 export default defineAppConfig({
   // Branding — the mark itself lives in components/shell/LogoMark.vue
   app: {
@@ -83,6 +93,7 @@ export default defineAppConfig({
         }
       },
       compoundVariants: [
+        ...SAME_SIZE_EVERYWHERE,
         { leading: true, size: 'md', class: 'ps-11' },
         { leading: true, size: 'lg', class: 'ps-12' },
         { trailing: true, size: 'md', class: 'pe-11' },
@@ -98,7 +109,8 @@ export default defineAppConfig({
           md: { base: 'px-3.5 py-3' },
           lg: { base: 'px-4 py-3.5' }
         }
-      }
+      },
+      compoundVariants: SAME_SIZE_EVERYWHERE
     },
 
     select: {
@@ -113,7 +125,8 @@ export default defineAppConfig({
           md: { base: 'px-3.5 py-3 text-base/5', item: 'p-2.5' },
           lg: { base: 'px-4 py-3.5 text-base/5', item: 'p-3' }
         }
-      }
+      },
+      compoundVariants: SAME_SIZE_EVERYWHERE
     },
 
     selectMenu: {
@@ -123,7 +136,8 @@ export default defineAppConfig({
       },
       variants: {
         variant: { outline: FIELD }
-      }
+      },
+      compoundVariants: SAME_SIZE_EVERYWHERE
     },
 
     formField: {
@@ -261,12 +275,23 @@ export default defineAppConfig({
       }
     },
 
+    // An alert is a note, not a coloured box: a grey well, the text in the
+    // ordinary colours, and only the glyph (and an error's title) in the
+    // colour that says why
     alert: {
       slots: {
         root: 'rounded-card',
         title: 'text-subheadline font-semibold',
         description: 'text-footnote opacity-90'
-      }
+      },
+      compoundVariants: [
+        { color: 'primary', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-primary' } },
+        { color: 'success', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-success' } },
+        { color: 'info', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-info' } },
+        { color: 'warning', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-warning' } },
+        { color: 'error', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-error', title: 'text-error' } },
+        { color: 'neutral', variant: ['soft', 'subtle'], class: { root: NOTE, description: 'text-muted', icon: 'text-muted' } }
+      ]
     },
 
     skeleton: {

@@ -136,6 +136,7 @@ function submit() {
         <DecimalInput
           v-model="quantity"
           size="lg"
+          fixed
           class="w-full"
           :ui="{ base: 'tabular-nums text-lg font-medium' }"
         />

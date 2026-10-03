@@ -24,7 +24,7 @@ export interface RingTrack {
  *     { key: 'carbs', value: totals.carbs, goal: target?.carbs ?? null },
  *     { key: 'fat', value: totals.fat, goal: target?.fat ?? null }
  *   ]">
- *     <span class="text-[2rem] font-bold tabular-nums">1 060</span>
+ *     <span class="font-rounded text-[2.125rem] font-bold tabular-nums">1 060</span>
  *     <span class="text-caption text-muted">kcal left</span>
  *   </ShellMacroRing>
  *
