@@ -29,6 +29,7 @@ import {
 const {
   settings,
   day,
+  dayFailed,
   meals,
   totals,
   target,
@@ -121,7 +122,19 @@ const route = useRoute()
  * claims about data that simply hasn't arrived. The cards hold their shape.
  */
 const settled = ref(false)
-const firstLoad = computed(() => !meals.value.length && (loading.value || !settled.value))
+/** The day on screen could not be read — an empty diary would be a lie */
+const failed = computed(() => dayFailed.value === day.value && !loading.value)
+const firstLoad = computed(() => !meals.value.length && !failed.value && (loading.value || !settled.value))
+const retrying = ref(false)
+
+async function retry() {
+  retrying.value = true
+  try {
+    await refreshAll()
+  } finally {
+    retrying.value = false
+  }
+}
 
 onMounted(async () => {
   // A meal reminder opens the app on "/?add=lunch", the home-screen shortcut
@@ -661,11 +674,21 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       @pointerup="onDayUp"
       @pointercancel="dayGesture = null"
     >
+      <UAlert
+        v-if="failed"
+        color="warning"
+        variant="subtle"
+        icon="i-lucide-wifi-off"
+        title="This day didn't load"
+        description="Nothing is lost — the diary just couldn't be reached. Check the connection and try again."
+        :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', color: 'warning', variant: 'outline', loading: retrying, onClick: () => void retry() }]"
+      />
+
       <EatingScoreboard
         :totals="totals"
         :target="target"
         :meals="meals.length"
-        :loading="firstLoad"
+        :loading="firstLoad || failed"
         @targets="openTargets"
       />
 
@@ -680,7 +703,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         :icon="group.icon"
         :hint="group.meals.length
           ? `${formatKcal(group.kcal)} kcal`
-          : group.yesterday.length || firstLoad ? undefined : 'Nothing yet'"
+          : group.yesterday.length || firstLoad || failed ? undefined : 'Nothing yet'"
         :aria-label="group.plural"
       >
         <template #actions>

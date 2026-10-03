@@ -643,13 +643,19 @@ export function useEating() {
   const settings = useState<EatingSettings | null>('eating-settings', () => null)
   const day = useDiaryDay()
   const dayView = useState<DayView | null>('eating-day-view', () => null)
+  /** The day whose last load failed — said on screen, never shown as empty */
+  const dayFailed = useState<string | null>('eating-day-failed', () => null)
   const week = useState<DayTotals[]>('eating-week', () => [])
   const loading = ref(false)
 
-  const meals = computed<Meal[]>(() => dayView.value?.meals ?? [])
-  const totals = computed<Macros>(() => dayView.value?.totals ?? emptyMacros())
+  // Only the day on screen counts: while another day is loading (or failed
+  // to), the last one's meals must not stand under the new day's heading,
+  // where their totals and row actions would pass for this day's
+  const shown = computed<DayView | null>(() => (dayView.value?.day === day.value ? dayView.value : null))
+  const meals = computed<Meal[]>(() => shown.value?.meals ?? [])
+  const totals = computed<Macros>(() => shown.value?.totals ?? emptyMacros())
   /** The day's own target wins; the settings are the fallback before it loads */
-  const target = computed<Macros | null>(() => dayView.value?.target ?? targetOf(settings.value))
+  const target = computed<Macros | null>(() => shown.value?.target ?? targetOf(settings.value))
 
   // --- Settings -------------------------------------------------------------
 
@@ -677,8 +683,14 @@ export function useEating() {
       // A slow answer for a day already left behind must not replace the one on screen
       if (which === day.value) {
         dayView.value = view
+        dayFailed.value = null
       }
       return view
+    } catch (error) {
+      if (which === day.value) {
+        dayFailed.value = which
+      }
+      throw error
     } finally {
       loading.value = false
     }
@@ -903,6 +915,7 @@ export function useEating() {
     settings,
     day,
     dayView,
+    dayFailed,
     meals,
     totals,
     target,
