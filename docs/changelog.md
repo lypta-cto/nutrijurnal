@@ -10,7 +10,7 @@ Newest first. One line per piece of work that landed, in either repo.
   circle, sliders a thin track with the switch's white thumb, toasts banners with an
   accent Undo and a 2 px timer. The food, recipe and meal forms and the calculator's
   body numbers are grouped field rows (ShellFieldRow gains `hint`), day and time pill
-  rows like Calendar's. A short sheet's header and footer no longer show a grey glass
+  rows like Calendar's, the notes groups headed "Note". A short sheet's header and footer no longer show a grey glass
   band at rest. Starred foods are filled stars; a meal's "more" is the horizontal
   ellipsis; ring and bar tracks are 25 % in dark mode; the install card shows the real
   app icon; Reminders lose the box-in-a-box and the full empty state; the camera badge

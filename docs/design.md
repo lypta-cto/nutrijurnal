@@ -442,9 +442,9 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
   kcal, copy) only names the day under the title; there is no slot to pick there.
 - **Form sheets** — meal (day and time as pill rows, the slot and the name in the same
   group; the five ways as one segmented control, the plate as a group headed "On the
-  plate · n" with its total as the last row), recipe (the kcal in `font-rounded` on a
+  plate · n" with its total as the last row, the note a group headed "Note"), recipe (the kcal in `font-rounded` on a
   well, its title, subtitle, minutes and makes as field rows, ingredients and plain
-  numbered steps as groups), food (name and brand, the four numbers per 100 g, the
+  numbered steps and the note as groups), food (name and brand, the four numbers per 100 g, the
   portions with what each means — all field rows), export (a checkmark list), move,
   targets (`ShellFieldRow`s), keep the demo.
 - **Library** — Recipes / Foods as a segmented control and the search field in the
