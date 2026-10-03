@@ -194,35 +194,48 @@ function addPending() {
 const searchQuery = ref('')
 const results = ref<Food[]>([])
 const searching = ref(false)
+/** The search itself failed — not the same as a pantry without the food */
+const searchFailed = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+// Each search is numbered: only the newest one's answer, or failure, may land
+let searchesAsked = 0
 
 async function runSearch() {
   const q = searchQuery.value.trim()
+  const ask = (searchesAsked += 1)
   if (!q) {
+    // Cleared mid-search: the one in flight will never land, so its spinner goes now
     results.value = []
+    searching.value = false
+    searchFailed.value = false
     return
   }
   searching.value = true
+  // Typing on: an older answer, or an older failure, must not land over a newer word
+  const current = () => ask === searchesAsked && q === searchQuery.value.trim()
   try {
     const found = await searchFoods(q, 20)
-    // Typing on: an older answer must not replace a newer one
-    if (q === searchQuery.value.trim()) {
+    if (current()) {
       results.value = found
+      searchFailed.value = false
     }
   } catch {
-    results.value = []
+    if (current()) {
+      results.value = []
+      searchFailed.value = true
+    }
   } finally {
-    if (q === searchQuery.value.trim()) {
+    if (ask === searchesAsked) {
       searching.value = false
     }
   }
 }
 
-watch(searchQuery, () => {
+watch(searchQuery, (value) => {
   if (searchTimer) {
     clearTimeout(searchTimer)
   }
-  searchTimer = setTimeout(() => void runSearch(), 250)
+  searchTimer = setTimeout(() => void runSearch(), value.trim() ? 250 : 0)
 })
 
 // --- Type: the plate as a sentence ---------------------------------------------------
@@ -479,6 +492,7 @@ function reset() {
   scan.value = null
   searchQuery.value = ''
   results.value = []
+  searchFailed.value = false
   recipeQuery.value = ''
   picked.value = null
   recipeItems.value = []
@@ -851,6 +865,21 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           </span>
         </button>
       </div>
+      <ShellEmpty
+        v-else-if="searchFailed && searchQuery.trim() && !searching && !pending"
+        compact
+        icon="i-lucide-wifi-off"
+        title="The search didn't load"
+        description="Nothing is lost — check the connection and try again."
+        class="rounded-tile bg-elevated/60"
+      >
+        <UButton
+          label="Try again"
+          size="sm"
+          variant="soft"
+          @click="runSearch"
+        />
+      </ShellEmpty>
       <ShellEmpty
         v-else-if="searchQuery.trim() && !searching && !pending"
         compact

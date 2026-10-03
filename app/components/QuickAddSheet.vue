@@ -182,34 +182,50 @@ const searchInput = ref<{ inputRef?: HTMLInputElement | null } | null>(null)
 const query = ref('')
 const results = ref<Food[]>([])
 const searching = ref(false)
+/** The search itself failed — not the same as a pantry without the food */
+const searchFailed = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+// Each search is numbered: only the newest one's answer, or failure, may land
+let searchesAsked = 0
+
+async function runSearch() {
+  const asked = query.value
+  const ask = (searchesAsked += 1)
+  searching.value = true
+  // Typing on: an older answer, or an older failure, must not land over a newer word
+  const current = () => ask === searchesAsked && asked === query.value
+  try {
+    const found = await searchFoods(asked.trim(), 25)
+    if (current()) {
+      results.value = found
+      searchFailed.value = false
+    }
+  } catch {
+    if (current()) {
+      results.value = []
+      searchFailed.value = true
+    }
+  } finally {
+    if (ask === searchesAsked) {
+      searching.value = false
+    }
+  }
+}
 
 watch(query, (value) => {
   if (searchTimer) {
     clearTimeout(searchTimer)
   }
   if (!value.trim()) {
+    // Whatever is still in flight is for a word no longer there
+    searchesAsked += 1
     results.value = []
     searching.value = false
+    searchFailed.value = false
     return
   }
   searching.value = true
-  searchTimer = setTimeout(async () => {
-    const asked = value
-    try {
-      const found = await searchFoods(asked.trim(), 25)
-      // Typing on: an older answer must not replace a newer one
-      if (asked === query.value) {
-        results.value = found
-      }
-    } catch {
-      results.value = []
-    } finally {
-      if (asked === query.value) {
-        searching.value = false
-      }
-    }
-  }, 180)
+  searchTimer = setTimeout(() => void runSearch(), 180)
 })
 
 // --- Starring ---------------------------------------------------------------------
@@ -588,6 +604,20 @@ const description = computed(() => {
               :count="3"
               class="overflow-hidden rounded-tile border border-default"
             />
+            <ShellEmpty
+              v-else-if="searchFailed"
+              icon="i-lucide-wifi-off"
+              title="The search didn't load"
+              description="Nothing is lost — check the connection and try again."
+            >
+              <UButton
+                label="Try again"
+                icon="i-lucide-refresh-cw"
+                color="neutral"
+                variant="soft"
+                @click="runSearch"
+              />
+            </ShellEmpty>
             <ShellEmpty
               v-else
               icon="i-lucide-search-x"

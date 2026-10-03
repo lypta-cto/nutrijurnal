@@ -73,8 +73,12 @@ function pantry(older: 'late' | 'fails') {
   })
 }
 
+function searchField() {
+  return document.body.querySelector<HTMLInputElement>('input[placeholder^="Search foods"]')!
+}
+
 async function searchFor(...words: string[]) {
-  const field = document.body.querySelector<HTMLInputElement>('input[placeholder^="Search foods"]')!
+  const field = searchField()
   for (const word of words) {
     field.value = word
     field.dispatchEvent(new Event('input'))
@@ -180,11 +184,7 @@ describe('the meal form on a phone', () => {
     expect(document.body.textContent).not.toContain('Pileći file')
   })
 
-  // BUG app/components/MealForm.vue runSearch(): the catch empties `results`
-  // without checking the answer is still the current one, so an older search
-  // that fails late wipes the newer word's foods and the sheet says "Not in
-  // the pantry yet" under them. QuickAddSheet's search has the same catch.
-  it.fails('keeps the newer word’s foods when an older search fails late', async () => {
+  it('keeps the newer word’s foods when an older search fails late', async () => {
     pantry('fails')
     mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21' } }))
     await flushPromises()
@@ -197,5 +197,47 @@ describe('the meal form on a phone', () => {
 
     expect(document.body.textContent).toContain('Pire krompir')
     expect(document.body.textContent).not.toContain('Not in the pantry yet')
+    expect(document.body.textContent).not.toContain('The search didn\'t load')
+  })
+
+  it('stops the spinner when the field is cleared while a search is on its way', async () => {
+    pantry('late')
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21' } }))
+    await flushPromises()
+    const spinning = () => searchField().parentElement!.querySelector('.animate-spin')
+
+    await searchFor('pil')
+    expect(spinning()).not.toBeNull()
+    await searchFor('')
+    await flushPromises()
+    expect(spinning()).toBeNull()
+
+    // …and the answer to the word that is gone never lands
+    await wait(300)
+    await flushPromises()
+    expect(spinning()).toBeNull()
+    expect(document.body.textContent).not.toContain('Pileći file')
+  })
+
+  it('says the search failed rather than that the pantry has no such food', async () => {
+    let down = true
+    registerEndpoint('/api/v1/eating/foods', () => {
+      if (down) {
+        throw createError({ statusCode: 503 })
+      }
+      return [food('chicken', 'Pileći file')]
+    })
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21' } }))
+    await flushPromises()
+
+    await searchFor('pil')
+    await vi.waitFor(() => expect(document.body.textContent).toContain('The search didn\'t load'), { timeout: 2000 })
+    expect(document.body.textContent).not.toContain('Not in the pantry yet')
+
+    down = false
+    const retry = [...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Try again')
+    retry!.click()
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Pileći file'))
+    expect(document.body.textContent).not.toContain('The search didn\'t load')
   })
 })
