@@ -25,7 +25,7 @@ other local stacks. `.claude/launch.json`: `nutri-api` (backend dev server) and
 ```bash
 npm install
 npm run dev                          # :3400 (backend first — see ../nutrijurnal-back/CLAUDE.md)
-npx nuxt typecheck && npx eslint .   # the checks — green before any commit
+npx nuxt typecheck && npx eslint . && npx vitest run   # the checks — green before any commit
 ```
 
 `.env` (never read or copy it): `NUXT_PUBLIC_API_BASE=http://localhost:8004/api/v1`,
@@ -60,8 +60,12 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 - `app/middleware/auth.global.ts` — session restore, public routes, Google callback,
   and the redirect to `/onboarding` until `user.onboarded_at` is set.
 - `useToday()` (moved on by `plugins/today.client.ts`) is "today" — never keep a
-  `localIsoDay()` read once: the installed app stays open overnight. Decimal fields are
-  `<DecimalInput>` (comma or point), never `type="number"`.
+  `localIsoDay()` read once: the installed app stays open overnight. A day something is
+  written onto gets `:max="today"` and `dayRefusal(day, today)` (iOS ignores `max`).
+  Decimal fields are `<DecimalInput>` (comma or point), never `type="number"`.
+- A failed load says so with Try again (a `ShellEmpty` "… didn't load"), never an empty
+  state; searches and loads that can overlap are numbered so only the newest lands.
+  Files leave through `useSaveFile()` (the share sheet on iOS, a download elsewhere).
 
 ## Ownership (parallel agents)
 
@@ -86,7 +90,7 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 - No cookbook or meal-plan content, ever — people build their own recipes.
 - Never read, print or copy any `.env`. Never configure production hosting or secrets.
 - Never sign in through a browser or mint sessions to drive the UI; verify with
-  typecheck, lint and (once set up) vitest.
+  typecheck, lint and vitest.
 - Never `git push`. Commit only your own paths (`git add <paths>`), imperative subject,
   a body that says why, ending with the `Co-Authored-By` line.
 - Comments say why, not what. No dead code, no TODO litter.

@@ -47,7 +47,9 @@ first navigation, keeps `/login` and `/register` public, finishes the Google rou
 
 Registration is open (`POST /auth/register` with email, password, name) and returns the
 same session as a login. Google sign-in appears only when `GET /auth/providers` says the
-API has a client id.
+API has a client id. Sign-in, sign-up and the demo are throttled per address (sign-in
+also per email, counting wrong passwords); past a limit the API answers 429 with an
+English `detail`, which the forms show as it is.
 
 ## The shell
 
@@ -96,7 +98,10 @@ moves on when the app comes back into view, gets focus, or passes midnight while
 and the diary's day (`useDiaryDay()`) goes with it when it was on today. Anything that
 decides by today reads `useToday()`; `dayLabel(day, today)` takes it for the same reason.
 Anything that reads text through `/eating/parse` keeps the read in flight and saving
-waits for it, so a fast "Save" never outruns the foods it names.
+waits for it, so a fast "Save" never outruns the foods it names. A day something is
+written onto is checked with `dayRefusal(day, today)` as well as `max` (iOS's date
+wheel ignores `max`), and the API refuses a day more than one past UTC's today: Today
+never opens a day that hasn't come, so a meal there would vanish.
 
 Meals sit in **slots** — breakfast, lunch, dinner, snack — sent by the page or worked out
 by the API from the time or the name; the title stays the person's (an untitled meal is
@@ -171,7 +176,9 @@ slide, and panels swapped inside a sheet (`<Transition name="panel" mode="out-in
 Rings, bars and chart marks animate in; numbers count up; rows swipe; `useHaptics()`
 buzzes on adds, glasses, swipes. Every duration and curve is the design's (120 ms press,
 200 ms state change or exit, 300 ms arrival, 700 ms filling, `--ease-soft`). Every form
-is a bottom sheet (`FormSheet` or a `UDrawer` with `SHEET_UI`). Everything checks
+is a bottom sheet (`FormSheet` or a `UDrawer` with `SHEET_UI`), and Back closes the
+open one: `useSheetHistory(open)` keeps one same-address history entry while any sheet
+is open and takes it back out when a sheet closes otherwise. Everything checks
 `prefers-reduced-motion` (CSS, and `useReducedMotion()` in script); sheets then appear
 instead of sliding.
 
@@ -194,7 +201,7 @@ login, refresh, logout, me, providers, password, avatar, `DELETE /auth/me`,
 
 ## Not built yet
 
-Label OCR for a barcode miss, password reset and email verification, rate limiting on
-sign-in and registration (the demo has its own per-address limit), offline writes
-(the offline cache is read-only). Production hosting, VAPID keys and secrets are a
-later step.
+Label OCR for a barcode miss, password reset and email verification, offline writes
+(the offline cache is read-only), a shared store for the sign-in throttle once more
+than one machine serves the API (it counts in memory, per worker). Production hosting,
+VAPID keys and secrets are a later step.

@@ -4,6 +4,24 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **QA round 2 — the tester's second list, fixed.** Parser: decilitres and dekagrams,
+  litres and kilos in every case ending ("2 litra", "pola kile"), an amount written after
+  the food ("piletina 200 g"), "half a litre", hundreds said in words ("dvesta grama",
+  "pet sto"), "četvrt", "jedna i po banana", "1.000 g" as a thousand, "3,5% mleko" keeping
+  its percentage in the name, a portion of rice as 100 g rather than a handful, "kafa sa
+  mlekom" as coffee. API: a day more than one ahead of UTC's today is refused for every
+  write (meals, moves, copies, recipes, water, weight); a food's portion weighs at most
+  5000 g and an Open Food Facts label no food can hold is a miss; sign-in (per address,
+  and wrong passwords per email), sign-up and demos are throttled with a 429 and
+  `Retry-After` (`TRUSTED_PROXY` decides whether `X-Forwarded-For` counts). Frontend:
+  the meal form, the Move sheet and a recipe's day refuse a day that hasn't come (iOS's
+  wheel ignores `max`); only the newest food or recipe search lands, and a failed one
+  says so; water, weight, the copy panel and the quick foods say when they didn't load;
+  the Move sheet never says "Invalid Date"; sign-in and sign-up tell password managers
+  their fields; exports go through the share sheet on iPhone and iPad; a typed decimal
+  comma stays a comma; a recorder that won't start turns the microphone off; a desktop
+  click on the day's name opens the calendar; Back closes the open sheet
+  (`useSheetHistory`). `SheetCard.vue` is finally gone.
 - **QA round 1 — the bugs the tester found, fixed.** Parser: the decimal comma ("0,5 l",
   "31,25 g") stays in its amount, kilos and litres are saved at their weight, a pinch is a
   pinch and "1 jogurt" a glass. A stated dish is counted per serving, so editing the
