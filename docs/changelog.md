@@ -4,6 +4,12 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **The printed diary opens with the period at a glance** (backend `eating_report.py`).
+  Page one: the mark, the period and how many of its days were logged, four tiles (energy
+  and each macro a day against its target), energy a day as columns with the target dashed
+  across (amber past it), the macro share of the energy, and protein a day against its
+  target — across the whole period asked for, so an unlogged day is a gap. The diary
+  follows in the app's colours; a dish logged whole reads once.
 - **Design round 2 — the QA pass.** Every function on the list was used, not looked
   at, in a fresh demo at 375 px: sign-in validation, register, the Google button and
   its error messages, the demo and Keep it, onboarding and the calculator; Today's day
