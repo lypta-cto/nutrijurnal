@@ -4,6 +4,21 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Redesign, part 1 — the system and the shell.** `docs/design.md` is now "a quiet iOS
+  app": the system font (SF on Apple devices, never embedded), iOS text styles with
+  Apple's tracking, Apple's grey layers (`#f2f2f7` canvas, white cells; black and
+  `#1c1c1e` in dark) and one accent (basil, deepened to `#1d7f43` for AA), quieter macro
+  colours, small radii, hairline separators, almost no shadows, a glass material with an
+  opaque fallback (no `backdrop-filter`, `prefers-reduced-transparency`) and a spring
+  curve. Nuxt UI themed to match: grey-filled fields, rounded-rect buttons, iOS switch,
+  sheets with a grabber whose header and footer turn to glass as the body scrolls, glass
+  menus and toasts. Shell: a large title that collapses into a compact glass bar with the
+  toolbar pinned under it, a floating glass tab bar with a flat "+", a plain auth layout
+  (the hero illustration is gone), a plain error page. Blocks: new `ShellList` (inset
+  grouped list), and `ShellCard`, `ShellSection`, `ShellListRow`, `ShellEmpty`,
+  `ShellStatTile`, `ShellSegmented`, `ShellSkeleton`, the macro line and bar flattened —
+  no tinted tiles, pills or washes. The mark is one flat colour; icons regenerated. The
+  screens themselves are restyled in the next pass.
 - **Ready to deploy.** `vercel.json` rewrites `/api/*` and `/uploads/*` to the Render
   service, so the refresh cookie stays first-party; a production build talks to `/api/v1`
   on its own origin with no environment variable to set; the service worker no longer
