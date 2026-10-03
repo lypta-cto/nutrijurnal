@@ -4,6 +4,22 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **QA round 1 — the bugs the tester found, fixed.** Parser: the decimal comma ("0,5 l",
+  "31,25 g") stays in its amount, kilos and litres are saved at their weight, a pinch is a
+  pinch and "1 jogurt" a glass. A stated dish is counted per serving, so editing the
+  servings adds up; a PATCH with `day: null` no longer 503s; a weighing outside 30–350 kg
+  no longer breaks Settings, and deleting the newest weighing hands the calculator the
+  one before. Barcodes read "1 portion (60 g)" and litre bottles right. Uploads are read
+  only up to their limit and images are checked for size before decoding (decompression
+  bombs), off the event loop. A refused refresh clears its cookie, a clashing write is a
+  409, the docker hint stays local, the demo ignores a far-off clock and its cleanup can't
+  delete a demo kept a moment earlier, a moved reminder doesn't fire twice, search ranks
+  "chicken" before "chickpeas". Frontend: today moves at midnight in an app left open; a
+  day, a Library shelf or Settings that failed to load says so; decimal fields take a
+  comma; saving waits for a sentence still being read; only changed targets are sent;
+  one person's diary never shows in the next session on the same tab; "no connection"
+  and "can't be played on this device" in place of "Is the backend running?"; the
+  microphone explains an http page; "Serbian", not "Srpski"; "Calories:" pastes.
 - **Every screen restyled for the phone.** Today (week rings, the day's four rings with
   eaten and target, meal rows whose names wrap, two-line items), the quick-add sheet and
   every form sheet (grouped lists, chips, one full-width action), Library, Progress (stat

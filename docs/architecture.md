@@ -18,7 +18,15 @@ own: public sign-up, one diary per person, phone first. It starts from the
   person adds or scans is visible to them alone; recipes, meals, voice notes and targets
   are private. A request for someone else's row is a plain 404.
 - **History holds still.** A meal item carries a copy of its food's per-100 g numbers, so
-  correcting a food never rewrites a past day.
+  correcting a food never rewrites a past day. A line with no food behind it (quick kcal,
+  a recipe known only by its stated numbers) is counted in servings: 100 g a serving,
+  one serving's numbers per 100 g, so any later quantity adds up.
+- **Amounts in the diary's own units.** The parser reads "0,5 l" and "31,25 g" (a comma
+  between two digits is a decimal, any other comma separates foods) and hands kilos and
+  litres back as grams and millilitres; the diary converts a posted `kg`/`l` the same way.
+  On the page every decimal field is `DecimalInput` (a text field with the decimal keypad,
+  `parseDecimal` takes either separator) — never `type="number"`, which a phone in a
+  comma region reads back as empty.
 - **English UI, Serbian data.** Every string the app says is English; food names are data
   and stay as the pantry spells them. The free-text parser and dictation are Serbian-aware
   (five-letter stems, "pola", "merica"), and English food names match too through each
@@ -30,7 +38,10 @@ own: public sign-up, one diary per person, phone first. It starts from the
 
 Access token (15 min) in memory only (`useAuthState`), refresh token in an `httpOnly`
 cookie scoped to `/api/v1/auth` and rotated on every use. `useApi` sends the bearer token,
-refreshes once on a 401 and replays. `middleware/auth.global.ts` restores the session on
+refreshes once on a 401 and replays (not for login/register/demo, where a 401 is a wrong
+credential); a session that can't be renewed goes to `/login?redirect=…`. Signing in as
+another person resets the previous one's diary state and clears the offline API cache
+when it belongs to someone else. `middleware/auth.global.ts` restores the session on
 first navigation, keeps `/login` and `/register` public, finishes the Google round trip on
 `/auth/callback`, and sends any account without `onboarded_at` to `/onboarding` first.
 
@@ -75,8 +86,17 @@ under it. How every screen is laid out is in `docs/design.md` → Screens.
 
 `composables/useEating.ts` holds every diary type, formatter and API call. The day, its
 meals and the week live in `useState`, so Today, the quick-add sheet and the forms agree
-without passing state down. `useBody.ts` is water, weight and progress;
-`useReminders.ts` / `usePush.ts` the reminders.
+without passing state down. Only a view of the day on screen is ever shown, and a day
+whose load failed says so (`dayFailed`) rather than reading as empty. `useBody.ts` is
+water, weight and progress; `useReminders.ts` / `usePush.ts` the reminders.
+
+**Today moves at midnight.** An installed app stays in memory for days, so "today" is
+never read once and kept: `useToday()` is one shared value that `plugins/today.client.ts`
+moves on when the app comes back into view, gets focus, or passes midnight while open,
+and the diary's day (`useDiaryDay()`) goes with it when it was on today. Anything that
+decides by today reads `useToday()`; `dayLabel(day, today)` takes it for the same reason.
+Anything that reads text through `/eating/parse` keeps the read in flight and saving
+waits for it, so a fast "Save" never outruns the foods it names.
 
 Meals sit in **slots** — breakfast, lunch, dinner, snack — sent by the page or worked out
 by the API from the time or the name; the title stays the person's (an untitled meal is
@@ -136,7 +156,9 @@ this browser, iPhone outside the installed app, blocked, server without keys.
 `@vite-pwa/nuxt` in `nuxt.config.ts`: the manifest (name, standalone, design colours,
 contract icons, an "Add food" shortcut) and a generated worker that precaches the shell,
 answers navigations with it, keeps foods / recipes / days readable offline
-(`nutrijurnal-api`, cleared on sign-out and account deletion) and caches the barcode
+(`nutrijurnal-api`, NetworkFirst with a 10 s wait — a shorter one served the copy from
+before a write on slow connections; cleared on sign-out, account deletion and when another
+account signs in) and caches the barcode
 WASM on first use. `<NuxtPwaManifest />` in `app.vue`; `theme-color` follows the theme.
 `InstallPrompt` uses the held-back `beforeinstallprompt` on Android/desktop Chromium and
 shows Share → Add to Home Screen on iOS. The dev worker is off (`pwa.devOptions`).
