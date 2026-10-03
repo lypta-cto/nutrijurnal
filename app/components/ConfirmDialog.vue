@@ -17,30 +17,27 @@ const icon = computed(() =>
     @update:open="value => !value && respond(false)"
   >
     <template #content>
-      <div class="flex flex-col items-center gap-3 px-5 pt-6 pb-5 text-center">
-        <span
-          class="flex size-12 shrink-0 items-center justify-center rounded-full"
-          :class="color === 'error' ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'"
-        >
-          <UIcon
-            :name="icon"
-            class="size-6"
-          />
-        </span>
+      <!-- An iOS alert: a glyph, the question, what it means, then the answers -->
+      <div class="flex flex-col items-center gap-2 px-5 pt-6 pb-4 text-center">
+        <UIcon
+          :name="icon"
+          class="size-7 shrink-0"
+          :class="color === 'error' ? 'text-error' : 'text-primary'"
+        />
 
         <div class="min-w-0">
-          <p class="text-headline font-semibold text-highlighted">
+          <p class="text-headline text-highlighted">
             {{ state.title }}
           </p>
           <p
             v-if="state.description"
-            class="mt-1 text-sm text-muted"
+            class="mt-1 text-footnote text-pretty text-muted"
           >
             {{ state.description }}
           </p>
         </div>
 
-        <div class="mt-3 flex w-full flex-col gap-2">
+        <div class="mt-3 flex w-full flex-col gap-1">
           <UButton
             :label="state.confirmLabel ?? 'Confirm'"
             :color="color"

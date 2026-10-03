@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /**
- * The app's navigation: four places and, raised in the middle, the one action
- * the whole app exists for — writing down what was eaten. The "+" only opens
- * the quick-add sheet through useQuickAdd(); everything about adding lives there.
+ * The app's navigation: four places and, in the middle, the one action the
+ * whole app exists for — writing down what was eaten. The "+" only opens the
+ * quick-add sheet through useQuickAdd(); everything about adding lives there.
  *
- * A floating glass bar, clear of the home indicator. While a text field has
- * focus on a touch screen it slides away, so it never rides up on the keyboard
- * or covers the field being typed into.
+ * A glass capsule floating over the content, clear of the home indicator: the
+ * selected tab in the accent with a faint capsule behind it, the "+" a flat
+ * accent circle in line with the tabs. While a text field has focus on a touch
+ * screen the bar slides away, so it never rides up on the keyboard or covers
+ * the field being typed into.
  */
 const route = useRoute()
 const quickAdd = useQuickAdd()
@@ -74,17 +76,11 @@ onBeforeUnmount(() => {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-(--app-tabbar-offset) transition-[translate,opacity] duration-300 ease-soft motion-reduce:transition-none"
+    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-(--app-tabbar-offset) transition-[translate,opacity] duration-300 ease-soft motion-reduce:transition-none"
     :class="typing ? 'translate-y-[calc(100%+1rem)] opacity-0' : ''"
     aria-label="Main"
   >
-    <!-- Rows passing under the bar fade out instead of colliding with its labels -->
-    <div
-      class="absolute inset-x-0 bottom-0 h-(--app-tabbar-space) bg-linear-to-t from-canvas via-canvas/80 to-transparent"
-      aria-hidden="true"
-    />
-
-    <div class="app-glass pointer-events-auto relative mx-auto grid h-(--app-tabbar-height) w-full max-w-[calc(var(--app-column)-1.5rem)] grid-cols-5 rounded-[1.75rem] shadow-raised ring-1 ring-default">
+    <div class="app-glass pointer-events-auto mx-auto grid h-(--app-tabbar-height) w-full max-w-[calc(var(--app-column)-2rem)] grid-cols-5 rounded-full border-[length:var(--app-hairline)] border-(--app-glass-border) p-1 shadow-raised">
       <template
         v-for="(side, index) in [LEFT, RIGHT]"
         :key="index"
@@ -92,11 +88,11 @@ onBeforeUnmount(() => {
         <!-- The "+" sits between the two halves -->
         <div
           v-if="index === 1"
-          class="relative flex justify-center"
+          class="flex items-center justify-center"
         >
           <button
             type="button"
-            class="absolute -top-5 flex size-14 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-fab ring-4 ring-canvas outline-none transition-transform duration-200 ease-spring focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 dark:from-primary-400 dark:to-primary-600"
+            class="flex size-11 items-center justify-center rounded-full bg-primary text-inverted outline-none transition-transform duration-200 ease-spring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.92] motion-reduce:transition-none motion-reduce:active:scale-100"
             aria-label="Add food"
             aria-haspopup="dialog"
             :aria-expanded="quickAdd.isOpen.value"
@@ -104,7 +100,7 @@ onBeforeUnmount(() => {
           >
             <UIcon
               name="i-lucide-plus"
-              class="size-7"
+              class="size-6"
             />
           </button>
         </div>
@@ -113,23 +109,21 @@ onBeforeUnmount(() => {
           v-for="tab in side"
           :key="tab.to"
           :to="tab.to"
-          class="app-press flex flex-col items-center justify-center gap-0.5 rounded-[1.5rem] text-caption outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-          :class="isActive(tab) ? 'font-semibold text-highlighted' : 'font-medium text-muted'"
+          class="relative flex flex-col items-center justify-center gap-0.5 rounded-full text-[0.625rem]/3 font-medium tracking-[0.01em] outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset motion-reduce:transition-none"
+          :class="isActive(tab) ? 'text-primary' : 'text-muted active:text-default'"
           :aria-current="isActive(tab) ? 'page' : undefined"
         >
-          <!-- The active tab's pill grows out from the icon -->
-          <span class="relative flex h-8 w-14 items-center justify-center">
-            <span
-              class="absolute inset-0 rounded-full bg-primary/12 transition-[scale,opacity] duration-300 ease-spring motion-reduce:transition-none"
-              :class="isActive(tab) ? 'scale-100 opacity-100' : 'scale-x-50 opacity-0'"
-            />
-            <UIcon
-              :name="tab.icon"
-              class="relative size-5.5 transition-colors duration-200 ease-soft"
-              :class="isActive(tab) ? 'text-primary' : ''"
-            />
-          </span>
-          {{ tab.label }}
+          <!-- The selected tab's faint capsule, as iOS draws it under the glass -->
+          <span
+            class="absolute inset-0 rounded-full bg-elevated transition-[opacity,scale] duration-300 ease-spring motion-reduce:transition-none"
+            :class="isActive(tab) ? 'scale-100 opacity-100' : 'scale-90 opacity-0'"
+            aria-hidden="true"
+          />
+          <UIcon
+            :name="tab.icon"
+            class="relative size-6"
+          />
+          <span class="relative">{{ tab.label }}</span>
         </NuxtLink>
       </template>
     </div>

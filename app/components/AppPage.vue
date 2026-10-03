@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * One screen of the phone shell: the app bar (ShellAppBar — transparent at
- * rest, glass once the page scrolls under it) and the page body under it,
- * its cards cascading in on arrival.
+ * One screen of the phone shell: the navigation bar (ShellAppBar — a large
+ * title that turns into a compact glass bar as the page scrolls) and the page
+ * body under it, fading in on arrival.
  *
  *   <AppPage title="Library" eyebrow="Your foods and recipes">
  *     <template #actions>…</template>
@@ -15,11 +15,14 @@ const props = withDefaults(defineProps<{
   title: string
   /** The small line over the title; today's date when left out, '' for none */
   eyebrow?: string | null
-  /** A back arrow before the title, for screens one level down */
+  /** A back chevron in the bar, for screens one level down */
   back?: boolean | string
+  /** The compact bar's title, when #heading shows something other than `title` */
+  compactTitle?: string
 }>(), {
   eyebrow: undefined,
-  back: false
+  back: false,
+  compactTitle: undefined
 })
 
 defineSlots<{
@@ -27,7 +30,7 @@ defineSlots<{
   heading?: () => unknown
   /** Buttons on the right of the bar */
   actions?: () => unknown
-  /** A second row that stays pinned with the bar — tabs, a search field */
+  /** A row that sticks under the bar once the title has scrolled away — a segmented control, a search field */
   toolbar?: () => unknown
   /** Page body */
   default?: () => unknown
@@ -42,6 +45,7 @@ useHead({ title: props.title })
       :title="title"
       :eyebrow="eyebrow"
       :back="back"
+      :compact-title="compactTitle"
     >
       <template
         v-if="$slots.heading"
@@ -65,7 +69,7 @@ useHead({ title: props.title })
 
     <main
       :key="$route.path"
-      class="app-page-in flex flex-col gap-3 px-4 pt-2 pb-6"
+      class="app-page-in flex flex-col gap-4 px-4 pt-2 pb-6"
     >
       <slot />
     </main>

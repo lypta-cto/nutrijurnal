@@ -12,7 +12,7 @@ const isDark = computed({
 <template>
   <ClientOnly>
     <UButton
-      class="app-icon-btn"
+      class="app-icon-btn app-hit p-0"
       color="neutral"
       variant="ghost"
       :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"
@@ -21,7 +21,10 @@ const isDark = computed({
     />
 
     <template #fallback>
-      <div class="app-icon-btn" />
+      <div
+        class="app-icon-btn"
+        aria-hidden="true"
+      />
     </template>
   </ClientOnly>
 </template>
