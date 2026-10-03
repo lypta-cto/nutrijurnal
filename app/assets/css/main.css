@@ -3,44 +3,50 @@
 
 /*
  * Nutrijurnal's design tokens — the why behind every value is in docs/design.md.
- * Pages use the semantic names (text-primary, bg-protein, shadow-card, rounded-card),
+ * Pages use the semantic names (text-primary, bg-protein, bg-cell, rounded-card),
  * never a raw palette step, so light and dark stay in step.
  */
 
 /* Static: every step is emitted even when no class uses it, because Nuxt UI
    points its --ui-color-* variables at these by name (app.config.ts) */
 @theme static {
-  /* @nuxt/fonts reads these two declarations and serves the faces itself */
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  /*
+   * The system face, never an embedded one: San Francisco on Apple devices,
+   * Roboto on Android, Segoe on Windows. SF's licence covers Apple platforms
+   * only, so it is reached by name and never shipped as a file — @nuxt/fonts
+   * finds nothing here to download.
+   */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, "Segoe UI", sans-serif;
+  /* SF Pro Rounded where Safari has it, the system face elsewhere — big numbers only */
+  --font-rounded: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 
-  /* Basil — the brand, success and the kcal ring */
-  --color-basil-50: #edfbef;
-  --color-basil-100: #dbf6df;
-  --color-basil-200: #bcefc7;
-  --color-basil-300: #95e1a7;
-  --color-basil-400: #65cc85;
-  --color-basil-500: #3eb268;
-  --color-basil-600: #307e4b;
-  --color-basil-700: #25673e;
-  --color-basil-800: #1c4f2f;
-  --color-basil-900: #173f26;
-  --color-basil-950: #0d2516;
+  /* Basil — the one accent: actions, selection, success and the kcal ring */
+  --color-basil-50: #eefbf2;
+  --color-basil-100: #d7f5e0;
+  --color-basil-200: #b0ebc3;
+  --color-basil-300: #7ddb9d;
+  --color-basil-400: #4cd07a;
+  --color-basil-500: #2fb463;
+  --color-basil-600: #1d7f43;
+  --color-basil-700: #186a38;
+  --color-basil-800: #15552f;
+  --color-basil-900: #114627;
+  --color-basil-950: #072714;
 
-  /* Oat — warm grey for the canvas, text and hairlines */
-  --color-oat-50: #fbfaf7;
-  --color-oat-100: #f4f2ee;
-  --color-oat-200: #e9e6e0;
-  --color-oat-300: #d7d4ce;
-  --color-oat-400: #a7a49e;
-  --color-oat-500: #706d67;
-  --color-oat-600: #5a5751;
-  --color-oat-700: #46443f;
-  --color-oat-800: #2d2b27;
-  --color-oat-900: #1b1916;
-  --color-oat-950: #0f0e0c;
+  /* Graphite — Apple's greys, for text and the few lines the app draws */
+  --color-graphite-50: #f9f9fb;
+  --color-graphite-100: #f2f2f7;
+  --color-graphite-200: #e5e5ea;
+  --color-graphite-300: #d1d1d6;
+  --color-graphite-400: #aeaeb2;
+  --color-graphite-500: #8e8e93;
+  --color-graphite-600: #6e6e73;
+  --color-graphite-700: #48484a;
+  --color-graphite-800: #2c2c2e;
+  --color-graphite-900: #1c1c1e;
+  --color-graphite-950: #0b0b0c;
 
-  /* Clay — warning: over a target, needs a look. Kept well apart from fat's amber */
+  /* Clay — warning: over a target. Kept well apart from fat's amber */
   --color-clay-50: #fff1ea;
   --color-clay-100: #ffe2d4;
   --color-clay-200: #ffc9af;
@@ -53,40 +59,72 @@
   --color-clay-900: #622b0d;
   --color-clay-950: #3b1908;
 
-  /* Type scale on top of Tailwind's — see the table in docs/design.md */
-  --text-hero: 2.75rem;
-  --text-hero--line-height: 1;
-  --text-hero--letter-spacing: -0.035em;
-  --text-hero--font-weight: 700;
+  /* iOS text styles with Apple's tracking — the table in docs/design.md */
+  --text-large-title: 2.125rem;
+  --text-large-title--line-height: 2.5625rem;
+  --text-large-title--letter-spacing: 0.004em;
+  --text-large-title--font-weight: 700;
   --text-title: 1.75rem;
-  --text-title--line-height: 1.15;
-  --text-title--letter-spacing: -0.02em;
+  --text-title--line-height: 2.125rem;
+  --text-title--letter-spacing: 0.007em;
+  --text-title--font-weight: 700;
+  --text-title2: 1.375rem;
+  --text-title2--line-height: 1.75rem;
+  --text-title2--letter-spacing: 0.01em;
+  --text-title2--font-weight: 700;
+  --text-title3: 1.25rem;
+  --text-title3--line-height: 1.5625rem;
+  --text-title3--letter-spacing: 0.01em;
+  --text-title3--font-weight: 600;
   --text-headline: 1.0625rem;
-  --text-headline--line-height: 1.4;
-  --text-body: 0.9375rem;
-  --text-body--line-height: 1.45;
-  --text-caption: 0.6875rem;
-  --text-caption--line-height: 1.35;
+  --text-headline--line-height: 1.375rem;
+  --text-headline--letter-spacing: -0.022em;
+  --text-headline--font-weight: 600;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.375rem;
+  --text-body--letter-spacing: -0.022em;
+  --text-callout: 1rem;
+  --text-callout--line-height: 1.3125rem;
+  --text-callout--letter-spacing: -0.02em;
+  --text-subheadline: 0.9375rem;
+  --text-subheadline--line-height: 1.25rem;
+  --text-subheadline--letter-spacing: -0.016em;
+  --text-footnote: 0.8125rem;
+  --text-footnote--line-height: 1.125rem;
+  --text-footnote--letter-spacing: -0.006em;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption2: 0.6875rem;
+  --text-caption2--line-height: 0.8125rem;
+  --text-caption2--letter-spacing: 0.005em;
+  --text-hero: 2.75rem;
+  --text-hero--line-height: 1.05;
+  --text-hero--font-weight: 700;
+  /* Only the column heads that still use it */
   --text-micro: 0.625rem;
-  --text-micro--line-height: 1.3;
+  --text-micro--line-height: 0.8125rem;
 
-  /* Named radii; Nuxt UI's own scale follows --ui-radius below */
-  --radius-card: 1.25rem;
-  --radius-tile: 1rem;
-  --radius-control: 0.875rem;
-  --radius-sheet: 1.75rem;
+  /* Named radii — small and consistent; Nuxt UI's own scale follows --ui-radius */
+  --radius-card: 0.75rem;
+  --radius-tile: 0.625rem;
+  --radius-control: 0.625rem;
+  --radius-sheet: 0.875rem;
+
+  /* backdrop-blur-glass: the material's blur, for Nuxt UI slots that can't take a class */
+  --blur-glass: 20px;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* A damped spring; a real one (linear()) replaces it where supported, below */
+  --ease-spring: cubic-bezier(0.25, 1.1, 0.4, 1);
 
-  --animate-rise: app-rise 320ms var(--ease-soft) both;
-  --animate-shimmer: app-shimmer 1.6s ease-in-out infinite;
+  --animate-rise: app-rise 240ms var(--ease-soft) both;
+  --animate-pulse-soft: app-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes app-rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
 
   to {
@@ -95,20 +133,20 @@
   }
 }
 
-@keyframes app-shimmer {
-  from {
-    background-position: 100% 0;
-  }
-
-  to {
-    background-position: -100% 0;
+@keyframes app-pulse {
+  50% {
+    opacity: 0.55;
   }
 }
 
-/* Inline: utilities that resolve per theme, so `bg-protein` or `shadow-card`
+/* Inline: utilities that resolve per theme, so `bg-protein` or `bg-cell`
    follow light and dark without a `dark:` twin on every element */
 @theme inline {
   --color-canvas: var(--app-canvas);
+  --color-cell: var(--app-cell);
+  --color-plain: var(--app-plain);
+  --color-glass: var(--app-material);
+  --color-separator: var(--app-separator);
   --color-kcal: var(--app-kcal);
   --color-kcal-ink: var(--app-kcal-ink);
   --color-protein: var(--app-protein);
@@ -129,9 +167,9 @@
   /* Native pickers (date, time), scrollbars and autofill follow the theme */
   color-scheme: light;
 
-  --ui-radius: 0.3125rem;
+  --ui-radius: 0.25rem;
 
-  /* Coloured text has to read on white: one step darker than Nuxt UI's default */
+  /* Coloured text has to read on white and on the grey canvas: a step darker */
   --ui-primary: var(--ui-color-primary-600);
   --ui-success: var(--ui-color-success-600);
   --ui-warning: var(--ui-color-warning-600);
@@ -139,42 +177,65 @@
   /* Teal only reaches 4.5:1 on white at 700 */
   --ui-info: var(--ui-color-info-700);
 
-  --ui-bg: #fff;
-  --ui-bg-muted: var(--ui-color-neutral-50);
-  --ui-bg-elevated: var(--ui-color-neutral-100);
-  --ui-bg-accented: var(--ui-color-neutral-200);
-  --ui-border: var(--ui-color-neutral-200);
-  --ui-border-muted: var(--ui-color-neutral-200);
-  --ui-border-accented: var(--ui-color-neutral-300);
-  --ui-text-highlighted: var(--ui-color-neutral-900);
+  --ui-text-dimmed: #a1a1a6;
+  --ui-text-muted: var(--color-graphite-600);
+  --ui-text-toned: var(--color-graphite-700);
+  --ui-text: var(--color-graphite-900);
+  --ui-text-highlighted: #000;
+  --ui-text-inverted: #fff;
 
-  --app-canvas: #f8f5f1;
-  /* The light that falls on the top of every screen */
-  --app-wash-leaf: rgb(188 239 199 / 55%);
-  --app-wash-sun: rgb(255 201 175 / 40%);
+  --ui-bg: #fff;
+  /* Fills are translucent, as iOS's are: one field reads right on white, on
+     the grey canvas and on a sheet */
+  --ui-bg-muted: rgb(118 118 128 / 6%);
+  --ui-bg-elevated: rgb(118 118 128 / 12%);
+  --ui-bg-accented: rgb(118 118 128 / 20%);
+  --ui-bg-inverted: #000;
+  --ui-border: rgb(60 60 67 / 13%);
+  --ui-border-muted: rgb(60 60 67 / 10%);
+  --ui-border-accented: rgb(60 60 67 / 22%);
+  --ui-border-inverted: #000;
+
+  /* iOS's layers: grouped background, the cells on it, a plain screen */
+  --app-canvas: var(--color-graphite-100);
+  --app-cell: #fff;
+  --app-plain: #fff;
+  --app-separator: rgb(60 60 67 / 29%);
+  --app-hairline: 1px;
+  --app-scrim: rgb(0 0 0 / 25%);
+  --app-grabber: rgb(60 60 67 / 30%);
+  /* The segmented control's thumb: white on the grey track */
+  --app-thumb: #fff;
+
+  /* Glass — the bars, sheet headers, toasts and menus (docs/design.md → Materials) */
+  --app-material: rgb(250 250 252 / 72%);
+  --app-material-solid: #f7f7f9;
+  --app-blur: blur(20px) saturate(180%);
+  --app-glass-border: rgb(0 0 0 / 7%);
 
   --app-kcal: var(--color-basil-500);
   --app-kcal-ink: var(--color-basil-600);
-  --app-protein: #0ea5e9;
-  --app-protein-ink: #0370ab;
-  --app-carbs: #8b5cf6;
-  --app-carbs-ink: #7c3aed;
-  --app-fat: #f59e0b;
-  --app-fat-ink: #b45309;
+  --app-protein: #4a8fe7;
+  --app-protein-ink: #2563c9;
+  --app-carbs: #8e7ce8;
+  --app-carbs-ink: #6a55d4;
+  --app-fat: #e9a23b;
+  --app-fat-ink: #9c5c00;
 
-  /* Warm-tinted shadows: grey ones look dirty on the cream canvas */
-  --app-shadow-card: 0 1px 2px rgb(45 38 25 / 4%), 0 2px 8px -2px rgb(45 38 25 / 6%);
-  --app-shadow-raised: 0 2px 6px -1px rgb(45 38 25 / 6%), 0 12px 32px -8px rgb(45 38 25 / 16%);
-  --app-shadow-overlay: 0 24px 64px -12px rgb(45 38 25 / 28%);
-  --app-shadow-fab: 0 8px 20px -6px rgb(48 126 75 / 55%), 0 2px 4px rgb(45 38 25 / 10%);
+  /* Almost no elevation: surfaces are told apart by their grey */
+  --app-shadow-card: 0 0 #0000;
+  --app-shadow-raised: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 24px -6px rgb(0 0 0 / 12%);
+  --app-shadow-overlay: 0 1px 3px rgb(0 0 0 / 6%), 0 12px 32px -8px rgb(0 0 0 / 18%);
+  --app-shadow-fab: 0 0 #0000;
 
   /* The phone's chrome */
   --app-column: 34rem;
-  --app-tabbar-height: 4rem;
+  --app-bar-height: 2.75rem;
+  --app-tabbar-height: 3.5rem;
   /* From the screen's bottom edge to the bar: clear of the home indicator, never flush */
   --app-tabbar-offset: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.25rem));
-  /* All the room the bar takes, raised "+" and breathing space included */
-  --app-tabbar-space: calc(var(--app-tabbar-height) + var(--app-tabbar-offset) + 1.5rem);
+  /* All the room the bar takes, breathing space included */
+  --app-tabbar-space: calc(var(--app-tabbar-height) + var(--app-tabbar-offset) + 1rem);
 }
 
 .dark {
@@ -186,40 +247,86 @@
   --ui-error: var(--ui-color-error-400);
   --ui-info: var(--ui-color-info-400);
 
-  /* Surfaces get lighter as they come forward — dark mode has no shadows to lean on */
-  --ui-bg: var(--ui-color-neutral-900);
-  --ui-bg-muted: #201f1b;
-  --ui-bg-elevated: #24231f;
-  --ui-bg-accented: #302e29;
-  --ui-border: #292724;
-  --ui-border-muted: #292724;
-  --ui-border-accented: #373531;
-  --ui-text-highlighted: #f7f5f1;
+  --ui-text-dimmed: #636366;
+  --ui-text-muted: #98989d;
+  --ui-text-toned: #c7c7cc;
+  --ui-text: #ebebf0;
+  --ui-text-highlighted: #fff;
+  --ui-text-inverted: var(--color-graphite-900);
 
-  --app-canvas: var(--color-oat-950);
-  --app-wash-leaf: rgb(37 103 62 / 30%);
-  --app-wash-sun: rgb(161 66 6 / 14%);
+  /* Surfaces come forward by getting lighter — dark mode has no shadows to lean on */
+  --ui-bg: var(--color-graphite-900);
+  --ui-bg-muted: rgb(118 118 128 / 12%);
+  --ui-bg-elevated: rgb(118 118 128 / 24%);
+  --ui-bg-accented: rgb(118 118 128 / 32%);
+  --ui-bg-inverted: #fff;
+  --ui-border: rgb(84 84 88 / 45%);
+  --ui-border-muted: rgb(84 84 88 / 35%);
+  --ui-border-accented: rgb(84 84 88 / 70%);
+  --ui-border-inverted: #fff;
+
+  --app-canvas: #000;
+  --app-cell: var(--color-graphite-900);
+  --app-plain: #000;
+  --app-separator: rgb(84 84 88 / 60%);
+  --app-scrim: rgb(0 0 0 / 50%);
+  --app-grabber: rgb(235 235 245 / 30%);
+  --app-thumb: #636366;
+
+  --app-material: rgb(30 30 32 / 70%);
+  --app-material-solid: var(--color-graphite-900);
+  --app-glass-border: rgb(255 255 255 / 9%);
 
   --app-kcal: var(--color-basil-400);
   --app-kcal-ink: var(--color-basil-400);
-  --app-protein: #38bdf8;
-  --app-protein-ink: #38bdf8;
-  --app-carbs: #a78bfa;
-  --app-carbs-ink: #a78bfa;
-  --app-fat: #fbbf24;
-  --app-fat-ink: #fbbf24;
+  --app-protein: #62a3f5;
+  --app-protein-ink: #62a3f5;
+  --app-carbs: #a598f5;
+  --app-carbs-ink: #b1a6f7;
+  --app-fat: #f2b65a;
+  --app-fat-ink: #f2be6b;
 
-  --app-shadow-card: none;
-  --app-shadow-raised: 0 12px 32px -8px rgb(0 0 0 / 60%);
-  --app-shadow-overlay: 0 24px 64px -12px rgb(0 0 0 / 70%);
-  --app-shadow-fab: 0 8px 22px -6px rgb(62 178 104 / 45%), 0 2px 4px rgb(0 0 0 / 40%);
+  --app-shadow-raised: 0 8px 24px -6px rgb(0 0 0 / 60%);
+  --app-shadow-overlay: 0 12px 32px -8px rgb(0 0 0 / 70%);
+}
+
+/* A hairline is one device pixel wherever the screen has two to give */
+@media (min-resolution: 2dppx) {
+  :root {
+    --app-hairline: 0.5px;
+  }
+}
+
+/* A real spring where the browser can draw one: ~2 % overshoot, settled well before the end */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: linear(0, 0.06, 0.196, 0.358, 0.518, 0.658, 0.773, 0.861, 0.924, 0.967, 0.995, 1.01, 1.018, 1.02, 1.019, 1.016, 1.013, 1.01, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
+  }
+}
+
+/* Glass that can't be glass is a solid bar: no blur to draw, or the person asked for less transparency */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root,
+  .light,
+  .dark {
+    --app-material: var(--app-material-solid);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  .light,
+  .dark {
+    --app-material: var(--app-material-solid);
+    --app-blur: none;
+  }
 }
 
 @layer base {
   html {
     background-color: var(--app-canvas);
-    /* A focused field scrolls clear of the sticky app bar and the tab bar */
-    scroll-padding-top: calc(env(safe-area-inset-top) + 7rem);
+    /* A focused field scrolls clear of the sticky bar and the tab bar */
+    scroll-padding-top: calc(env(safe-area-inset-top) + 6.5rem);
     scroll-padding-bottom: var(--app-tabbar-space);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -228,6 +335,8 @@
   body {
     background-color: var(--app-canvas);
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* No double-tap zoom on anything a thumb presses twice quickly */
@@ -261,50 +370,101 @@
 }
 
 @layer components {
-  /* The page and the app bar at rest */
+  /* The page behind grouped content */
   .app-canvas {
     background-color: var(--app-canvas);
   }
 
-  /* The light at the top of a screen — a fixed layer under the content */
-  .app-wash {
-    background:
-      radial-gradient(70% 55% at 15% 0%, var(--app-wash-leaf), transparent 70%),
-      radial-gradient(55% 45% at 95% 0%, var(--app-wash-sun), transparent 70%);
-  }
-
-  /* A white card on the cream canvas */
+  /* A cell surface on the canvas: white (or #1c1c1e), small radius, no border, no shadow */
   .app-card {
-    background-color: var(--ui-bg);
-    border: 1px solid var(--ui-border);
+    background-color: var(--app-cell);
     border-radius: var(--radius-card);
-    box-shadow: var(--app-shadow-card);
-    transition: box-shadow 200ms var(--ease-soft), border-color 200ms var(--ease-soft);
   }
 
-  /* Chrome that floats over scrolling content: the app bar once scrolled, the tab bar */
+  /* Inside a sheet a group steps one layer up, as iOS's do */
+  .app-sheet {
+    --app-cell: var(--color-graphite-100);
+  }
+
+  .dark .app-sheet {
+    --app-cell: var(--color-graphite-800);
+  }
+
+  /*
+   * The material for chrome that floats over content: the tab bar, the compact
+   * nav bar, a sheet's header and footer. --app-material turns opaque by itself
+   * where blur is unsupported or unwanted (above).
+   */
   .app-glass {
-    background-color: color-mix(in oklab, var(--ui-bg) 78%, transparent);
-    -webkit-backdrop-filter: blur(20px) saturate(1.8);
-    backdrop-filter: blur(20px) saturate(1.8);
+    background-color: var(--app-material);
+    -webkit-backdrop-filter: var(--app-blur);
+    backdrop-filter: var(--app-blur);
   }
 
-  .app-glass-canvas {
-    background-color: color-mix(in oklab, var(--app-canvas) 80%, transparent);
-    -webkit-backdrop-filter: blur(20px) saturate(1.8);
-    backdrop-filter: blur(20px) saturate(1.8);
+  /*
+   * Hairlines between a container's children, starting where the text starts.
+   * A child sets --app-divide-inset to move its own line (a row with an icon).
+   */
+  .app-divide > :where(:not(:first-child)) {
+    position: relative;
   }
 
-  /* A round 44 px icon button for headers — a thumb-sized target */
+  .app-divide > :not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: var(--app-divide-inset, 1rem);
+    z-index: 1;
+    height: var(--app-hairline);
+    background-color: var(--app-separator);
+    pointer-events: none;
+  }
+
+  /* One inset hairline above or below an element (a group's header, a footer) */
+  .app-rule-t,
+  .app-rule-b {
+    position: relative;
+  }
+
+  .app-rule-t::before,
+  .app-rule-b::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    left: var(--app-divide-inset, 1rem);
+    z-index: 1;
+    height: var(--app-hairline);
+    background-color: var(--app-separator);
+    pointer-events: none;
+  }
+
+  .app-rule-t::before {
+    top: 0;
+  }
+
+  .app-rule-b::after {
+    bottom: 0;
+  }
+
+  /* A grouped section's header, as iOS sets it */
+  .app-group-title {
+    font-size: var(--text-footnote);
+    line-height: var(--text-footnote--line-height);
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--ui-text-muted);
+  }
+
+  /* An icon-only control in a header — a grey circle, the iOS way */
   .app-icon-btn {
-    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-default text-toned ring-1 ring-default;
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-elevated text-default;
 
-    box-shadow: var(--app-shadow-card);
     transition: background-color 150ms var(--ease-soft), transform 120ms var(--ease-soft);
   }
 
   .app-icon-btn:hover {
-    @apply bg-elevated;
+    @apply bg-accented;
   }
 
   .app-icon-btn:active {
@@ -317,13 +477,13 @@
    * around it is ours.
    */
   .app-field {
-    @apply h-11 w-full min-w-0 appearance-none rounded-control bg-default px-3.5 text-left text-sm tabular-nums text-highlighted ring ring-accented ring-inset outline-none;
+    @apply h-11 w-full min-w-0 appearance-none rounded-control bg-elevated px-3.5 text-left text-[0.9375rem] tabular-nums text-highlighted outline-none;
 
     transition: box-shadow 200ms var(--ease-soft);
   }
 
   .app-field:focus-visible {
-    @apply ring-2 ring-primary;
+    @apply ring-2 ring-primary ring-inset;
   }
 
   .app-field:disabled {
@@ -336,39 +496,38 @@
    * look can never disagree with what a screen reader hears.
    */
   .app-chip {
-    @apply inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-default px-3.5 text-sm font-semibold whitespace-nowrap text-toned ring ring-default ring-inset outline-none;
+    @apply inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full bg-elevated px-3.5 text-[0.9375rem] font-medium whitespace-nowrap text-default outline-none;
 
     transition:
       background-color 200ms var(--ease-soft),
       color 200ms var(--ease-soft),
-      box-shadow 200ms var(--ease-soft),
       transform 120ms var(--ease-soft);
   }
 
   .app-chip:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
 
   .app-chip:focus-visible {
-    @apply ring-2 ring-primary;
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-(--ui-bg);
   }
 
   .app-chip[aria-pressed="true"],
   .app-chip[aria-checked="true"] {
-    @apply bg-primary/12 text-primary ring-primary/35;
+    @apply bg-primary text-inverted;
   }
 
   .app-chip:disabled {
     @apply pointer-events-none opacity-50;
   }
 
-  /* Press feedback for anything tappable that isn't a Nuxt UI button */
+  /* Press feedback for anything tappable that isn't a Nuxt UI button or a row */
   .app-press {
     transition: transform 120ms var(--ease-soft), background-color 150ms var(--ease-soft);
   }
 
   .app-press:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 
   /* A small control keeps its looks but gets a full 44 px hit area */
@@ -404,21 +563,20 @@
     scroll-snap-align: start;
   }
 
-  /* Small caps-style label above a title: the date, a section's kind */
+  /* The small line over a page title: the date, what the screen holds */
   .app-eyebrow {
-    font-size: var(--text-caption);
-    line-height: var(--text-caption--line-height);
+    font-size: var(--text-footnote);
+    line-height: var(--text-footnote--line-height);
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
     text-transform: uppercase;
     color: var(--ui-text-muted);
   }
 
-  /* Placeholder fill for skeletons: a slow sweep of light, not a blink */
+  /* Placeholder fill for skeletons: a slow, gentle pulse — iOS's redacted look */
   .app-shimmer {
-    background-image: linear-gradient(90deg, var(--ui-bg-elevated) 25%, var(--ui-bg-accented) 50%, var(--ui-bg-elevated) 75%);
-    background-size: 200% 100%;
-    animation: var(--animate-shimmer);
+    background-color: var(--ui-bg-elevated);
+    animation: var(--animate-pulse-soft);
   }
 
   /*
@@ -429,21 +587,30 @@
     animation: var(--animate-rise);
   }
 
-  /* Children cascade in rather than arriving as one block */
-  .app-page-in > * {
-    animation: app-rise 360ms var(--ease-soft) both;
+  /*
+   * A sheet's header and footer are glass over its scrolling body. Where the
+   * browser can tie an animation to scrolling, the glass and its hairline
+   * appear only while something is under the bar — at rest a sheet is one
+   * clean surface, as iOS draws a bar at the scroll edge.
+   */
+  .app-sheet-header,
+  .app-sheet-footer {
+    background-color: var(--app-material);
+    -webkit-backdrop-filter: var(--app-blur);
+    backdrop-filter: var(--app-blur);
   }
 
-  .app-page-in > :nth-child(2) {
-    animation-delay: 40ms;
-  }
+  @supports (animation-timeline: scroll()) {
+    .app-sheet-header {
+      animation: app-edge-top linear both;
+      animation-timeline: scroll(nearest block);
+      animation-range: 0 1rem;
+    }
 
-  .app-page-in > :nth-child(3) {
-    animation-delay: 80ms;
-  }
-
-  .app-page-in > :nth-child(n + 4) {
-    animation-delay: 120ms;
+    .app-sheet-footer {
+      animation: app-edge-bottom linear both;
+      animation-timeline: scroll(nearest block);
+    }
   }
 
   /*
@@ -460,8 +627,32 @@
   }
 }
 
+@keyframes app-edge-top {
+  from {
+    background-color: transparent;
+    box-shadow: 0 var(--app-hairline) 0 transparent;
+  }
+
+  to {
+    background-color: var(--app-material);
+    box-shadow: 0 var(--app-hairline) 0 var(--app-separator);
+  }
+}
+
+@keyframes app-edge-bottom {
+  0%,
+  96% {
+    background-color: var(--app-material);
+    box-shadow: 0 calc(var(--app-hairline) * -1) 0 var(--app-separator);
+  }
+
+  100% {
+    background-color: transparent;
+    box-shadow: 0 calc(var(--app-hairline) * -1) 0 transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .app-card,
   .app-icon-btn,
   .app-press,
   .app-field,
@@ -470,7 +661,6 @@
   }
 
   .app-page-in,
-  .app-page-in > *,
   .app-shimmer {
     animation: none;
   }

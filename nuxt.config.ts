@@ -60,8 +60,8 @@ export default defineNuxtConfig({
     }
   },
 
-  // Plus Jakarta Sans and Fraunces are found in main.css's --font-sans and
-  // --font-display and served by @nuxt/fonts; nothing to list here
+  // The app sets the system font (main.css → --font-sans): San Francisco is
+  // reached by name and never downloaded, so @nuxt/fonts serves nothing today
   fonts: {
     defaults: {
       weights: [400, 500, 600, 700]
@@ -84,8 +84,8 @@ export default defineNuxtConfig({
       scope: '/',
       display: 'standalone',
       orientation: 'portrait',
-      theme_color: '#f8f5f1',
-      background_color: '#f8f5f1',
+      theme_color: '#f2f2f7',
+      background_color: '#f2f2f7',
       categories: ['health', 'food', 'lifestyle'],
       icons: [
         { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

@@ -394,7 +394,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
           >
             <span
               class="flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ease-soft"
-              :class="form.activity === option.value ? 'bg-primary text-white dark:text-oat-950' : 'bg-primary/10 text-primary'"
+              :class="form.activity === option.value ? 'bg-primary text-inverted' : 'bg-primary/10 text-primary'"
             >
               <UIcon
                 :name="option.icon"
@@ -437,7 +437,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
           >
             <span
               class="flex size-11 items-center justify-center rounded-full transition-colors duration-200 ease-soft"
-              :class="form.goal === option.value ? 'bg-primary text-white dark:text-oat-950' : 'bg-primary/10 text-primary'"
+              :class="form.goal === option.value ? 'bg-primary text-inverted' : 'bg-primary/10 text-primary'"
             >
               <UIcon
                 :name="option.icon"

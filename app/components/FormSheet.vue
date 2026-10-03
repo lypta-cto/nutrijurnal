@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * A form in a bottom sheet: title, the fields scrolling in the middle, and
- * the buttons pinned at the bottom where the thumb already is — Cancel quiet
- * on the left, the one thing the sheet is for filling the rest. The submit
+ * A form in a bottom sheet: title, the fields scrolling in the middle under a
+ * glass header, and the buttons pinned at the bottom where the thumb already
+ * is — Cancel quiet on the left, the one thing the sheet is for filling the
+ * rest. The submit
  * button belongs to the form through `form="form-sheet"`, so Enter in a
  * field submits too.
  */
@@ -48,12 +49,12 @@ function cancel() {
     v-model:open="open"
     :title="title"
     :description="description"
-    :ui="{ ...SHEET_UI, body: 'flex-1 overflow-y-auto' }"
+    :ui="SHEET_UI"
   >
     <template #body>
       <form
         id="form-sheet"
-        class="space-y-5"
+        class="space-y-4"
         @submit.prevent="emit('submit')"
       >
         <slot />

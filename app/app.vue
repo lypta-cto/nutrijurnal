@@ -9,7 +9,7 @@ const { ready } = useAuth()
 // The browser chrome (Android's address bar, the installed app's title bar)
 // takes the canvas colour of whichever theme is showing
 const colorMode = useColorMode()
-const themeColor = computed(() => (colorMode.value === 'dark' ? '#0f0e0c' : '#f8f5f1'))
+const themeColor = computed(() => (colorMode.value === 'dark' ? '#000000' : '#f2f2f7'))
 
 useHead({
   titleTemplate: title => (title ? `${title} · ${app.name}` : app.name),
