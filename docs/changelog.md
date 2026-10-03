@@ -4,6 +4,12 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Ready to deploy.** `vercel.json` rewrites `/api/*` and `/uploads/*` to the Render
+  service, so the refresh cookie stays first-party; a production build talks to `/api/v1`
+  on its own origin with no environment variable to set; the service worker no longer
+  answers navigations to `/api` or `/uploads` with the app shell. Backend: `render.yaml`,
+  Supabase connection strings work as pasted, row-level security closes Supabase's
+  public Data API, and the rate limiter reads the visitor behind both proxies.
 - **QA round 2 — the tester's second list, fixed.** Parser: decilitres and dekagrams,
   litres and kilos in every case ending ("2 litra", "pola kile"), an amount written after
   the food ("piletina 200 g"), "half a litre", hundreds said in words ("dvesta grama",

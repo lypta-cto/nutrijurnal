@@ -33,10 +33,12 @@ export default defineNuxtConfig({
     storageKey: 'nutrijurnal-color-mode'
   },
 
-  // Override at runtime with NUXT_PUBLIC_API_BASE
+  // A build for production talks to its own origin: vercel.json rewrites
+  // /api/* to the API, which keeps the refresh cookie first-party. The dev
+  // server talks to the API on :8004. NUXT_PUBLIC_API_BASE overrides both.
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:8004/api/v1'
+      apiBase: process.env.NODE_ENV === 'production' ? '/api/v1' : 'http://localhost:8004/api/v1'
     }
   },
 
@@ -95,15 +97,19 @@ export default defineNuxtConfig({
       ]
     },
     workbox: {
-      // A single-page app: every navigation is answered by the shell
+      // A single-page app: every navigation is answered by the shell —
+      // except the API and uploads, which the rewrite sends on to the server
+      // (an export link, a profile photo opened in its own tab)
       navigateFallback: '/',
+      navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
       globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
       importScripts: ['/push-sw.js'],
       cleanupOutdatedCaches: true,
       runtimeCaching: [
         {
           // The pantry, recipes and days already opened stay readable offline.
-          // The API is another origin, so this matches on the path; the
+          // Matched on the path, so it holds whether the API is reached
+          // through the rewrite (production) or on :8004 (development); the
           // cache is cleared on sign-out (useAuth), never shared between people.
           urlPattern: ({ url }) => /\/api\/v1\/eating\/(foods|recipes|days)/.test(url.pathname),
           handler: 'NetworkFirst',
