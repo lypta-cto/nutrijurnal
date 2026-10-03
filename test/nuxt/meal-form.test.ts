@@ -3,6 +3,7 @@ import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { readBody } from 'h3'
 import type { Food, Meal, MealPayload, ParseResult } from '~/composables/useEating'
+import { shiftDay } from '~/composables/useEating'
 import MealForm from '~/components/MealForm.vue'
 
 /** A meal already in the diary, opened to be edited */
@@ -103,6 +104,26 @@ describe('the meal form on a phone', () => {
     await flushPromises()
 
     expect(sheet().save?.disabled).toBe(true)
+  })
+
+  it('will not save a meal on a day that hasn’t come, which an iPhone’s date wheel offers', async () => {
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21', meal: LUNCH } }))
+    await flushPromises()
+    const { day } = sheet()
+    const today = useToday().value
+    expect(day?.max).toBe(today)
+
+    day!.value = shiftDay(today, 1)
+    day!.dispatchEvent(new Event('input'))
+    await flushPromises()
+
+    expect(sheet().save?.disabled).toBe(true)
+    expect(document.body.textContent).toContain('That day hasn\'t come yet — pick today or an earlier day')
+
+    day!.value = today
+    day!.dispatchEvent(new Event('input'))
+    await flushPromises()
+    expect(sheet().save?.disabled).toBe(false)
   })
 
   it('saved while a typed line is still being read, waits for the foods in it', async () => {

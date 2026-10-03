@@ -57,6 +57,7 @@ const {
 
 /** Filling in a meal that was only written down, rather than adding one */
 const filling = computed(() => props.meal ?? null)
+const today = useToday()
 const toast = useToast()
 const haptics = useHaptics()
 
@@ -581,9 +582,11 @@ const noteOnly = computed(
   () => !fromRecipe.value && !items.value.length && quickText.value.trim().length > 0
 )
 
+/** A date field cleared on a phone holds "", and an iPhone offers next week */
+const dayError = computed(() => dayRefusal(form.day, today.value))
+
 const canSave = computed(() =>
-  // A date field cleared on a phone holds "" — a meal always needs its day
-  Boolean(form.day) && (fromRecipe.value
+  !dayError.value && (fromRecipe.value
     // A recipe known only by its numbers has no rows and is still a plate —
     // but some of it has to have been eaten
     ? (servings.value ?? 0) > 0 && (recipeItems.value.length > 0 || Boolean(picked.value?.stated))
@@ -733,10 +736,14 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
   >
     <!-- When, and what it is called -->
     <div class="grid grid-cols-2 gap-3">
-      <UFormField label="Day">
+      <UFormField
+        label="Day"
+        :error="dayError ?? false"
+      >
         <input
           v-model="form.day"
           type="date"
+          :max="today"
           class="app-field"
           aria-label="Day"
         >

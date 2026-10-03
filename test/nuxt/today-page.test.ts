@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import type { DayView } from '~/composables/useEating'
+import type { DayView, Meal } from '~/composables/useEating'
 import TodayPage from '~/pages/index.vue'
 
 function empty(day: string): DayView {
@@ -80,6 +80,63 @@ describe('picking a day on Today', () => {
     await picker.trigger('change')
 
     expect(useDiaryDay().value).toBe('2026-09-21')
+  })
+})
+
+describe('moving a meal to another day', () => {
+  const LUNCH: Meal = {
+    id: 'meal-1',
+    day: '2026-09-21',
+    at: null,
+    title: 'Ručak',
+    slot: 'lunch',
+    recipe_id: null,
+    recipe_title: null,
+    servings: 1,
+    note: null,
+    has_voice: false,
+    voice_seconds: null,
+    voice_transcribed: false,
+    items: [],
+    kcal: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0
+  }
+
+  /** The sheet is teleported out of the page, so it is read off the document */
+  function moveSheet() {
+    return {
+      day: document.body.querySelector<HTMLInputElement>('input[aria-label="The day to move it to"]')!,
+      move: [...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Move')!
+    }
+  }
+
+  async function pick(value: string) {
+    const { day } = moveSheet()
+    day.value = value
+    day.dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('will not send it to a day that hasn’t come, which an iPhone’s date wheel offers', async () => {
+    const moved: unknown[] = []
+    registerEndpoint('/api/v1/eating/meals/meal-1', { method: 'PATCH', handler: (event) => {
+      moved.push(event.path)
+      return LUNCH
+    } })
+    const page = await open()
+    ;(page.vm as unknown as { askMove: (meal: Meal) => void }).askMove(LUNCH)
+    await flushPromises()
+    expect(moveSheet().day.max).toBe('2026-09-21')
+
+    await pick('2026-09-28')
+
+    expect(moveSheet().move.disabled).toBe(true)
+    expect(document.body.textContent).toContain('That day hasn\'t come yet — pick today or an earlier day')
+    moveSheet().move.click()
+    await flushPromises()
+    expect(moved).toEqual([])
   })
 })
 

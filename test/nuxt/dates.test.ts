@@ -76,6 +76,18 @@ describe('naming a day', () => {
   })
 })
 
+describe('a day a meal can go on', () => {
+  it('is today or any day before it', () => {
+    expect(dayRefusal('2026-09-21', '2026-09-21')).toBeNull()
+    expect(dayRefusal('2025-01-01', '2026-09-21')).toBeNull()
+  })
+
+  it('is never one to come, nor a cleared field', () => {
+    expect(dayRefusal('2026-09-22', '2026-09-21')).toBe('That day hasn\'t come yet — pick today or an earlier day')
+    expect(dayRefusal('', '2026-09-21')).toBe('Pick a day')
+  })
+})
+
 describe('clock and slot', () => {
   it('shows a meal’s time as hours and minutes, or a dash', () => {
     expect(timeLabel('08:30:00')).toBe('08:30')

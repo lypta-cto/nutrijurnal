@@ -3,6 +3,7 @@ import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { readBody } from 'h3'
 import type { ParseResult, Recipe, RecipePayload } from '~/composables/useEating'
+import { shiftDay } from '~/composables/useEating'
 import RecipeModal from '~/components/RecipeModal.vue'
 
 const OMELETTE: Recipe = {
@@ -92,6 +93,27 @@ describe('a recipe, open', () => {
     await flushPromises()
 
     expect(button('Write it down').disabled).toBe(true)
+    sheet.unmount()
+  })
+
+  it('will not put the dish on a day that hasn’t come', async () => {
+    registerEndpoint('/api/v1/eating/recipes/recipe-1', { method: 'GET', handler: () => OMELETTE })
+    const sheet = await mountSuspended(RecipeModal, { props: { recipe: OMELETTE, open: false } })
+    await sheet.setProps({ open: true })
+    await flushPromises()
+
+    button('Add to diary').click()
+    await flushPromises()
+    const day = document.body.querySelector<HTMLInputElement>('input[type="date"][aria-label="Day"]')!
+    const today = useToday().value
+    expect(day.max).toBe(today)
+
+    day.value = shiftDay(today, 7)
+    day.dispatchEvent(new Event('input'))
+    await flushPromises()
+
+    expect(button('Write it down').disabled).toBe(true)
+    expect(document.body.textContent).toContain('That day hasn\'t come yet — pick today or an earlier day')
     sheet.unmount()
   })
 })

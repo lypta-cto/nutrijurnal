@@ -390,10 +390,15 @@ function askMove(meal: Meal) {
   moveOpen.value = true
 }
 
+/** A cleared date field holds "", and an iPhone's wheel offers next week */
+const moveError = computed(() => dayRefusal(moveDay.value, today.value))
+
 async function doMove() {
   const meal = moving.value
-  // A cleared date field on a phone holds "": nowhere to move it to
-  if (!meal || !moveDay.value || moveDay.value === meal.day) {
+  if (!meal || moveError.value) {
+    return
+  }
+  if (moveDay.value === meal.day) {
     moveOpen.value = false
     return
   }
@@ -974,10 +979,12 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
         <UFormField
           label="Day"
           :hint="dayLabel(moveDay)"
+          :error="moveError ?? false"
         >
           <input
             v-model="moveDay"
             type="date"
+            :max="today"
             class="app-field"
             aria-label="The day to move it to"
           >
@@ -997,6 +1004,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
             icon="i-lucide-calendar-check"
             size="lg"
             class="flex-1 justify-center"
+            :disabled="Boolean(moveError)"
             @click="doMove"
           />
         </div>

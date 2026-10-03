@@ -5,3 +5,19 @@ export function localIsoDay(date = new Date()): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${date.getFullYear()}-${month}-${day}`
 }
+
+/**
+ * Why a meal can't go on this day, or null when it can. A date field's `max`
+ * is only a hint — iOS's date wheel ignores it and offers next week — and a
+ * day after today is one Today never opens, so a meal put there would vanish.
+ * The API refuses it too; saying so here keeps the sheet open to fix it.
+ */
+export function dayRefusal(day: string, today: string): string | null {
+  if (!day) {
+    return 'Pick a day'
+  }
+  if (day > today) {
+    return 'That day hasn\'t come yet — pick today or an earlier day'
+  }
+  return null
+}

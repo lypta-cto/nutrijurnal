@@ -453,15 +453,18 @@ async function save() {
 
 // --- Onto a day ------------------------------------------------------------------
 
+const today = useToday()
 const planning = ref(false)
 const plan = reactive({
-  day: localIsoDay(),
+  day: today.value,
   at: '',
   servings: 1
 })
+/** A date field cleared on a phone holds "", and an iPhone offers next week */
+const planError = computed(() => dayRefusal(plan.day, today.value))
 
 function startPlanning() {
-  plan.day = localIsoDay()
+  plan.day = today.value
   plan.at = ''
   plan.servings = 1
   planning.value = true
@@ -469,8 +472,7 @@ function startPlanning() {
 
 async function addToDiary() {
   const recipe = full.value
-  // A date field cleared on a phone holds ""
-  if (!recipe || adding.value || !plan.day) {
+  if (!recipe || adding.value || planError.value) {
     return
   }
   adding.value = true
@@ -485,7 +487,7 @@ async function addToDiary() {
     planning.value = false
     open.value = false
     toast.add({
-      title: `${recipe.title} on ${dayLabel(plan.day)}`,
+      title: `${recipe.title} on ${dayLabel(plan.day, today.value)}`,
       icon: 'i-lucide-utensils',
       color: 'success'
     })
@@ -601,10 +603,14 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           class="grid grid-cols-2 gap-3 rounded-tile bg-primary/6 p-4 border border-primary/20"
         >
           <span class="app-eyebrow col-span-2 text-primary">Put it on a day</span>
-          <UFormField label="Day">
+          <UFormField
+            label="Day"
+            :error="planError ?? false"
+          >
             <input
               v-model="plan.day"
               type="date"
+              :max="today"
               class="app-field"
               aria-label="Day"
             >
@@ -643,7 +649,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
               icon="i-lucide-check"
               class="flex-1 justify-center"
               :loading="adding"
-              :disabled="!plan.day"
+              :disabled="Boolean(planError)"
               @click="addToDiary"
             />
           </div>
