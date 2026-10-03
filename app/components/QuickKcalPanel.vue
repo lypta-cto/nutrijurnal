@@ -112,11 +112,8 @@ function submit() {
           />
           {{ bar.label }}
         </template>
-        <UInput
-          v-model.number="numbers[bar.key]"
-          type="number"
-          inputmode="decimal"
-          min="0"
+        <DecimalInput
+          v-model="numbers[bar.key]"
           placeholder="—"
           class="w-full"
           :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
@@ -124,7 +121,7 @@ function submit() {
           <template #trailing>
             <span class="text-xs text-dimmed">g</span>
           </template>
-        </UInput>
+        </DecimalInput>
       </UFormField>
     </div>
 

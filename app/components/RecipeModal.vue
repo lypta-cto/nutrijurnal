@@ -612,12 +612,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             :label="full.serving_unit === 'piece' ? 'Pieces' : 'Servings'"
             class="col-span-2"
           >
-            <UInput
-              v-model.number="plan.servings"
-              type="number"
-              inputmode="decimal"
-              min="0.25"
-              step="0.25"
+            <DecimalInput
+              v-model="plan.servings"
               class="w-28"
               :ui="AMOUNT_UI"
             />
@@ -672,12 +668,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             </UFormField>
             <UFormField label="Makes">
               <div class="flex items-center gap-2">
-                <UInput
-                  v-model.number="form.servings"
-                  type="number"
-                  inputmode="decimal"
-                  min="1"
-                  step="1"
+                <DecimalInput
+                  v-model="form.servings"
                   class="w-16 shrink-0"
                   :ui="{ base: 'tabular-nums text-center px-2' }"
                   aria-label="How many it makes"
@@ -790,12 +782,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
                 :aria-label="`Remove ${line.label}`"
                 @click="dropLine(line.key)"
               />
-              <UInput
-                v-model.number="line.quantity"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
+              <DecimalInput
+                v-model="line.quantity"
                 size="sm"
                 class="w-full"
                 :ui="AMOUNT_UI"

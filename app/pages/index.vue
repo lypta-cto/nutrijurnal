@@ -868,12 +868,8 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                           :aria-label="`Remove ${item.label}`"
                           @click="dropItem(meal, item)"
                         />
-                        <UInput
-                          v-model.number="item.quantity"
-                          type="number"
-                          inputmode="decimal"
-                          min="0"
-                          step="0.1"
+                        <DecimalInput
+                          v-model="item.quantity"
                           size="sm"
                           class="w-full"
                           :ui="{ base: 'tabular-nums px-2 text-right' }"

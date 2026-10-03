@@ -365,12 +365,8 @@ const dictationNote = computed(() => {
           :key="item.key"
           class="grid grid-cols-[4.5rem_minmax(0,1fr)_auto_2rem] items-center gap-3 py-2.5 pr-2 pl-3"
         >
-          <UInput
-            v-model.number="item.quantity"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="any"
+          <DecimalInput
+            v-model="item.quantity"
             size="sm"
             :ui="{ base: 'tabular-nums text-right' }"
             :aria-label="`Amount of ${item.label}`"

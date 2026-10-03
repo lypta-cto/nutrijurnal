@@ -22,7 +22,7 @@ const haptics = useHaptics()
 const recent = ref<WeightEntry[]>([])
 const loading = ref(false)
 const editing = ref(false)
-const typed = ref<number | undefined>(undefined)
+const typed = ref<number | null | undefined>(undefined)
 const saving = ref(false)
 
 async function load() {
@@ -64,8 +64,11 @@ function startEditing() {
 }
 
 async function save() {
+  if (saving.value) {
+    return
+  }
   const kg = Number(typed.value)
-  if (!Number.isFinite(kg) || kg < 20 || kg > 400 || saving.value) {
+  if (typed.value === null || typed.value === undefined || !Number.isFinite(kg) || kg < 20 || kg > 400) {
     toast.add({ title: 'Enter a weight between 20 and 400 kg', icon: 'i-lucide-circle-help', color: 'warning' })
     return
   }
@@ -192,23 +195,18 @@ async function remove() {
         Weigh in once a week or so — the trend shows up in Progress.
       </p>
       <div class="flex items-center gap-2">
-        <UInput
-          v-model.number="typed"
-          type="number"
-          inputmode="decimal"
-          step="0.1"
-          min="20"
-          max="400"
+        <DecimalInput
+          v-model="typed"
           :placeholder="last ? last.kg.toFixed(1) : '70.0'"
           class="min-w-0 flex-1"
           :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
           aria-label="Weight in kilograms"
-          @focus="!editing && typed === undefined && (typed = last?.kg)"
+          @focus="!editing && (typed === undefined || typed === null) && (typed = last?.kg)"
         >
           <template #trailing>
             <span class="text-sm text-dimmed">kg</span>
           </template>
-        </UInput>
+        </DecimalInput>
         <UButton
           v-if="editing"
           label="Cancel"

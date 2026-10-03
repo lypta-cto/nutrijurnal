@@ -340,7 +340,7 @@ const recipeQuery = ref('')
 const recipes = ref<Recipe[]>([])
 const recipesLoading = ref(false)
 const picked = ref<Recipe | null>(null)
-const servings = ref(1)
+const servings = ref<number | null>(1)
 
 let recipeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -383,7 +383,7 @@ const recipeItems = ref<RecipeDraft[]>([])
 /** How much of the recipe is being eaten — its items follow */
 const factor = computed(() => {
   const base = picked.value?.servings ?? 1
-  return base > 0 ? servings.value / base : 1
+  return base > 0 ? (servings.value ?? 0) / base : 1
 })
 
 function pickRecipe(recipe: Recipe) {
@@ -568,8 +568,9 @@ const noteOnly = computed(
 
 const canSave = computed(() =>
   fromRecipe.value
-    // A recipe known only by its numbers has no rows and is still a plate
-    ? recipeItems.value.length > 0 || Boolean(picked.value?.stated)
+    // A recipe known only by its numbers has no rows and is still a plate —
+    // but some of it has to have been eaten
+    ? (servings.value ?? 0) > 0 && (recipeItems.value.length > 0 || Boolean(picked.value?.stated))
     // Editing an existing meal: its day, time, name and note are enough to save
     : items.value.length > 0 || noteOnly.value || filling.value !== null
 )
@@ -578,7 +579,8 @@ function payloadItems(): MealItemPayload[] {
   return items.value.map(entry => ({
     food_id: entry.food_id,
     label: entry.label.trim() || 'Item',
-    quantity: entry.quantity,
+    // An emptied amount field holds null, which the API would refuse
+    quantity: Number(entry.quantity) || 0,
     unit: entry.unit,
     ...(entry.direct ? { macros: entry.direct } : {})
   }))
@@ -634,7 +636,7 @@ async function save() {
         day: form.day,
         at: form.at || null,
         slot: form.slot,
-        servings: servings.value
+        servings: servings.value ?? 1
       })
       meal = await applyRecipeEdits(meal)
       const title = form.title.trim()
@@ -984,12 +986,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             :label="picked.serving_unit === 'piece' ? 'Pieces eaten' : 'Servings eaten'"
             :hint="`of ${picked.servings}`"
           >
-            <UInput
-              v-model.number="servings"
-              type="number"
-              inputmode="decimal"
-              min="0.25"
-              step="0.25"
+            <DecimalInput
+              v-model="servings"
               class="w-full"
               :ui="AMOUNT_UI"
             />
@@ -1081,12 +1079,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             />
             {{ field.label }}
           </template>
-          <UInput
-            v-model.number="direct[field.key]"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="1"
+          <DecimalInput
+            v-model="direct[field.key]"
             placeholder="—"
             class="w-full"
             :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
@@ -1094,7 +1088,7 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             <template #trailing>
               <span class="text-xs text-dimmed">{{ field.unit }}</span>
             </template>
-          </UInput>
+          </DecimalInput>
         </UFormField>
       </div>
       <UButton
@@ -1141,12 +1135,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
 
       <div class="grid grid-cols-[5rem_7rem_minmax(0,1fr)] items-end gap-2">
         <UFormField label="How much">
-          <UInput
-            v-model.number="pendingQuantity"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="1"
+          <DecimalInput
+            v-model="pendingQuantity"
             class="w-full"
             :ui="AMOUNT_UI"
           />
@@ -1226,12 +1216,8 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
             :aria-label="`Remove ${row.entry.label}`"
             @click="removeRow(row)"
           />
-          <UInput
-            v-model.number="row.entry.quantity"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="0.1"
+          <DecimalInput
+            v-model="row.entry.quantity"
             size="sm"
             class="w-full"
             :ui="AMOUNT_UI"

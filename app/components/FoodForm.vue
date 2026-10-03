@@ -237,19 +237,15 @@ async function remove() {
                 />
                 {{ field.label }}
               </template>
-              <UInput
-                v-model.number="form[field.key]"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
+              <DecimalInput
+                v-model="form[field.key]"
                 class="w-full"
                 :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
               >
                 <template #trailing>
                   <span class="text-xs text-dimmed">{{ field.unit }}</span>
                 </template>
-              </UInput>
+              </DecimalInput>
             </UFormField>
           </div>
         </section>
@@ -271,12 +267,8 @@ async function remove() {
               :label="portion.label"
               :help="portion.hint"
             >
-              <UInput
-                v-model.number="portions[portion.unit]"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="1"
+              <DecimalInput
+                v-model="portions[portion.unit]"
                 placeholder="—"
                 class="w-full"
                 :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
@@ -284,7 +276,7 @@ async function remove() {
                 <template #trailing>
                   <span class="text-xs text-dimmed">g</span>
                 </template>
-              </UInput>
+              </DecimalInput>
             </UFormField>
           </div>
         </section>

@@ -344,10 +344,8 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
             label="Height"
             :error="bodyProblems.height_cm"
           >
-            <UInput
-              v-model.number="form.height_cm"
-              type="number"
-              inputmode="decimal"
+            <DecimalInput
+              v-model="form.height_cm"
               placeholder="170"
               class="w-full"
               :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
@@ -355,17 +353,14 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
               <template #trailing>
                 <span class="text-sm text-dimmed">cm</span>
               </template>
-            </UInput>
+            </DecimalInput>
           </UFormField>
           <UFormField
             label="Weight"
             :error="bodyProblems.weight_kg"
           >
-            <UInput
-              v-model.number="form.weight_kg"
-              type="number"
-              inputmode="decimal"
-              step="0.1"
+            <DecimalInput
+              v-model="form.weight_kg"
               placeholder="70"
               class="w-full"
               :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
@@ -373,7 +368,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
               <template #trailing>
                 <span class="text-sm text-dimmed">kg</span>
               </template>
-            </UInput>
+            </DecimalInput>
           </UFormField>
         </div>
       </div>

@@ -133,12 +133,8 @@ function submit() {
 
     <div class="grid grid-cols-[minmax(0,1fr)_8.5rem] gap-3">
       <UFormField label="Amount">
-        <UInput
-          v-model.number="quantity"
-          type="number"
-          inputmode="decimal"
-          min="0"
-          step="any"
+        <DecimalInput
+          v-model="quantity"
           size="lg"
           class="w-full"
           :ui="{ base: 'tabular-nums text-lg font-semibold' }"
