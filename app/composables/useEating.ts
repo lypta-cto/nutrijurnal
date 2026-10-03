@@ -349,7 +349,8 @@ export interface PastedDish {
   rest: string
 }
 
-const MACRO_LINE = /(kcal|kalorij)/i
+// "Calories" is how most English labels and recipe sites print the energy
+const MACRO_LINE = /(kcal|kalorij|calori)/i
 const NUMBER = String.raw`(\d+(?:[.,]\d+)?)`
 
 function figure(text: string, labels: string[]): number | null {
@@ -370,7 +371,7 @@ export function readPastedDish(text: string): PastedDish {
   let stated: Macros | null = null
   if (numbersAt !== -1) {
     const line = lines[numbersAt] ?? ''
-    const kcal = figure(line, ['kcal', 'kalorija', 'kalorije'])
+    const kcal = figure(line, ['kcal', 'kalorija', 'kalorije', 'calories', 'calorie'])
     if (kcal !== null) {
       stated = {
         kcal,

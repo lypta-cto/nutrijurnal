@@ -71,12 +71,17 @@ describe('a dish pasted from a label or a plan', () => {
     expect(readPastedDish('\n \n')).toEqual({ title: '', stated: null, rest: '' })
   })
 
-  // "Calories" is how most English labels and recipe sites print energy; the
-  // reader only knows "kcal" and the Serbian "kalorij-", so an English paste
-  // arrives with no numbers at all
-  it.fails('reads "Calories" as the energy line', () => {
+  // "Calories" is how most English labels and recipe sites print energy
+  it('reads "Calories" as the energy line', () => {
     const dish = readPastedDish('Banana bread\nCalories: 420, Protein: 8g, Carbs: 60g, Fat: 16g')
 
     expect(dish.stated).toEqual({ kcal: 420, protein: 8, carbs: 60, fat: 16 })
+    expect(dish.title).toBe('Banana bread')
+  })
+
+  it('reads "420 calories" and a single "Calorie" too, and still prefers kcal', () => {
+    expect(readPastedDish('Toast\n420 calories, 8 g protein').stated?.kcal).toBe(420)
+    expect(readPastedDish('Toast\nCalorie 95').stated?.kcal).toBe(95)
+    expect(readPastedDish('Soup\nKcal: 210, calories from fat: 40').stated?.kcal).toBe(210)
   })
 })
