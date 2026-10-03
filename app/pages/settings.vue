@@ -308,7 +308,7 @@ async function confirmDelete() {
       v-model:open="calculatorOpen"
       title="Goal calculator"
       description="Your body, your week, your goal — and the day it comes to."
-      :ui="{ content: 'mx-auto w-full max-w-[34rem]', body: 'app-safe-bottom' }"
+      :ui="{ ...SHEET_UI, body: 'overflow-y-auto app-safe-bottom' }"
     >
       <template #body>
         <GoalWizard

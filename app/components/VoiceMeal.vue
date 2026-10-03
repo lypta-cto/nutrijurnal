@@ -27,6 +27,7 @@ const voice = useVoiceNote()
 const { supported, canTranscribe, seconds, transcript, error, dictationFailed } = voice
 const language = useDictationLanguage()
 const toast = useToast()
+const haptics = useHaptics()
 
 type Stage = 'ready' | 'recording' | 'draft'
 const stage = ref<Stage>('ready')
@@ -178,6 +179,7 @@ async function save() {
         })
       }
     }
+    haptics.success()
     emit('saved', meal)
     toast.add({
       title: payload.length ? `${meal.title} added to ${slotLabel(meal.slot)}` : `Written down for ${slotLabel(meal.slot)}`,

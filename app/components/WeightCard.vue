@@ -16,6 +16,7 @@ const emit = defineEmits<{ changed: [] }>()
 
 const { weightRange, putWeight, removeWeight } = useBody()
 const toast = useToast()
+const haptics = useHaptics()
 
 /** The month up to the day: enough for "last weighed" and the week's change */
 const recent = ref<WeightEntry[]>([])
@@ -71,7 +72,7 @@ async function save() {
   saving.value = true
   try {
     await putWeight(props.day, Math.round(kg * 10) / 10)
-    navigator.vibrate?.(15)
+    haptics.success()
     editing.value = false
     await load()
     emit('changed')

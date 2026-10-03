@@ -341,18 +341,21 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
       :is-empty="!foods.length"
       :empty="onlyMine ? 'You haven\'t added any foods yet — scan a packet or add one by hand.' : 'No foods match — add one and it is yours from then on.'"
     >
-      <FoodRow
-        v-for="food in foods"
-        :key="food.id"
-        :food="food"
-        @pick="openFood"
-        @star="toggleStar"
-      />
+      <TransitionGroup name="list">
+        <FoodRow
+          v-for="food in foods"
+          :key="food.id"
+          :food="food"
+          @pick="openFood"
+          @star="toggleStar"
+        />
+      </TransitionGroup>
     </SheetCard>
 
     <!-- A recipe of one's own: a name, or a dish copied off a label -->
-    <UModal
+    <UDrawer
       v-model:open="newOpen"
+      :ui="SHEET_UI"
       title="New recipe"
       description="A name is enough — or paste the dish as it is written, numbers and all."
     >
@@ -389,7 +392,7 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
           />
         </div>
       </template>
-    </UModal>
+    </UDrawer>
 
     <RecipeModal
       v-model:open="recipeOpen"

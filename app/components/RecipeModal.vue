@@ -526,11 +526,11 @@ const UNIT_UI = { base: 'px-1.5' }
 </script>
 
 <template>
-  <UModal
+  <UDrawer
     v-model:open="open"
     :title="full?.title ?? recipe?.title ?? 'Recipe'"
     :description="full?.subtitle ?? recipe?.subtitle ?? undefined"
-    :ui="{ content: 'sm:max-w-xl' }"
+    :ui="SHEET_UI"
   >
     <template #body>
       <div
@@ -953,5 +953,5 @@ const UNIT_UI = { base: 'px-1.5' }
         </div>
       </div>
     </template>
-  </UModal>
+  </UDrawer>
 </template>

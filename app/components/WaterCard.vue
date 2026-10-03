@@ -15,6 +15,7 @@ const emit = defineEmits<{ changed: [WaterDay] }>()
 
 const { loadWater, addWater, removeWater } = useBody()
 const toast = useToast()
+const haptics = useHaptics()
 
 const water = ref<WaterDay | null>(null)
 const busy = ref(false)
@@ -44,7 +45,7 @@ async function add(ml: number) {
   busy.value = true
   try {
     water.value = await addWater(props.day, ml)
-    navigator.vibrate?.(15)
+    haptics.tap()
     emit('changed', water.value)
   } catch (error) {
     fail(error)

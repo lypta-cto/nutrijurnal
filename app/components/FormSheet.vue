@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * A form in a bottom sheet: title, the fields scrolling in the middle, and
+ * the buttons pinned at the bottom where the thumb already is. The submit
+ * button belongs to the form through `form="form-sheet"`, so Enter in a
+ * field submits too.
+ */
 withDefaults(defineProps<{
   title: string
   description?: string
@@ -35,15 +41,15 @@ function cancel() {
 </script>
 
 <template>
-  <USlideover
+  <UDrawer
     v-model:open="open"
     :title="title"
     :description="description"
-    :ui="{ content: 'max-w-lg', body: 'flex-1 overflow-y-auto' }"
+    :ui="{ ...SHEET_UI, body: 'flex-1 overflow-y-auto' }"
   >
     <template #body>
       <form
-        id="form-slideover"
+        id="form-sheet"
         class="space-y-5"
         @submit.prevent="emit('submit')"
       >
@@ -63,7 +69,7 @@ function cancel() {
           />
           <UButton
             type="submit"
-            form="form-slideover"
+            form="form-sheet"
             :label="submitLabel"
             :loading="loading"
             :disabled="disabled"
@@ -71,5 +77,5 @@ function cancel() {
         </div>
       </slot>
     </template>
-  </USlideover>
+  </UDrawer>
 </template>

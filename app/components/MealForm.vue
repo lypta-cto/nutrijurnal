@@ -60,6 +60,7 @@ const {
 /** Filling in a meal that was only written down, rather than adding one */
 const filling = computed(() => props.meal ?? null)
 const toast = useToast()
+const haptics = useHaptics()
 
 const TABS: { value: MealTab, label: string, icon: string }[] = [
   { value: 'search', label: 'Search', icon: 'i-lucide-search' },
@@ -672,6 +673,7 @@ async function save() {
         items: payloadItems()
       })
     }
+    haptics.success()
     emit('saved', meal)
     open.value = false
     toast.add({
@@ -698,7 +700,7 @@ const UNIT_UI = { base: 'px-1.5' }
 </script>
 
 <template>
-  <FormSlideover
+  <FormSheet
     v-model:open="open"
     :title="!filling ? 'New meal' : filling.items.length ? 'Edit the meal' : 'Fill in the meal'"
     :description="!filling
@@ -1351,7 +1353,7 @@ const UNIT_UI = { base: 'px-1.5' }
           />
           <UButton
             type="submit"
-            form="form-slideover"
+            form="form-sheet"
             :label="filling
               ? (filling.items.length ? 'Save' : 'Count it')
               : noteOnly ? 'Write it down' : 'Add meal'"
@@ -1361,5 +1363,5 @@ const UNIT_UI = { base: 'px-1.5' }
         </div>
       </div>
     </template>
-  </FormSlideover>
+  </FormSheet>
 </template>

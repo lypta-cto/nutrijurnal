@@ -164,8 +164,9 @@ async function remove() {
 </script>
 
 <template>
-  <UModal
+  <UDrawer
     v-model:open="open"
+    :ui="SHEET_UI"
     :title="editing ? 'Edit food' : template ? 'Your own version' : 'New food'"
     :description="template
       ? `${template.name} is shared and stays as it is — this copy is yours to change.`
@@ -305,5 +306,5 @@ async function remove() {
         </div>
       </div>
     </template>
-  </UModal>
+  </UDrawer>
 </template>

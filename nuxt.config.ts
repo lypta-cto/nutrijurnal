@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  // Tabs cross-fade; the styles are in motion.css (and stand still under
+  // prefers-reduced-motion)
+  app: {
+    pageTransition: { name: 'page', mode: 'out-in' }
+  },
+
   // main.css is the design's tokens and base; motion.css the features' transitions
   css: ['~/assets/css/main.css', '~/assets/css/motion.css'],
 

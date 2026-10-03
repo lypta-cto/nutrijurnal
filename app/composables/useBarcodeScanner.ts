@@ -156,7 +156,12 @@ export function useBarcodeScanner(video: Ref<HTMLVideoElement | null>) {
       const hit = await detect(element)
       if (hit && wanted && checksumHolds(hit.code, hit.format)) {
         wanted = false
-        navigator.vibrate?.(60)
+        // A firmer buzz than a tap: the phone found it, the hand can relax
+        try {
+          navigator.vibrate?.(60)
+        } catch {
+          // Vibration not allowed here — the screen says it anyway
+        }
         release()
         state.value = 'idle'
         onCode?.(hit)

@@ -32,3 +32,68 @@
     transition: none;
   }
 }
+
+/*
+ * Moving between tabs: the old screen fades out quickly and the new one
+ * rises in (AppPage's own entrance) — nuxt.config.ts → app.pageTransition.
+ */
+.page-leave-active {
+  transition: opacity 110ms ease-out;
+}
+
+.page-leave-to {
+  opacity: 0;
+}
+
+.page-enter-active {
+  transition: opacity 160ms ease-out;
+}
+
+.page-enter-from {
+  opacity: 0;
+}
+
+/* Today, swiped (or stepped) to another day: it slides in from that side */
+.day-from-next {
+  animation: day-from-next 260ms var(--ease-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.day-from-prev {
+  animation: day-from-prev 260ms var(--ease-soft, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes day-from-next {
+  from {
+    opacity: 0.35;
+    transform: translateX(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes day-from-prev {
+  from {
+    opacity: 0.35;
+    transform: translateX(-28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-leave-active,
+  .page-enter-active {
+    transition: none;
+  }
+
+  .day-from-next,
+  .day-from-prev {
+    animation: none;
+  }
+}

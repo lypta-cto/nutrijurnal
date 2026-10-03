@@ -19,6 +19,7 @@ import type { QuickAddKind } from '~/composables/useQuickAdd'
 const quickAdd = useQuickAdd()
 const { day, peekDay, quickFoods, searchFoods, setFavourite, addMeal, addItem, updateMeal, removeMeal, removeItem, copyDay } = useEating()
 const toast = useToast()
+const haptics = useHaptics()
 
 type Panel = 'list' | 'amount' | 'kcal' | 'copy' | 'voice' | 'scan'
 
@@ -304,6 +305,7 @@ async function addFood(food: Food, quantity: number, unit: Unit) {
 }
 
 function confirmAdded(what: string, result: { meal: Meal, itemId: string | null, created: boolean }) {
+  haptics.success()
   quickAdd.markSaved()
   toast.add({
     title: `${what} → ${slotLabel(result.meal.slot)}`,
@@ -421,7 +423,7 @@ const description = computed(() => {
     v-model:open="sheetOpen"
     :title="panel === 'voice' ? 'Say what you ate' : `Add to ${slotLabel(slot)}`"
     :description="description"
-    :ui="{ content: 'mx-auto w-full max-w-[34rem] max-h-[92svh]', body: 'app-safe-bottom overflow-y-auto' }"
+    :ui="{ ...SHEET_UI, body: 'overflow-y-auto app-safe-bottom' }"
   >
     <template #body>
       <VoiceMeal
@@ -656,7 +658,11 @@ const description = computed(() => {
               />
               Starred
             </h3>
-            <div class="-mx-2 flex flex-col divide-y divide-default">
+            <TransitionGroup
+              tag="div"
+              name="list"
+              class="-mx-2 flex flex-col divide-y divide-default"
+            >
               <FoodRow
                 v-for="food in favourites"
                 :key="food.id"
@@ -667,7 +673,7 @@ const description = computed(() => {
                 @star="toggleStar"
                 @again="again"
               />
-            </div>
+            </TransitionGroup>
           </section>
 
           <section
@@ -681,7 +687,11 @@ const description = computed(() => {
               />
               Recent
             </h3>
-            <div class="-mx-2 flex flex-col divide-y divide-default">
+            <TransitionGroup
+              tag="div"
+              name="list"
+              class="-mx-2 flex flex-col divide-y divide-default"
+            >
               <FoodRow
                 v-for="food in recent"
                 :key="food.id"
@@ -692,7 +702,7 @@ const description = computed(() => {
                 @star="toggleStar"
                 @again="again"
               />
-            </div>
+            </TransitionGroup>
           </section>
 
           <p
