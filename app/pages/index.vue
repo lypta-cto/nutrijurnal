@@ -788,9 +788,11 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                     :aria-expanded="isOpen(meal)"
                     @click="toggle(meal)"
                   >
-                    <!-- Two lines before it gives up: a meal's name is worth reading -->
+                    <!-- Two lines before it gives up: a meal's name is worth reading.
+                         The word joiner keeps the glyphs on the last word's line,
+                         so a chevron never wraps onto a line of its own -->
                     <span class="line-clamp-2 text-body break-words text-highlighted">
-                      {{ meal.title }}<UIcon
+                      {{ meal.title }}<span class="whitespace-nowrap">&#8288;<UIcon
                         v-if="meal.has_voice"
                         name="i-lucide-mic"
                         class="ml-1 inline-block size-3.5 align-[-2px] text-dimmed"
@@ -798,7 +800,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
                         name="i-lucide-chevron-down"
                         class="ml-0.5 inline-block size-4 align-[-3px] text-dimmed transition-transform duration-200 ease-soft motion-reduce:transition-none"
                         :class="isOpen(meal) && 'rotate-180'"
-                      />
+                      /></span>
                     </span>
                     <ShellMacroLine
                       v-if="meal.items.length"
