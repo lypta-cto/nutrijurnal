@@ -157,7 +157,9 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
     </template>
 
     <div class="flex flex-col gap-3">
-      <!-- The glasses are the buttons: the next empty one drinks, the last full one takes back -->
+      <!-- The glasses are the buttons: the next empty one drinks, the last full one takes back.
+           Plain glyphs rather than tiles: the buttons under them are already a grey row,
+           and twelve glasses (the most drawn) still fit at 22 px -->
       <div
         class="flex gap-1"
         role="group"
@@ -167,7 +169,7 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
           v-for="entry in glasses"
           :key="entry.index"
           type="button"
-          class="app-press flex h-10 max-w-12 min-w-0 flex-1 items-center justify-center rounded-tile bg-elevated outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-info disabled:opacity-60 motion-reduce:transition-none"
+          class="app-press flex h-11 max-w-12 min-w-0 flex-1 items-center justify-center rounded-tile outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-info active:bg-elevated disabled:opacity-60 motion-reduce:transition-none"
           :class="entry.full ? 'text-info' : 'text-dimmed'"
           :aria-label="entry.full ? `Take back a glass (${formatWater(glass)})` : `Drink a glass (${formatWater(glass)})`"
           :disabled="busy"
@@ -175,7 +177,7 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
         >
           <UIcon
             name="i-lucide-glass-water"
-            class="size-5 transition-transform duration-300 ease-spring motion-reduce:transition-none"
+            class="size-5.5 transition-transform duration-300 ease-spring motion-reduce:transition-none"
             :class="entry.full ? 'scale-100' : 'scale-90'"
           />
         </button>
