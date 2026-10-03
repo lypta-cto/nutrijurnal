@@ -2,7 +2,7 @@
 import type { Progress } from '~/composables/useBody'
 import { formatWater, formatWeight } from '~/composables/useBody'
 import type { ChartPoint, SplitPart } from '~/composables/useChartWidth'
-import { CHART_COLORS, MACRO_BARS, dayLabel, dayShort, formatKcal, formatMacro, shiftDay } from '~/composables/useEating'
+import { CHART_COLORS, MACRO_BARS, dayLabel, dayShort, formatKcal, shiftDay } from '~/composables/useEating'
 
 /**
  * How the days have gone: a week, a month or a quarter in one answer from
@@ -114,168 +114,185 @@ const streakHint = computed(() => {
 
 const weightChange = computed(() => data.value?.weight.change ?? null)
 
-/** The table view: the same numbers as the charts, newest first */
-const rows = computed(() => [...days.value].reverse())
+/** The period, said over the title: "27 Sep – 3 Oct" */
+const periodLabel = computed(() => {
+  const today = localIsoDay()
+  return `${dayShort(shiftDay(today, -(span.value - 1)))} – ${dayShort(today)}`
+})
 
-const SEGMENT = 'flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
+/**
+ * Day by day, newest first — the same numbers as the charts, each day with a
+ * bar against the target: kcal within it, clay past it, an empty track and
+ * "—" for a day nothing was written down. Without a target the bars compare
+ * the days with each other.
+ */
+const rows = computed(() => {
+  const scale = kcalTarget.value || Math.max(1, ...days.value.map(entry => entry.kcal))
+  return [...days.value].reverse().map(entry => ({
+    ...entry,
+    share: entry.meals ? Math.min(100, Math.round((entry.kcal / scale) * 100)) : 0,
+    over: Boolean(kcalTarget.value) && entry.meals > 0 && entry.kcal > (kcalTarget.value ?? 0)
+  }))
+})
 </script>
 
 <template>
-  <AppPage title="Progress">
+  <AppPage
+    title="Progress"
+    :eyebrow="periodLabel"
+  >
     <template #toolbar>
-      <div
-        class="flex items-center gap-0.5 rounded-xl bg-elevated/70 p-0.5"
-        role="radiogroup"
-        aria-label="Period"
-      >
-        <button
-          v-for="entry in SPANS"
-          :key="entry.value"
-          type="button"
-          role="radio"
-          :class="[SEGMENT, span === entry.value ? 'bg-default text-highlighted shadow-sm' : 'text-muted']"
-          :aria-checked="span === entry.value"
-          @click="span = entry.value"
-        >
-          {{ entry.label }}
-        </button>
-      </div>
+      <ShellSegmented
+        v-model="span"
+        label="Period"
+        :options="SPANS"
+      />
     </template>
 
-    <UAlert
-      v-if="failed && !data"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-circle-alert"
-      title="Progress could not be loaded"
-      :actions="[{ label: 'Try again', color: 'neutral', variant: 'outline', onClick: () => void load() }]"
-    />
+    <ShellCard v-if="failed && !data">
+      <ShellEmpty
+        icon="i-lucide-cloud-off"
+        title="Progress didn't load"
+        description="The numbers are safe — the connection dropped on the way. Try again in a moment."
+      >
+        <UButton
+          label="Try again"
+          icon="i-lucide-rotate-ccw"
+          :loading="loading"
+          @click="load"
+        />
+      </ShellEmpty>
+    </ShellCard>
 
     <template v-if="!data && loading">
       <div class="grid grid-cols-2 gap-3">
-        <USkeleton
+        <span
           v-for="index in 4"
           :key="index"
-          class="h-24 rounded-2xl"
+          class="app-shimmer h-24 rounded-tile"
         />
       </div>
-      <USkeleton class="h-56 rounded-2xl" />
-      <USkeleton class="h-32 rounded-2xl" />
+      <ShellSkeleton
+        variant="card"
+        :count="5"
+      />
+      <ShellSkeleton
+        variant="card"
+        :count="2"
+      />
     </template>
 
     <!-- A refetch keeps the last picture, dimmed, rather than flashing skeletons -->
     <div
       v-if="data"
-      class="flex flex-col gap-4 transition-opacity duration-200"
+      class="flex flex-col gap-3 transition-opacity duration-200 ease-soft"
       :class="loading && 'opacity-60'"
       :aria-busy="loading"
     >
       <div class="grid grid-cols-2 gap-3">
-        <div class="app-card flex flex-col gap-1 px-4 py-3">
-          <span class="flex items-center gap-1.5 text-xs font-medium text-muted">
-            <UIcon
-              name="i-lucide-flame"
-              class="size-3.5 text-warning"
-            />
-            Streak
-          </span>
-          <span class="text-2xl font-semibold text-highlighted">
-            <CountUp :value="data.streak.current" /> <span class="text-sm font-medium text-muted">{{ data.streak.current === 1 ? 'day' : 'days' }}</span>
-          </span>
-          <span class="text-[11px] text-muted">{{ streakHint }}</span>
-        </div>
-
-        <div class="app-card flex flex-col gap-1 px-4 py-3">
-          <span class="text-xs font-medium text-muted">Average day</span>
-          <span class="text-2xl font-semibold text-highlighted">
-            <template v-if="averages?.kcal"><CountUp
-              :value="averages.kcal"
+        <ShellStatTile
+          label="Average day"
+          icon="i-lucide-flame"
+          :value="averages?.kcal ?? null"
+          unit="kcal"
+          :hint="kcalAgainstTarget ?? 'on the days you logged'"
+          tone="brand"
+        >
+          <template #value>
+            <CountUp
+              :value="averages?.kcal ?? 0"
               :format="formatKcal"
-            /> <span class="text-sm font-medium text-muted">kcal</span></template>
-            <template v-else>—</template>
-          </span>
-          <span class="text-[11px] text-muted">{{ kcalAgainstTarget ?? 'on the days you logged' }}</span>
-        </div>
+            />
+          </template>
+        </ShellStatTile>
 
-        <div class="app-card flex flex-col gap-1 px-4 py-3">
-          <span class="text-xs font-medium text-muted">Days logged</span>
-          <span class="text-2xl font-semibold text-highlighted">
-            <CountUp :value="averages?.logged_days ?? 0" /> <span class="text-sm font-medium text-muted">of {{ averages?.days ?? span }}</span>
-          </span>
-          <UProgress
-            :model-value="averages?.logged_days ?? 0"
-            :max="averages?.days || span"
-            size="xs"
-            aria-label="Days logged in this period"
-          />
-        </div>
+        <ShellStatTile
+          label="Streak"
+          icon="i-lucide-calendar-check"
+          :value="data.streak.current"
+          :unit="data.streak.current === 1 ? 'day' : 'days'"
+          :hint="streakHint"
+        >
+          <template #value>
+            <CountUp :value="data.streak.current" />
+          </template>
+        </ShellStatTile>
 
-        <div class="app-card flex flex-col gap-1 px-4 py-3">
-          <span class="text-xs font-medium text-muted">Weight</span>
-          <span class="text-2xl font-semibold text-highlighted">
-            <template v-if="weightChange !== null">{{ weightChange > 0 ? '+' : weightChange < 0 ? '−' : '' }}{{ Math.abs(weightChange).toFixed(1) }} <span class="text-sm font-medium text-muted">kg</span></template>
-            <template v-else-if="data.weight.last">{{ data.weight.last.kg.toFixed(1) }} <span class="text-sm font-medium text-muted">kg</span></template>
-            <template v-else>—</template>
-          </span>
-          <span class="text-[11px] text-muted">
-            <template v-if="weightChange !== null && data.weight.first">since {{ dayShort(data.weight.first.day) }}</template>
-            <template v-else-if="data.weight.last">weighed {{ dayShort(data.weight.last.day) }}</template>
-            <template v-else>not weighed in this period</template>
-          </span>
-        </div>
+        <ShellStatTile
+          label="Days logged"
+          icon="i-lucide-notebook-pen"
+          :value="averages?.logged_days ?? 0"
+          :unit="`of ${averages?.days ?? span}`"
+          :hint="averages?.logged_days === (averages?.days ?? span) ? 'every single one' : 'in this period'"
+        >
+          <template #value>
+            <CountUp :value="averages?.logged_days ?? 0" />
+          </template>
+        </ShellStatTile>
+
+        <ShellStatTile
+          label="Weight"
+          icon="i-lucide-scale"
+          :value="weightChange !== null
+            ? `${weightChange > 0 ? '+' : weightChange < 0 ? '−' : ''}${Math.abs(weightChange).toFixed(1)}`
+            : data.weight.last ? data.weight.last.kg.toFixed(1) : null"
+          unit="kg"
+          :hint="weightChange !== null && data.weight.first
+            ? `since ${dayShort(data.weight.first.day)}`
+            : data.weight.last ? `weighed ${dayShort(data.weight.last.day)}` : 'not weighed in this period'"
+        />
       </div>
 
       <!-- Energy against the target -->
-      <section class="app-card flex flex-col gap-3 px-4 py-3">
-        <header class="flex items-baseline gap-2">
-          <h2 class="text-sm font-semibold text-highlighted">
-            Energy
-          </h2>
-          <span class="text-xs text-muted">kcal a day<template v-if="kcalTarget"> · dashed line is your target</template></span>
-        </header>
-        <ChartColumns
-          v-if="averages?.logged_days"
-          :points="kcalPoints"
-          :color="CHART_COLORS.kcal"
-          :format="formatKcal"
-          :reference="kcalTarget ? { value: kcalTarget, label: `Target ${formatKcal(kcalTarget)}` } : null"
-          label="Kcal per day"
-        />
-        <UEmpty
+      <ShellCard
+        title="Energy"
+        icon="i-lucide-flame"
+        hint="kcal a day"
+      >
+        <template v-if="averages?.logged_days">
+          <ChartColumns
+            :points="kcalPoints"
+            :color="CHART_COLORS.kcal"
+            over-color="var(--ui-warning)"
+            :format="formatKcal"
+            :reference="kcalTarget ? { value: kcalTarget, label: `Target ${formatKcal(kcalTarget)}` } : null"
+            label="Kcal per day"
+          />
+          <p
+            v-if="kcalTarget"
+            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted"
+          >
+            <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-kcal" />within target</span>
+            <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-warning" />over</span>
+            <span class="flex items-center gap-1.5"><span class="h-0 w-3 border-t-[1.5px] border-dashed border-(--ui-text-muted)" />your target</span>
+          </p>
+        </template>
+        <ShellEmpty
           v-else
+          compact
           icon="i-lucide-chart-column"
           title="Nothing logged in this period"
-          description="Log a meal and the days start filling in here."
-          variant="naked"
-          size="sm"
+          description="Log a meal and the days fill in here."
+          class="-mx-4 -mb-4"
         />
-      </section>
+      </ShellCard>
 
       <!-- Where the energy came from -->
-      <section
+      <ShellCard
         v-if="hasMacros"
-        class="app-card flex flex-col gap-3 px-4 py-3"
+        title="Macros"
+        icon="i-lucide-chart-pie"
+        hint="share of kcal, average day"
       >
-        <header class="flex items-baseline gap-2">
-          <h2 class="text-sm font-semibold text-highlighted">
-            Macros
-          </h2>
-          <span class="text-xs text-muted">share of kcal, average day</span>
-        </header>
         <ChartSplit :parts="split" />
-      </section>
+      </ShellCard>
 
       <!-- The weight trend -->
-      <section class="app-card flex flex-col gap-3 px-4 py-3">
-        <header class="flex items-baseline gap-2">
-          <h2 class="text-sm font-semibold text-highlighted">
-            Weight
-          </h2>
-          <span
-            v-if="weighings"
-            class="text-xs text-muted"
-          >{{ weighings }} {{ weighings === 1 ? 'weighing' : 'weighings' }}</span>
-        </header>
+      <ShellCard
+        title="Weight"
+        icon="i-lucide-scale"
+        :hint="weighings ? `${weighings} ${weighings === 1 ? 'weighing' : 'weighings'}` : undefined"
+      >
         <ChartLine
           v-if="weighings >= 2"
           :points="weightPoints"
@@ -283,26 +300,23 @@ const SEGMENT = 'flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-co
           :format="value => value.toFixed(1)"
           label="Weight in kilograms"
         />
-        <UEmpty
+        <ShellEmpty
           v-else
+          compact
           icon="i-lucide-scale"
           :title="weighings ? 'One weighing so far' : 'No weighings yet'"
-          description="Weigh in on Today every few days — the trend shows up from the second one."
-          variant="naked"
-          size="sm"
+          description="Weigh in on Today every few days — the trend shows from the second."
+          class="-mx-4 -mb-4"
         />
-      </section>
+      </ShellCard>
 
       <!-- Water against the goal -->
-      <section class="app-card flex flex-col gap-3 px-4 py-3">
-        <header class="flex items-baseline gap-2">
-          <h2 class="text-sm font-semibold text-highlighted">
-            Water
-          </h2>
-          <span class="text-xs text-muted">
-            <template v-if="averages?.water_ml">{{ formatWater(averages.water_ml) }} on average · </template>goal {{ formatWater(data.water_goal_ml) }}
-          </span>
-        </header>
+      <ShellCard
+        title="Water"
+        icon="i-lucide-glass-water"
+        icon-class="text-info"
+        :hint="averages?.water_ml ? `${formatWater(averages.water_ml)} on average · goal ${formatWater(data.water_goal_ml)}` : `goal ${formatWater(data.water_goal_ml)}`"
+      >
         <ChartColumns
           v-if="averages?.water_ml"
           :points="waterPoints"
@@ -312,42 +326,77 @@ const SEGMENT = 'flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-co
           label="Water per day"
           :height="110"
         />
-        <UEmpty
+        <ShellEmpty
           v-else
+          compact
           icon="i-lucide-glass-water"
           title="No water logged in this period"
           description="Tap a glass on Today each time you drink one."
-          variant="naked"
-          size="sm"
+          class="-mx-4 -mb-4"
         />
-      </section>
+      </ShellCard>
 
-      <!-- The same numbers as a table: every chart's twin -->
-      <SheetCard
+      <!-- The same numbers, day by day: every chart's twin -->
+      <ShellCard
+        flush
         title="Day by day"
-        icon="i-lucide-table"
+        icon="i-lucide-list"
+        :hint="kcalTarget ? 'kcal against the target' : 'kcal'"
+        :count="averages?.logged_days ? `${averages.logged_days}/${averages.days}` : null"
         :is-empty="!rows.length"
         empty="No days in this period."
       >
-        <div class="grid grid-cols-[minmax(0,1fr)_3.75rem_5.5rem_3.25rem_3.5rem] gap-x-2 bg-elevated/40 px-4 py-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-dimmed">
-          <span class="text-left">Day</span>
-          <span>kcal</span>
-          <span>P · C · F</span>
-          <span>Water</span>
-          <span>Weight</span>
-        </div>
         <div
           v-for="entry in rows"
           :key="entry.day"
-          class="grid grid-cols-[minmax(0,1fr)_3.75rem_5.5rem_3.25rem_3.5rem] items-baseline gap-x-2 px-4 py-2 text-right text-xs tabular-nums"
+          class="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem] items-center gap-x-3 gap-y-1 px-4 py-3"
         >
-          <span class="truncate text-left font-medium text-default">{{ dayLabel(entry.day) }}</span>
-          <span :class="entry.meals ? 'font-medium text-highlighted' : 'text-dimmed'">{{ entry.meals ? formatKcal(entry.kcal) : '—' }}</span>
-          <span :class="entry.meals ? 'text-muted' : 'text-dimmed'">{{ entry.meals ? `${formatMacro(entry.protein)} · ${formatMacro(entry.carbs)} · ${formatMacro(entry.fat)}` : '—' }}</span>
-          <span :class="entry.water_ml ? 'text-muted' : 'text-dimmed'">{{ entry.water_ml ? formatWater(entry.water_ml) : '—' }}</span>
-          <span :class="entry.weight_kg !== null ? 'text-muted' : 'text-dimmed'">{{ entry.weight_kg !== null ? formatWeight(entry.weight_kg).replace(' kg', '') : '—' }}</span>
+          <span
+            class="truncate text-sm font-semibold"
+            :class="entry.meals ? 'text-highlighted' : 'text-muted'"
+          >{{ dayLabel(entry.day) }}</span>
+          <span
+            class="h-1.5 overflow-hidden rounded-full bg-elevated"
+            aria-hidden="true"
+          >
+            <span
+              class="block h-full rounded-full"
+              :class="entry.over ? 'bg-warning' : 'bg-kcal'"
+              :style="{ width: `${entry.share}%` }"
+            />
+          </span>
+          <span
+            class="text-right text-sm tabular-nums"
+            :class="entry.meals ? (entry.over ? 'font-semibold text-warning' : 'font-semibold text-highlighted') : 'text-dimmed'"
+          >{{ entry.meals ? formatKcal(entry.kcal) : '—' }}</span>
+          <span class="col-span-3 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-caption text-muted tabular-nums">
+            <ShellMacroLine
+              v-if="entry.meals"
+              :macros="entry"
+              :kcal="false"
+            />
+            <span v-else>nothing written down</span>
+            <span
+              v-if="entry.water_ml"
+              class="flex items-center gap-1"
+            >
+              <UIcon
+                name="i-lucide-glass-water"
+                class="size-3 text-info"
+              />{{ formatWater(entry.water_ml) }}
+            </span>
+            <span
+              v-if="entry.weight_kg !== null"
+              class="flex items-center gap-1"
+            >
+              <UIcon
+                name="i-lucide-scale"
+                class="size-3"
+              />{{ formatWeight(entry.weight_kg) }}
+            </span>
+          </span>
         </div>
-      </SheetCard>
+      </ShellCard>
     </div>
   </AppPage>
 </template>

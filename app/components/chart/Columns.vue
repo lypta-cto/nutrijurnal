@@ -16,6 +16,10 @@ const props = withDefaults(defineProps<{
   points: ChartPoint[]
   /** A CSS colour — a design token, e.g. var(--app-kcal) */
   color: string
+  /** Columns past the reference take this colour instead — kcal over the
+   *  target turns clay, the same rule as the rings. Left out for water,
+   *  where past the goal is no warning. */
+  overColor?: string | null
   format: (value: number) => string
   reference?: { value: number, label: string } | null
   /** What the chart shows, for screen readers */
@@ -23,8 +27,13 @@ const props = withDefaults(defineProps<{
   height?: number
 }>(), {
   reference: null,
+  overColor: null,
   height: 150
 })
+
+function fillOf(value: number): string {
+  return props.overColor && props.reference && value > props.reference.value ? props.overColor : props.color
+}
 
 const box = ref<HTMLElement | null>(null)
 const width = useChartWidth(box)
@@ -147,9 +156,9 @@ onMounted(() => requestAnimationFrame(() => {
           <path
             v-if="point.value"
             :d="column(index, point.value)"
-            :fill="color"
+            :fill="fillOf(point.value)"
             :opacity="active === null || active === index || points[active]?.value === null ? 1 : 0.45"
-            class="transition-opacity duration-150"
+            class="transition-opacity duration-200 ease-soft motion-reduce:transition-none"
           />
         </template>
       </g>
@@ -217,7 +226,7 @@ onMounted(() => requestAnimationFrame(() => {
 
     <div
       v-if="tooltip"
-      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-inverted px-2.5 py-1.5 text-center shadow-lg"
+      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-inverted px-3 py-2 text-center shadow-overlay"
       :style="{ left: `${tooltip.left}px` }"
       role="status"
     >
@@ -236,7 +245,7 @@ onMounted(() => requestAnimationFrame(() => {
 <style scoped>
 .chart-grow {
   transform: scaleY(0);
-  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 700ms var(--ease-soft);
 }
 
 .chart-grow.is-drawn {

@@ -219,7 +219,7 @@ const tooltip = computed(() => {
         :fill="color"
         stroke="var(--ui-bg)"
         stroke-width="2"
-        class="transition-[r] duration-150"
+        class="transition-[r] duration-200 ease-soft motion-reduce:transition-none"
       />
 
       <!-- The latest value, at the end of the line -->
@@ -234,7 +234,7 @@ const tooltip = computed(() => {
 
     <div
       v-if="tooltip"
-      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-inverted px-2.5 py-1.5 text-center shadow-lg"
+      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-inverted px-3 py-2 text-center shadow-overlay"
       :style="{ left: `${tooltip.left}px` }"
       role="status"
     >
@@ -253,7 +253,7 @@ const tooltip = computed(() => {
 .chart-draw {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: chart-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: chart-draw 700ms var(--ease-soft) forwards;
 }
 
 @keyframes chart-draw {

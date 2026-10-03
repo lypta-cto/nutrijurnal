@@ -29,7 +29,7 @@ onMounted(() => requestAnimationFrame(() => {
 <template>
   <div class="flex flex-col gap-3">
     <div
-      class="flex h-3 w-full gap-0.5 overflow-hidden rounded-full bg-elevated"
+      class="flex h-3.5 w-full gap-0.5 overflow-hidden rounded-full bg-elevated"
       role="img"
       :aria-label="rows.map(row => `${row.label} ${row.share}%`).join(', ')"
     >
@@ -47,17 +47,17 @@ onMounted(() => requestAnimationFrame(() => {
         :key="row.key"
         class="flex flex-col"
       >
-        <dt class="flex items-center gap-1.5 text-xs font-medium text-default">
+        <dt class="flex items-center gap-1.5 text-caption font-semibold text-muted">
           <span
             class="size-2 shrink-0 rounded-full"
             :style="{ backgroundColor: row.color }"
           />
           {{ row.label }}
         </dt>
-        <dd class="text-lg font-semibold text-highlighted">
-          {{ row.share }}%
+        <dd class="text-xl font-bold text-highlighted tabular-nums">
+          {{ row.share }}<span class="text-sm font-semibold text-muted">%</span>
         </dd>
-        <dd class="text-[11px] tabular-nums text-muted">
+        <dd class="text-caption text-muted tabular-nums">
           {{ Math.round(row.grams) }} g<template v-if="row.goalShare !== null">
             · target {{ row.goalShare }}%
           </template>
@@ -71,7 +71,7 @@ onMounted(() => requestAnimationFrame(() => {
 .split-part {
   flex-grow: 0;
   flex-shrink: 0;
-  transition: flex-basis 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: flex-basis 700ms var(--ease-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {

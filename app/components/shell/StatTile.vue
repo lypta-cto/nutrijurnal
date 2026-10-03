@@ -12,8 +12,9 @@ import { formatKcal } from '~/composables/useEating'
  *   </div>
  *
  * Numbers are rounded with thin-space thousands; pass a string to format it
- * yourself (one decimal on a small macro), null for "—". `macro` adds its
- * colour dot. `tone`: `card` stands on the canvas, `well` sits inside a card,
+ * yourself (one decimal on a small macro), null for "—", or fill #value (a
+ * CountUp) and keep `value` for deciding whether there is one. `macro` adds
+ * its colour dot. `tone`: `card` stands on the canvas, `well` sits inside a card,
  * `brand` / `warning` tint the one tile that matters most.
  */
 type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
@@ -42,6 +43,11 @@ const TONES = {
   brand: 'bg-primary-50 ring-1 ring-primary-100 dark:bg-primary-950/50 dark:ring-primary-900/70',
   warning: 'bg-warning/8 ring-1 ring-warning/20'
 } as const
+
+defineSlots<{
+  /** Replaces the printed number — a CountUp, say; `unit` still follows it */
+  value?: () => unknown
+}>()
 
 const DOTS: Record<MacroKey, string> = {
   kcal: 'bg-kcal',
@@ -86,7 +92,10 @@ const empty = computed(() => shown.value === '—')
           size === 'lg' ? 'text-[2rem] leading-none' : 'text-2xl leading-tight',
           empty ? 'text-dimmed' : tone === 'warning' ? 'text-warning' : 'text-highlighted'
         ]"
-      >{{ shown }}</span>
+      ><slot
+        v-if="!empty"
+        name="value"
+      >{{ shown }}</slot><template v-else>{{ shown }}</template></span>
       <span
         v-if="unit && !empty"
         class="shrink-0 text-xs font-semibold text-muted"
@@ -95,7 +104,7 @@ const empty = computed(() => shown.value === '—')
 
     <span
       v-if="hint"
-      class="truncate text-caption text-muted"
+      class="line-clamp-2 text-caption text-muted"
     >{{ hint }}</span>
   </div>
 </template>

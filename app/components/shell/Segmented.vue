@@ -49,9 +49,11 @@ function step(delta: number) {
     @keydown.left.prevent="step(-1)"
     @keydown.up.prevent="step(-1)"
   >
+    <!-- The thumb comes forward: white on the track in light mode, a step
+         lighter than it in dark, where surfaces lighten instead of casting shadows -->
     <span
       v-if="index >= 0"
-      class="absolute inset-y-1 left-1 rounded-full bg-default shadow-card ring-1 ring-default transition-transform duration-300 ease-soft motion-reduce:transition-none"
+      class="absolute inset-y-1 left-1 rounded-full bg-default shadow-card ring-1 ring-default transition-transform duration-300 ease-soft motion-reduce:transition-none dark:bg-accented"
       :style="{
         width: `calc((100% - 0.5rem) / ${options.length})`,
         transform: `translateX(${index * 100}%)`
