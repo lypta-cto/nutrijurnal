@@ -57,6 +57,9 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 - PWA: `pwa` in `nuxt.config.ts` (@vite-pwa/nuxt), `public/push-sw.js` for notifications.
 - `app/middleware/auth.global.ts` — session restore, public routes, Google callback,
   and the redirect to `/onboarding` until `user.onboarded_at` is set.
+- `useToday()` (moved on by `plugins/today.client.ts`) is "today" — never keep a
+  `localIsoDay()` read once: the installed app stays open overnight. Decimal fields are
+  `<DecimalInput>` (comma or point), never `type="number"`.
 
 ## Ownership (parallel agents)
 
