@@ -21,3 +21,20 @@ export function dayRefusal(day: string, today: string): string | null {
   }
   return null
 }
+
+/**
+ * Opens a date field's calendar where a click alone would not. A desktop
+ * browser opens it only from the field's own small icon, which the app hides
+ * under the day's name; a phone opens it on any tap and is left to do so.
+ */
+export function showDatePicker(event: Event) {
+  const field = event.currentTarget as HTMLInputElement | null
+  if (!field?.showPicker || !window.matchMedia?.('(pointer: fine)').matches) {
+    return
+  }
+  try {
+    field.showPicker()
+  } catch {
+    // Refused (inside a cross-origin frame, say) — the field still takes typing
+  }
+}

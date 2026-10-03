@@ -134,6 +134,7 @@ async function copy() {
           type="date"
           class="absolute inset-0 cursor-pointer opacity-0"
           aria-label="The day to copy from"
+          @click="showDatePicker"
           @change="event => source = (event.target as HTMLInputElement).value || source"
         >
       </label>

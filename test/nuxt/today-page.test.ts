@@ -72,6 +72,32 @@ describe('picking a day on Today', () => {
     expect(useDiaryDay().value).toBe('2026-09-21')
   })
 
+  it('opens the calendar on a click, which a desktop browser keeps for its hidden icon', async () => {
+    const showPicker = vi.fn()
+    Object.defineProperty(HTMLInputElement.prototype, 'showPicker', { value: showPicker, configurable: true })
+    const page = await open()
+    const picker = page.find('input[aria-label="Pick a day"]')
+    const real = window.matchMedia.bind(window)
+    let fine = true
+    const media = vi.spyOn(window, 'matchMedia').mockImplementation((query) => {
+      const list = real(query)
+      return query === '(pointer: fine)' ? Object.defineProperty(list, 'matches', { value: fine }) : list
+    })
+
+    try {
+      await picker.trigger('click')
+      expect(showPicker).toHaveBeenCalledTimes(1)
+
+      // A phone opens its own wheel on the tap
+      fine = false
+      await picker.trigger('click')
+      expect(showPicker).toHaveBeenCalledTimes(1)
+    } finally {
+      media.mockRestore()
+      Reflect.deleteProperty(HTMLInputElement.prototype, 'showPicker')
+    }
+  })
+
   it('stays put when the picker is cleared', async () => {
     const page = await open()
     const picker = page.find('input[aria-label="Pick a day"]')

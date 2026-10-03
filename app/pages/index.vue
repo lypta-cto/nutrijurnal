@@ -570,6 +570,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
           :max="today"
           class="absolute inset-0 cursor-pointer opacity-0"
           aria-label="Pick a day"
+          @click="showDatePicker"
           @change="event => pickDay((event.target as HTMLInputElement).value)"
         >
       </label>
