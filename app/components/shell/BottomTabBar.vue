@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-(--app-tabbar-offset) transition-[translate,opacity] duration-300 ease-soft"
+    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-(--app-tabbar-offset) transition-[translate,opacity] duration-300 ease-soft motion-reduce:transition-none"
     :class="typing ? 'translate-y-[calc(100%+1rem)] opacity-0' : ''"
     aria-label="Main"
   >
@@ -96,7 +96,7 @@ onBeforeUnmount(() => {
         >
           <button
             type="button"
-            class="absolute -top-5 flex size-14 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-fab ring-4 ring-canvas outline-none transition-transform duration-200 ease-spring focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary active:scale-90 dark:from-primary-400 dark:to-primary-600"
+            class="absolute -top-5 flex size-14 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-fab ring-4 ring-canvas outline-none transition-transform duration-200 ease-spring focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 dark:from-primary-400 dark:to-primary-600"
             aria-label="Add food"
             aria-haspopup="dialog"
             :aria-expanded="quickAdd.isOpen.value"
@@ -120,12 +120,12 @@ onBeforeUnmount(() => {
           <!-- The active tab's pill grows out from the icon -->
           <span class="relative flex h-8 w-14 items-center justify-center">
             <span
-              class="absolute inset-0 rounded-full bg-primary/12 transition-[scale,opacity] duration-300 ease-spring"
+              class="absolute inset-0 rounded-full bg-primary/12 transition-[scale,opacity] duration-300 ease-spring motion-reduce:transition-none"
               :class="isActive(tab) ? 'scale-100 opacity-100' : 'scale-x-50 opacity-0'"
             />
             <UIcon
               :name="tab.icon"
-              class="relative size-5.5 transition-colors duration-200"
+              class="relative size-5.5 transition-colors duration-200 ease-soft"
               :class="isActive(tab) ? 'text-primary' : ''"
             />
           </span>

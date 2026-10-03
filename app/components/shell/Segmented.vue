@@ -69,7 +69,7 @@ function step(delta: number) {
       role="radio"
       :aria-checked="position === index"
       :tabindex="position === index || (index < 0 && position === 0) ? 0 : -1"
-      class="relative flex min-w-0 items-center justify-center gap-1.5 rounded-full px-3 font-semibold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary"
+      class="relative flex min-w-0 items-center justify-center gap-1.5 rounded-full px-3 font-semibold outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
       :class="[
         size === 'sm' ? 'h-8 text-xs' : 'h-10 text-sm',
         position === index ? 'text-highlighted' : 'text-muted hover:text-default'

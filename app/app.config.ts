@@ -164,10 +164,13 @@ export default defineAppConfig({
       }
     },
 
+    // The time left on a toast (the Undo window) is a hint, not a headline:
+    // a neutral toast's bar is the inverted colour, glaring at full strength
     toast: {
       slots: {
         root: 'rounded-tile shadow-overlay',
-        title: 'font-semibold'
+        title: 'font-semibold',
+        progress: 'opacity-40'
       }
     },
 

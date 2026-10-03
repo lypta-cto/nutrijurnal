@@ -31,7 +31,7 @@ const withArt = computed(() => WITH_ART.includes(route.path))
         v-if="withArt"
         class="flex justify-center px-8 pt-1"
       >
-        <ShellHeroArt class="animate-rise w-full max-w-[21rem]" />
+        <ShellHeroArt class="w-full max-w-[21rem] motion-safe:animate-rise" />
       </div>
 
       <main
