@@ -404,7 +404,7 @@ async function doMove() {
   }
   try {
     await updateMeal(meal.id, { day: moveDay.value })
-    toast.add({ title: `Moved to ${dayLabel(moveDay.value)}`, icon: 'i-lucide-calendar-check', color: 'success' })
+    toast.add({ title: `Moved to ${dayLabel(moveDay.value, today.value)}`, icon: 'i-lucide-calendar-check', color: 'success' })
     moveOpen.value = false
     void refreshWeek()
   } catch (error) {
@@ -978,7 +978,7 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       <template #body>
         <UFormField
           label="Day"
-          :hint="dayLabel(moveDay)"
+          :hint="moveError ? undefined : dayLabel(moveDay, today)"
           :error="moveError ?? false"
         >
           <input

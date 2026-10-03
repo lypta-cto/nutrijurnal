@@ -138,6 +138,20 @@ describe('moving a meal to another day', () => {
     await flushPromises()
     expect(moved).toEqual([])
   })
+
+  it('names the day picked, and asks for one when the field is cleared', async () => {
+    const page = await open()
+    ;(page.vm as unknown as { askMove: (meal: Meal) => void }).askMove(LUNCH)
+    await flushPromises()
+
+    await pick('2026-09-20')
+    expect(document.body.textContent).toContain('Yesterday')
+
+    await pick('')
+    expect(document.body.textContent).not.toContain('Invalid Date')
+    expect(document.body.textContent).toContain('Pick a day')
+    expect(moveSheet().move.disabled).toBe(true)
+  })
 })
 
 describe('a day that did not load', () => {
