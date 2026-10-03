@@ -132,6 +132,9 @@ export interface EatingSettings extends Targets {
   onboarded_at: string | null
   /** The calculator's answers, once they were given */
   profile: GoalProfile | null
+  water_goal_ml: number
+  /** What one tap of the water "+" adds */
+  water_glass_ml: number
   /** The shared pantry plus your own foods */
   foods: number
   recipes: number
@@ -150,6 +153,8 @@ export interface SettingsPatch extends Partial<Targets> {
   onboarded?: boolean
   /** The answers the targets were worked out from, kept whole */
   profile?: GoalProfile
+  water_goal_ml?: number
+  water_glass_ml?: number
 }
 
 export type Sex = 'female' | 'male' | 'other'
@@ -224,6 +229,10 @@ export interface DayView {
   totals: Macros
   target: Macros | null
   meals: Meal[]
+  water_ml: number
+  water_goal_ml: number
+  /** Weighed that day, or null */
+  weight_kg: number | null
 }
 
 export interface ParsedItem extends Macros {

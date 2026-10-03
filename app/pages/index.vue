@@ -852,6 +852,10 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
       </div>
     </section>
 
+    <WaterCard :day="day" />
+
+    <WeightCard :day="day" />
+
     <!-- Onto another day -->
     <UModal
       v-model:open="moveOpen"

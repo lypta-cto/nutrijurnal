@@ -15,6 +15,7 @@ useHead({ title: 'Your daily targets' })
 const toast = useToast()
 const { user } = useAuth()
 const { settings, loadSettings, saveSettings } = useEating()
+const { putWeight } = useBody()
 
 /** The calculator, or the four numbers typed straight in */
 const mode = ref<'calculator' | 'manual'>('calculator')
@@ -35,6 +36,10 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
   saving.value = true
   try {
     const saved = await saveSettings({ ...patch.targets, profile: patch.profile, onboarded: true })
+    // The weight the calculator was given is the first point of the trend
+    if (patch.profile) {
+      await putWeight(localIsoDay(), patch.profile.weight_kg).catch(() => {})
+    }
     // The middleware reads this off the session; no need to fetch /auth/me again
     if (user.value) {
       user.value = { ...user.value, onboarded_at: saved.onboarded_at }

@@ -9,6 +9,7 @@ const { confirm } = useConfirm()
 
 const { user, logout, deleteAccount } = useAuth()
 const { settings, loadSettings, saveSettings } = useEating()
+const { putWeight } = useBody()
 
 function fail(error: unknown) {
   toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
@@ -61,6 +62,37 @@ async function storeTargets() {
   }
 }
 
+/* --- Water --------------------------------------------------------------- */
+
+const water = reactive({ goal: undefined as number | undefined, glass: undefined as number | undefined })
+const savingWater = ref(false)
+
+watch(settings, (value) => {
+  water.goal = value?.water_goal_ml
+  water.glass = value?.water_glass_ml
+}, { immediate: true })
+
+const waterChanged = computed(() =>
+  water.goal !== settings.value?.water_goal_ml || water.glass !== settings.value?.water_glass_ml)
+
+async function storeWater() {
+  const goal = Number(water.goal)
+  const glass = Number(water.glass)
+  if (!(goal >= 250 && goal <= 10000) || !(glass >= 50 && glass <= 2000)) {
+    toast.add({ title: 'A goal of 250–10 000 ml and a glass of 50–2 000 ml', icon: 'i-lucide-circle-help', color: 'warning' })
+    return
+  }
+  savingWater.value = true
+  try {
+    await saveSettings({ water_goal_ml: goal, water_glass_ml: glass })
+    toast.add({ title: 'Water goal saved', icon: 'i-lucide-droplet', color: 'success' })
+  } catch (error) {
+    fail(error)
+  } finally {
+    savingWater.value = false
+  }
+}
+
 /* --- The goal calculator ------------------------------------------------- */
 
 const calculatorOpen = ref(false)
@@ -69,7 +101,12 @@ const savingCalculated = ref(false)
 async function storeCalculated(result: { profile: GoalProfile, targets: Targets }) {
   savingCalculated.value = true
   try {
+    const before = settings.value?.profile?.weight_kg
     await saveSettings({ ...result.targets, profile: result.profile })
+    // A new weight typed into the calculator is a weighing too
+    if (result.profile.weight_kg !== before) {
+      await putWeight(localIsoDay(), result.profile.weight_kg).catch(() => {})
+    }
     targets.value = targetsOf(settings.value)
     calculatorOpen.value = false
     toast.add({ title: 'New targets saved', icon: 'i-lucide-target', color: 'success' })
@@ -208,6 +245,59 @@ async function confirmDelete() {
           @click="storeTargets"
         />
       </div>
+    </section>
+
+    <!-- Water -->
+    <section class="app-card flex flex-col gap-3 px-4 py-4">
+      <div>
+        <h2 class="flex items-center gap-2 font-semibold text-highlighted">
+          <UIcon
+            name="i-lucide-droplet"
+            class="size-4 text-muted"
+          />
+          Water
+        </h2>
+        <p class="mt-0.5 text-sm text-muted">
+          A daily goal, and the glass one tap of “+” adds.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <UFormField label="Daily goal">
+          <UInput
+            v-model.number="water.goal"
+            type="number"
+            inputmode="numeric"
+            step="50"
+            class="w-full"
+            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="text-xs text-dimmed">ml</span>
+            </template>
+          </UInput>
+        </UFormField>
+        <UFormField label="Glass">
+          <UInput
+            v-model.number="water.glass"
+            type="number"
+            inputmode="numeric"
+            step="10"
+            class="w-full"
+            :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="text-xs text-dimmed">ml</span>
+            </template>
+          </UInput>
+        </UFormField>
+      </div>
+      <UButton
+        label="Save water goal"
+        class="self-end"
+        :loading="savingWater"
+        :disabled="!waterChanged"
+        @click="storeWater"
+      />
     </section>
 
     <UDrawer
