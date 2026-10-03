@@ -134,16 +134,25 @@ Quick, soft, never bouncy on data.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `duration-120` | 120 ms | press feedback (`active:scale-[0.97]`) |
-| `duration-200` | 200 ms | colour and state changes, app bar material |
-| `duration-300` | 300 ms | enter animations, the tab indicator, sheets |
-| `duration-700` | 700 ms | rings and bars filling to a new value |
-| `ease-soft` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default: fast out, gentle landing |
-| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | small UI only: the tab pill, the "+" |
+| `duration-120` | 120 ms | press feedback (`active:scale-[0.97]`), a page or panel leaving |
+| `duration-200` | 200 ms | colour and state changes, app bar material, rows leaving a list |
+| `duration-300` | 300 ms | anything arriving: rows, panels, a day sliding in, the tab indicator, sheets |
+| `duration-700` | 700 ms | anything filling: rings, bars, chart columns and lines, counting numbers |
+| `ease-soft` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default for all of the above: fast out, gentle landing |
+| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | small UI only: the tab pill, the "+", a glass filling |
 | `animate-rise` | 320 ms rise-and-fade | content arriving (`.app-page-in` staggers children) |
 
-Everything that moves respects `prefers-reduced-motion` (main.css switches the
-animations and the ring/bar transitions off).
+The named transitions live in `assets/css/motion.css`: `list` (`<TransitionGroup>`),
+`page` (between tabs), `panel` (one panel swapped for another inside a sheet, with
+`mode="out-in"`), and `.day-from-next` / `.day-from-prev` for Today's day slide.
+Loops are the only thing off the scale — the scan line sweeps `ease-in-out`, spinners
+spin — because they are not arriving anywhere.
+
+Everything that moves respects `prefers-reduced-motion`: main.css and motion.css switch
+the animations and transitions off, utilities carry `motion-reduce:transition-none` or
+`motion-safe:animate-*`, script checks `useReducedMotion()`, and bottom sheets appear
+instead of sliding (1 ms, not none — the drawer waits for its animation to end).
+Spinners keep spinning: they say "still working", which nothing else does.
 
 ## Icons
 
@@ -180,7 +189,7 @@ without a visible word carries an `aria-label`. Diary meanings: `flame` kcal,
 ┌──────────────────────────────┐  ShellAppBar — sticky, transparent until the
 │ SATURDAY 3 OCTOBER        ⋯  │  page scrolls, then glass + hairline.
 │ Today                        │  eyebrow (date) · display title · actions
-│ [toolbar: week strip / tabs] │  #toolbar stays pinned with it
+│ [toolbar: segmented, search] │  #toolbar stays pinned with it
 ├──────────────────────────────┤
 │  cards …                     │  AppPage body: px-4, gap-3, .app-page-in
 │                              │
@@ -209,18 +218,92 @@ Each file documents its props at the top. Auto-imported with the `Shell` prefix.
 | --- | --- | --- |
 | `ShellAppBar` | the top app bar | `title`, `eyebrow?` (defaults to today's date; `false` hides it), `back?`; `#heading`, `#actions`, `#toolbar` |
 | `ShellBottomTabBar` | the tab bar with the "+" | — |
-| `ShellCard` | the card every screen is built of; flush rows or padded body, optional header | `title?`, `icon?`, `count?`, `hint?`, `flush?`, `tone?: 'default' \| 'brand' \| 'muted'`, `to?`, `loading?`, `isEmpty?`, `empty?`; `#actions`, `#header`, `#footer` |
+| `ShellCard` | the card every screen is built of; flush rows or padded body, optional header (alone, it is a one-line card) | `title?`, `icon?`, `iconClass?`, `count?`, `hint?`, `flush?`, `tone?: 'default' \| 'brand' \| 'muted'`, `to?`, `loading?`, `isEmpty?`, `empty?`; `#actions`, `#header`, `#empty`, `#footer` |
 | `ShellSection` | a titled group of cards | `title?`, `description?`; `#actions` |
-| `ShellListRow` | a tappable row: icon, title, subtitle, trailing value, chevron | `title`, `subtitle?`, `icon?`, `tone?`, `to?`, `chevron?`; `#leading`, `#subtitle`, `#trailing` |
+| `ShellListRow` | a tappable row: icon, title, subtitle, trailing value, chevron | `title`, `subtitle?`, `icon?`, `tone?` (`error` reddens the title too), `to?`, `plain?`, `chevron?`; `#leading`, `#subtitle`, `#trailing` |
 | `ShellMacroRing` | concentric progress rings (kcal outside, macros in) | `tracks: { key, value, goal }[]` (type `RingTrack`), `size?` (208), `thickness?` (10 for several rings, 16 for one), `label?`; default slot = the centre — `text-[2rem]` inside four rings, `text-hero` inside one |
 | `ShellMacroBar` | one macro (or kcal) against its target: label, `used/goal`, bar | `macro`, `value`, `goal`, `label?`, `unit?`, `compact?` |
 | `ShellMacroLine` | "P 24 · C 30 · F 8 · 320 kcal" in the macro inks | `macros`, `kcal?: boolean`, `size?` |
-| `ShellStatTile` | one number with its label and context | `label`, `value`, `unit?`, `hint?`, `macro?`, `icon?`, `tone?` |
+| `ShellStatTile` | one number with its label and context | `label`, `value`, `unit?`, `hint?`, `macro?`, `icon?`, `tone?`, `size?`; `#value` (a `CountUp`) |
 | `ShellSegmented` | segmented control with a sliding thumb | `v-model`, `options: { value, label, icon? }[]`, `size?` |
 | `ShellEmpty` | an empty state that invites the next step | `icon?`, `title`, `description?`, `compact?`; default slot = actions |
 | `ShellSkeleton` | shimmering placeholders shaped like the content | `variant: 'rows' \| 'card' \| 'ring' \| 'tiles' \| 'text'`, `count?` |
 | `ShellLogoMark` / `ShellLogo` | the mark (two-tone, follows the theme) / mark + wordmark | `ShellLogo`: `size?`, `to?` |
 | `ShellHeroArt` | the auth illustration (a bowl of good things) | — |
+
+### Helpers in main.css
+
+| Class | What it is |
+| --- | --- |
+| `.app-field` | a native date or time `<input>` dressed as a `UInput` (44 px, `rounded-control`, inset ring, primary focus). The phone's own picker is the best one there is; only the box is ours |
+| `.app-chip` | one choice among a few, or a shortcut — an amount, a period, a weekday. Chosen when `aria-pressed` / `aria-checked` is true, so the look can't disagree with a screen reader |
+| `.app-hit` | a small control keeps its looks but gets a 44 px hit area |
+| `.app-press` | press feedback for anything tappable that isn't a `UButton` |
+| `.app-eyebrow` | the small uppercase line over a title, and the label over a group in a sheet |
+
+On touch screens every field's text is at least 16 px (iOS zooms into anything
+smaller); the rule only ever raises a size, so a field set large on purpose — the amount,
+the quick kcal — keeps its own.
+
+## Patterns
+
+The same few shapes, everywhere:
+
+- **A list row** — the name first, and it may wrap to two lines (`line-clamp-2`): a
+  food's or a meal's name is worth reading, and Serbian names run long. Under it, one
+  quiet line — a `ShellMacroLine`, the brand, the minutes. On the right, the kcal in one
+  fixed column (`w-14` or `w-16`, `tabular-nums`, the unit in a caption under it) so the
+  numbers line up down the list. Then at most one control (a star, a "+", ⋮) or a
+  chevron. Rows are at least 56 px tall.
+- **An editable item** (an open meal, the plate in the meal form, a recipe's
+  ingredients) is two lines: the name across the full width with ✕ (and "optional") at
+  the end, then amount · unit · what it comes to, right-aligned. Never four inputs on
+  one line at phone width.
+- **A list inside a sheet** is a group: `rounded-tile border border-default` with
+  hairlines between rows. A border, not a ring — rings draw outside the box and the
+  sheet's scrolling body clips them.
+- **A sheet** opens with its title and one line of description. A panel inside it
+  (amount, quick kcal, copy, scan) starts with a back arrow and its own headline. The
+  footer is a quiet `Cancel` (ghost, lg) and the one thing the sheet is for, filling the
+  rest (lg, `flex-1`). Destructive actions are an icon on the left of the footer, never
+  the big button.
+- **A choice of two to four** in place is `ShellSegmented`; more, or labels that won't
+  fit a quarter of the width, are `.app-chip`s that wrap; a few with an explanation each
+  are tiles (`rounded-tile border`, the chosen one `border-primary/50 bg-primary/8` with
+  its icon filled in the brand).
+- **Empty** is a `ShellEmpty`: the full one when a whole card or screen has nothing,
+  `compact` inside a card or a sheet. An empty meal slot is just its card's header —
+  "Breakfast · Nothing yet" with Repeat and "+".
+- **Loading** keeps the layout: `ShellSkeleton` shaped like what's coming (rows in a
+  list card, the ring on Today, tiles on Progress). A refetch dims what is there rather
+  than flashing skeletons.
+- **Errors** say what happened and offer the way out: a toast for an action that failed
+  (with the API's own words), a `ShellEmpty` with "Try again" for a screen that didn't
+  load, the error page in the app's own look.
+- **Toasts** come in at the top, under the notch; anything undoable carries Undo and a
+  faint timer line.
+- **Dark mode**: a thumb or a chosen tab on an `bg-elevated` track is `bg-accented`, not
+  `bg-default` — in dark mode surfaces come forward by getting lighter.
+
+## Screens
+
+- **Today** — the app bar names the day ("Today", "Yesterday", a weekday) over the full
+  date, and tapping the name opens the date picker. Under it the week: seven small rings
+  against the kcal target, chevrons either side, the chosen day raised, today in the
+  brand, days to come disabled. Then the day's card (`tone="brand"`): four rings with
+  the kcal left (or over, in clay) counting in the middle, eaten and target either side,
+  a bar per macro under it. One card per slot, each meal a `SwipeRow`; water, weight,
+  the install offer.
+- **Library** — a segmented Recipes / Foods with the search field pinned under it in
+  the app bar (and a "Mine" chip for foods), so a long pantry keeps its search in
+  reach. One flush card per shelf.
+- **Progress** — Week / 30 / 90 days in the bar, the period as the eyebrow; four stat
+  tiles; one card per chart; the day-by-day twin with a bar per day against the target.
+- **Settings** — the profile first (avatar with a camera badge, name), then titled
+  `ShellSection`s of shell cards: daily targets, water, reminders, appearance, your
+  data, account. Actions that go somewhere are `ShellListRow`s; delete is the one red row.
+- **Sign-in, sign-up, onboarding** — the auth layout's sheet; display titles from the
+  theme; the calculator moves on step dots and ends on the day's kcal at hero size.
 
 ## The mark and the icons
 

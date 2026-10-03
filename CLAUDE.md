@@ -6,8 +6,8 @@ must be running for anything past the login screen.
 
 Grown out of the CTO Productivity App's eating module (`../cto-productivity-app`), on the
 `admin-dashboard-template-front` shell. `docs/` here is the product brain for BOTH repos —
-read `docs/architecture.md` before larger changes, and add a line to `docs/changelog.md`
-when work lands.
+read `docs/architecture.md` before larger changes and `docs/design.md` before touching
+anything a person sees, and add a line to `docs/changelog.md` when work lands.
 
 ## Stack
 
@@ -39,8 +39,9 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 - `app/layouts/auth.vue` — login, register, onboarding, Google callback.
 - `app/pages/` — `/` Today, `/library`, `/progress`, `/settings`, `/onboarding`, `/login`,
   `/register`, `/auth/callback`.
-- `app/components/AppPage.vue` — a screen: sticky header (`#heading`, `#actions`,
-  `#toolbar`) + body. Use it for every signed-in page.
+- `app/components/AppPage.vue` — a screen: `ShellAppBar` (`eyebrow`, `#heading`,
+  `#actions`, `#toolbar`) + body. Use it for every signed-in page, and build the body from
+  the `components/shell/` blocks (`ShellCard`, `ShellListRow`, `ShellEmpty`, …).
 - `app/composables/useEating.ts` — the diary's types, formatters and API calls; state in
   `useState` so pages, sheet and forms agree. `useQuickAdd.ts` — the "+" contract:
   `open(kind?: 'search' | 'scan' | 'voice' | 'quick' | 'recipe', { slot? })`, `close()`,
@@ -59,11 +60,11 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
 
 ## Ownership (parallel agents)
 
-- Design: `app/assets/css/main.css`, `app/app.config.ts`, `app/layouts/**`,
-  `app/components/shell/**`, `public/icons/**`, `public/favicon.svg`, `public/logo.svg`.
+- Design: `app/assets/css/main.css`, `app/assets/css/motion.css`, `app/app.config.ts`,
+  `app/layouts/**`, `app/components/shell/**`, `public/icons/**`, `public/favicon.svg`,
+  `public/logo.svg` — and the look of every page and component.
 - Features: `nuxt.config.ts`, `package.json` + lockfile, `app/plugins/**`, PWA manifest +
-  service worker (`public/push-sw.js`), `app/assets/css/motion.css`, backend feature
-  modules and migrations.
+  service worker (`public/push-sw.js`), backend feature modules and migrations.
 - Tester: backend `tests/**`, frontend test files and vitest config.
 - PWA icon paths (design makes them, the manifest references them):
   `public/icons/icon-192.png`, `icon-512.png`, `maskable-512.png`,

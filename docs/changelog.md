@@ -4,6 +4,15 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Every screen restyled for the phone.** Today (week rings, the day's four rings with
+  eaten and target, meal rows whose names wrap, two-line items), the quick-add sheet and
+  every form sheet (grouped lists, chips, one full-width action), Library, Progress (stat
+  tiles, clay columns past the target, a day-by-day twin that fits 375 px), Settings
+  (sections of list rows), sign-in, onboarding and the goal calculator, empty, loading
+  and error states, toasts — all on the shell blocks, light and dark. Motion on the
+  design's durations and `--ease-soft`, standing still under reduced motion.
+  `SheetCard`, `SettingsRow` and the template logo are gone; `docs/design.md` gained
+  Patterns and Screens.
 - **Account data.** Settings → Your data: the diary as PDF/CSV for a period and every bit
   of the account as one JSON file (`GET /auth/me/export`, recordings on a switch).
   Closing the account takes every feature table with it.

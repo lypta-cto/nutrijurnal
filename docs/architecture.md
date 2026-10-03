@@ -49,9 +49,10 @@ Today · Library · [+] · Progress · Settings
 ```
 
 Safe areas: `viewport-fit=cover` in `app.vue`, and `.app-safe-top` / `.app-safe-bottom`
-(main.css) pad anything pinned to an edge. `components/AppPage.vue` is a screen: a sticky
-header (title or a custom `#heading`, `#actions`, an optional pinned `#toolbar` row) and
-the body under it.
+(main.css) pad anything pinned to an edge. `components/AppPage.vue` is a screen:
+`ShellAppBar` (eyebrow and display title or a custom `#heading`, `#actions`, an optional
+pinned `#toolbar` row — transparent at rest, glass once the page scrolls) and the body
+under it. How every screen is laid out is in `docs/design.md` → Screens.
 
 ### Quick add — the "+" contract
 
@@ -83,16 +84,16 @@ named after its one food, or its slot).
 
 | Piece | Job |
 | --- | --- |
-| `pages/index.vue` | Today: day picker + week strip, `DemoBanner`, `EatingScoreboard`, one card per slot (subtotal, "+", "Repeat yesterday"), meal rows (`SwipeRow`: left deletes, right duplicates) opening onto editable items, `WaterCard`, `WeightCard`, `InstallPrompt`; targets / move / export sheets. A sideways swipe changes the day |
+| `pages/index.vue` | Today: the day's name in the app bar (tap to pick a date), a week strip of seven small rings, `DemoBanner`, `EatingScoreboard`, one card per slot (subtotal, "+", "Repeat" when empty), meal rows (`SwipeRow`: left deletes, right duplicates) opening onto editable two-line items, `WaterCard`, `WeightCard`, `InstallPrompt`; targets / move / export sheets. A sideways swipe changes the day |
 | `components/MealForm.vue` | The full form (in `FormSheet`): slot, time, optional name, tabs Search · Type · Recipe · Scan · Kcal feeding one editable list. Editing a meal opens here |
-| `components/EatingScoreboard.vue` | `ShellMacroRing` + `ShellMacroBar`: kcal left counting up (`CountUp`) in the rings |
+| `components/EatingScoreboard.vue` | the day's card: four `ShellMacroRing` tracks with the kcal left counting up (`CountUp`), eaten and target either side, three `ShellMacroBar`s; "Set your targets" without them |
 | `components/BarcodeScanner.vue` + `useBarcodeScanner.ts` | live camera scanning: native `BarcodeDetector`, else `zxing-wasm` (self-hosted `.wasm`); check digit, torch, vibrate, typed digits and photo upload as fallbacks; every refusal explained |
 | `components/VoiceMeal.vue` / `MealVoice.vue` | dictate (Srpski / English) → parsed draft with slot → confirm; records audio either way / play back a meal's recording |
 | `components/GoalWizard.vue` | the goal calculator (onboarding and Settings): body → activity → goal + pace → plan with protein g/kg and fat % sliders and exact overrides |
 | `components/WaterCard.vue` / `WeightCard.vue` | glasses that are buttons, +glass, other amounts / the day's weight, the week's change |
 | `pages/library.vue` + `RecipeModal.vue` + `FoodForm.vue` + `FoodRow.vue` | own recipes; foods with stars (own ones edited or removed with Undo, shared ones copied into your own version) |
-| `pages/progress.vue` + `components/chart/*` | 7 / 30 / 90 days: streak, average day, days logged, weight change; kcal columns with the target line, macro split, weight line, water columns; a table twin of every chart |
-| `pages/settings.vue` | profile, targets (+ calculator sheet), water goal, `ReminderSettings`, `InstallPrompt`, appearance, Your data (diary PDF/CSV via `ExportSheet`, everything as JSON), account (password, sign out, delete) |
+| `pages/progress.vue` + `components/chart/*` | 7 / 30 / 90 days: stat tiles (average day, streak, days logged, weight change); kcal columns with the target line (clay past it), macro split, weight line, water columns; a day-by-day twin of every chart, each day a bar against the target |
+| `pages/settings.vue` | profile (avatar, name), then titled sections of shell cards: targets (+ calculator sheet), water goal, `ReminderSettings`, `InstallPrompt`, appearance, Your data (diary PDF/CSV via `ExportSheet`, everything as JSON), account (password on demand, sign out, delete) |
 | `pages/login.vue` | sign in, and "Try the demo" |
 
 ### Goals
@@ -142,12 +143,15 @@ shows Share → Add to Home Screen on iOS. The dev worker is off (`pwa.devOption
 
 ### Motion and feel
 
-`assets/css/motion.css` (features-owned, after the design's `main.css`): list
-transitions (`<TransitionGroup name="list">`), the tab cross-fade
-(`app.pageTransition`), the day slide. Rings, bars and chart marks animate in; numbers
-count up; rows swipe; `useHaptics()` buzzes on adds, glasses, swipes. Every form is a
-bottom sheet (`FormSheet` or a `UDrawer` with `SHEET_UI`). Everything checks
-`prefers-reduced-motion` (CSS, and `useReducedMotion()` in script).
+`assets/css/motion.css` (after the design's `main.css`): list transitions
+(`<TransitionGroup name="list">`), the tab cross-fade (`app.pageTransition`), the day
+slide, and panels swapped inside a sheet (`<Transition name="panel" mode="out-in">`).
+Rings, bars and chart marks animate in; numbers count up; rows swipe; `useHaptics()`
+buzzes on adds, glasses, swipes. Every duration and curve is the design's (120 ms press,
+200 ms state change or exit, 300 ms arrival, 700 ms filling, `--ease-soft`). Every form
+is a bottom sheet (`FormSheet` or a `UDrawer` with `SHEET_UI`). Everything checks
+`prefers-reduced-motion` (CSS, and `useReducedMotion()` in script); sheets then appear
+instead of sliding.
 
 ### Demo
 
