@@ -82,7 +82,7 @@ async function removeAvatar() {
         :src="avatarUrl"
         :alt="displayName"
         :text="initials"
-        :ui="{ root: 'size-16 bg-primary/10', fallback: 'text-xl font-semibold text-primary' }"
+        :ui="{ root: 'size-16 bg-accented', fallback: 'font-rounded text-title3 text-toned' }"
       />
       <div
         v-if="uploading"
@@ -99,7 +99,7 @@ async function removeAvatar() {
         color="neutral"
         variant="solid"
         square
-        class="app-hit absolute -right-1 -bottom-1 rounded-full ring-2 ring-(--ui-bg)"
+        class="app-hit absolute -right-1 -bottom-1 rounded-full ring-2 ring-(--app-cell)"
         :disabled="uploading"
         aria-label="Upload a photo — JPG, PNG, WebP or GIF, up to 5 MB"
         @click="input?.click()"
@@ -120,7 +120,7 @@ async function removeAvatar() {
       />
       <p
         v-else
-        class="text-caption text-dimmed"
+        class="text-caption text-muted"
       >
         JPG, PNG, WebP or GIF, up to 5 MB.
       </p>

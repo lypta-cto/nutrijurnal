@@ -13,16 +13,20 @@
  *
  * The input goes in the default slot with `variant="none"` and
  * `FIELD_ROW_INPUT` (app/utils/field-row.ts) as its `ui`, so it takes the row's
- * type and leaves the frame to the row. `dot` is a macro's colour mark.
+ * type and leaves the frame to the row. `dot` is a macro's colour mark;
+ * `wide` gives the value the room a name needs rather than a number's.
  */
 withDefaults(defineProps<{
   label: string
   unit?: string
   /** A colour class for a small dot before the label — a macro's own */
   dot?: string
+  /** Text rather than a number: the value takes the rest of the row */
+  wide?: boolean
 }>(), {
   unit: undefined,
-  dot: undefined
+  dot: undefined,
+  wide: false
 })
 
 defineSlots<{
@@ -39,8 +43,14 @@ defineSlots<{
       :class="dot"
       aria-hidden="true"
     />
-    <span class="min-w-0 flex-1 truncate text-body text-default">{{ label }}</span>
-    <span class="flex w-28 shrink-0 items-center justify-end">
+    <span
+      class="truncate text-body text-default"
+      :class="wide ? 'shrink-0' : 'min-w-0 flex-1'"
+    >{{ label }}</span>
+    <span
+      class="flex items-center justify-end"
+      :class="wide ? 'min-w-0 flex-1' : 'w-28 shrink-0'"
+    >
       <slot />
     </span>
     <span

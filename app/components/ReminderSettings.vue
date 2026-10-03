@@ -213,16 +213,15 @@ const status = computed<{ title: string, description: string, icon: string, colo
         v-else-if="push.state.value === 'off'"
         class="flex items-center gap-3"
       >
-        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-elevated text-toned">
+        <span class="flex w-6 shrink-0 justify-center text-muted">
           <UIcon
             name="i-lucide-bell-off"
-            class="size-5"
+            class="size-5.5"
           />
         </span>
-        <span class="min-w-0 flex-1 text-sm text-default">Notifications are off on this device.</span>
+        <span class="min-w-0 flex-1 text-body text-default">Notifications are off on this device.</span>
         <UButton
           label="Turn on"
-          icon="i-lucide-bell-ring"
           size="sm"
           class="app-hit"
           :loading="push.busy.value"
@@ -233,13 +232,13 @@ const status = computed<{ title: string, description: string, icon: string, colo
         v-else
         class="flex flex-wrap items-center gap-x-3 gap-y-2"
       >
-        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <span class="flex w-6 shrink-0 justify-center text-primary">
           <UIcon
             name="i-lucide-bell-ring"
-            class="size-5"
+            class="size-5.5"
           />
         </span>
-        <span class="min-w-0 flex-1 text-sm font-semibold text-highlighted">On for this device</span>
+        <span class="min-w-0 flex-1 text-body text-highlighted">On for this device</span>
         <span class="flex gap-1">
           <UButton
             label="Test"
@@ -278,7 +277,7 @@ const status = computed<{ title: string, description: string, icon: string, colo
     >
       <UButton
         label="Add the usual set"
-        icon="i-lucide-sparkles"
+        icon="i-lucide-plus"
         @click="addSuggested"
       />
     </ShellEmpty>
@@ -287,7 +286,7 @@ const status = computed<{ title: string, description: string, icon: string, colo
       v-else
       tag="ul"
       name="list"
-      class="flex flex-col divide-y divide-default"
+      class="app-divide flex flex-col"
     >
       <li
         v-for="reminder in ordered"
@@ -296,22 +295,22 @@ const status = computed<{ title: string, description: string, icon: string, colo
       >
         <div class="flex items-center gap-3">
           <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ease-soft"
-            :class="reminder.enabled ? 'bg-primary/10 text-primary' : 'bg-elevated text-dimmed'"
+            class="flex w-6 shrink-0 justify-center transition-colors duration-200 ease-soft motion-reduce:transition-none"
+            :class="reminder.enabled ? 'text-primary' : 'text-dimmed'"
           >
             <UIcon
               :name="reminderIcon(reminder)"
-              class="size-5"
+              class="size-5.5"
             />
           </span>
           <span
-            class="min-w-0 flex-1 truncate text-body font-semibold"
+            class="min-w-0 flex-1 truncate text-body"
             :class="reminder.enabled ? 'text-highlighted' : 'text-muted'"
           >{{ reminderLabel(reminder) }}</span>
           <input
             :value="reminder.at.slice(0, 5)"
             type="time"
-            class="app-field h-10 w-[6.25rem] shrink-0 px-2.5 text-center"
+            class="app-field h-9 w-[5.75rem] shrink-0 px-2.5 text-center"
             :aria-label="`Time for the ${reminderLabel(reminder)} reminder`"
             @change="event => setTime(reminder, (event.target as HTMLInputElement).value)"
           >
@@ -331,7 +330,7 @@ const status = computed<{ title: string, description: string, icon: string, colo
               v-for="(letter, day) in DAYS"
               :key="day"
               type="button"
-              class="app-chip size-8 px-0 text-xs"
+              class="app-chip size-8 px-0 text-footnote"
               :aria-label="DAY_NAMES[day]"
               :aria-pressed="reminder.weekdays.includes(day)"
               @click="toggleDay(reminder, day)"
