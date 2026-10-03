@@ -10,11 +10,11 @@ Newest first. One line per piece of work that landed, in either repo.
   circle, sliders a thin track with the switch's white thumb, toasts banners with an
   accent Undo and a 2 px timer. The food, recipe and meal forms and the calculator's
   body numbers are grouped field rows (ShellFieldRow gains `hint`), day and time pill
-  rows like Calendar's, the notes groups headed "Note". A short sheet's header and footer no longer show a grey glass
-  band at rest. Starred foods are filled stars; a meal's "more" is the horizontal
-  ellipsis; ring and bar tracks are 25 % in dark mode; the install card shows the real
-  app icon; Reminders lose the box-in-a-box and the full empty state; the camera badge
-  is the accent. Things that were cut off now fit: Progress's dates ("Wed 30 S…"), the
+  rows like Calendar's, the notes groups headed "Note". A short sheet's header and
+  footer no longer show a grey glass band at rest. Starred foods are filled stars; a
+  meal's "more" is the horizontal ellipsis; ring and bar tracks are 25 % in dark mode;
+  the install card shows the real app icon; Reminders lose the box-in-a-box and the
+  full empty state; the camera badge is the accent. Things that were cut off now fit: Progress's dates ("Wed 30 S…"), the
   macro legend, the add-an-item and barcode hints, Import's explanation; a week's charts
   label every day. Only the look changed — same handlers, models and limits; checked in
   the signed-in demo at 375 px light and dark, then 768 px and 1280 px.
