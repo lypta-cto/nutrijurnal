@@ -93,7 +93,7 @@ function numberOf(value: unknown): number | null {
   return value === '' || value === null || value === undefined || !Number.isFinite(number) ? null : number
 }
 
-/** Said under the field, as soon as it is wrong — never after Continue */
+/** What is wrong with a number, as soon as it is wrong — never after Continue */
 const bodyProblems = computed(() => {
   const problems: Partial<Record<'birth_year' | 'height_cm' | 'weight_kg', string>> = {}
   const year = numberOf(form.birth_year)
@@ -110,6 +110,13 @@ const bodyProblems = computed(() => {
   }
   return problems
 })
+
+/** Said under the group, each line naming the row it is about */
+const BODY_LABELS = { birth_year: 'Year of birth', height_cm: 'Height', weight_kg: 'Weight' } as const
+const bodyProblemLines = computed(() =>
+  (Object.keys(BODY_LABELS) as (keyof typeof BODY_LABELS)[])
+    .filter(key => bodyProblems.value[key])
+    .map(key => `${BODY_LABELS[key]}: ${bodyProblems.value[key]}`))
 
 const canContinue = computed(() => {
   if (step.value === 'body') {
@@ -321,53 +328,56 @@ const CHOICE = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left ou
           </div>
         </UFormField>
 
-        <UFormField
-          label="Year of birth"
-          :error="bodyProblems.birth_year"
-        >
-          <UInput
-            v-model.number="form.birth_year"
-            type="number"
-            inputmode="numeric"
-            :min="1900"
-            :max="YOUNGEST"
-            placeholder="1990"
-            class="w-full"
-            :ui="{ base: 'tabular-nums' }"
-          />
-        </UFormField>
-
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField
-            label="Height"
-            :error="bodyProblems.height_cm"
-          >
-            <DecimalInput
-              v-model="form.height_cm"
-              placeholder="170"
-              class="w-full"
-              :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+        <!-- The three numbers as one group, the way Health keeps them: the
+             label left, the value right-aligned against its unit -->
+        <div>
+          <div class="app-card app-divide flex flex-col overflow-hidden">
+            <ShellFieldRow label="Year of birth">
+              <UInput
+                v-model.number="form.birth_year"
+                type="number"
+                inputmode="numeric"
+                :min="1900"
+                :max="YOUNGEST"
+                placeholder="1990"
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+                :aria-invalid="Boolean(bodyProblems.birth_year)"
+              />
+            </ShellFieldRow>
+            <ShellFieldRow
+              label="Height"
+              unit="cm"
             >
-              <template #trailing>
-                <span class="text-subheadline text-muted">cm</span>
-              </template>
-            </DecimalInput>
-          </UFormField>
-          <UFormField
-            label="Weight"
-            :error="bodyProblems.weight_kg"
-          >
-            <DecimalInput
-              v-model="form.weight_kg"
-              placeholder="70"
-              class="w-full"
-              :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
+              <DecimalInput
+                v-model="form.height_cm"
+                placeholder="170"
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+                :aria-invalid="Boolean(bodyProblems.height_cm)"
+              />
+            </ShellFieldRow>
+            <ShellFieldRow
+              label="Weight"
+              unit="kg"
             >
-              <template #trailing>
-                <span class="text-subheadline text-muted">kg</span>
-              </template>
-            </DecimalInput>
-          </UFormField>
+              <DecimalInput
+                v-model="form.weight_kg"
+                placeholder="70"
+                variant="none"
+                :ui="FIELD_ROW_INPUT"
+                :aria-invalid="Boolean(bodyProblems.weight_kg)"
+              />
+            </ShellFieldRow>
+          </div>
+          <p
+            v-for="line in bodyProblemLines"
+            :key="line"
+            class="px-4 pt-1.5 text-footnote text-error"
+            role="alert"
+          >
+            {{ line }}
+          </p>
         </div>
       </div>
 

@@ -761,53 +761,57 @@ const GROUP = 'app-card app-divide flex flex-col overflow-hidden'
     :disabled="!canSave"
     @submit="save"
   >
-    <!-- When, and what it is called -->
-    <div class="grid grid-cols-2 gap-3">
-      <UFormField
-        label="Day"
-        :error="dayError ?? false"
-      >
-        <input
-          v-model="form.day"
-          type="date"
-          :max="today"
-          class="app-field"
-          aria-label="Day"
+    <!-- When, which meal and what it is called, as one group — Calendar's
+         new event: the label on the left, a grey pill to tap on the right -->
+    <div>
+      <div :class="GROUP">
+        <label class="flex min-h-11 items-center gap-3 py-1.5 pr-3 pl-4">
+          <span class="min-w-0 flex-1 text-body text-default">Day</span>
+          <input
+            v-model="form.day"
+            type="date"
+            :max="today"
+            class="app-field h-9 w-auto shrink-0 px-3"
+            aria-label="Day"
+            :aria-invalid="Boolean(dayError)"
+          >
+        </label>
+        <label class="flex min-h-11 items-center gap-3 py-1.5 pr-3 pl-4">
+          <span class="min-w-0 flex-1 text-body text-default">Time <span class="text-footnote text-muted">optional</span></span>
+          <input
+            v-model="form.at"
+            type="time"
+            class="app-field h-9 w-auto shrink-0 px-3"
+            aria-label="Time"
+          >
+        </label>
+        <div class="px-4 py-2.5">
+          <ShellSegmented
+            v-model="form.slot"
+            label="Meal"
+            size="sm"
+            :options="SLOTS.map(entry => ({ value: entry.value, label: entry.label }))"
+          />
+        </div>
+        <ShellFieldRow
+          label="Name"
+          wide
         >
-      </UFormField>
-      <UFormField
-        label="Time"
-        hint="optional"
+          <UInput
+            v-model="form.title"
+            :placeholder="items.length === 1 ? items[0]?.label : slotLabel(form.slot)"
+            variant="none"
+            :ui="FIELD_ROW_INPUT"
+          />
+        </ShellFieldRow>
+      </div>
+      <p
+        v-if="dayError"
+        class="px-4 pt-1.5 text-footnote text-error"
+        role="alert"
       >
-        <input
-          v-model="form.at"
-          type="time"
-          class="app-field"
-          aria-label="Time"
-        >
-      </UFormField>
-      <UFormField
-        label="Meal"
-        class="col-span-2"
-      >
-        <ShellSegmented
-          v-model="form.slot"
-          label="Meal"
-          size="sm"
-          :options="SLOTS.map(entry => ({ value: entry.value, label: entry.label }))"
-        />
-      </UFormField>
-      <UFormField
-        label="Name"
-        hint="optional"
-        class="col-span-2"
-      >
-        <UInput
-          v-model="form.title"
-          :placeholder="items.length === 1 ? items[0]?.label : slotLabel(form.slot)"
-          class="w-full"
-        />
-      </UFormField>
+        {{ dayError }}
+      </p>
     </div>
 
     <!-- Five ways in, as one segmented control — Health's D · W · M · 6M · Y -->
