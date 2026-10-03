@@ -69,9 +69,9 @@ function step(delta: number) {
       role="radio"
       :aria-checked="position === index"
       :tabindex="position === index || (index < 0 && position === 0) ? 0 : -1"
-      class="app-hit relative flex min-w-0 items-center justify-center gap-1.5 rounded-[0.4375rem] px-3 text-highlighted outline-none transition-[font-weight,opacity] duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary active:opacity-60"
+      class="app-hit relative flex min-w-0 items-center justify-center gap-1.5 rounded-[0.4375rem] text-highlighted outline-none transition-[font-weight,opacity] duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary active:opacity-60"
       :class="[
-        size === 'sm' ? 'h-7 text-[0.8125rem]' : 'h-8 text-subheadline',
+        size === 'sm' ? 'h-7 px-1.5 text-[0.8125rem]' : 'h-8 px-3 text-subheadline',
         position === index ? 'font-semibold' : 'font-medium'
       ]"
       @click="model = option.value"

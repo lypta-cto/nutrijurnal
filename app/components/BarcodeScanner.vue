@@ -142,7 +142,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
 
       <div
         v-if="state === 'starting' || looking"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 text-sm font-semibold text-white backdrop-blur-[2px]"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 text-subheadline font-semibold text-white backdrop-blur-[2px]"
         role="status"
       >
         <UIcon
@@ -175,7 +175,7 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
 
     <p
       v-if="state === 'scanning'"
-      class="text-center text-sm text-muted"
+      class="text-center text-footnote text-muted"
       role="status"
     >
       Hold the barcode inside the frame — it is read by itself.
@@ -262,7 +262,6 @@ const live = computed(() => state.value === 'scanning' || state.value === 'start
 /* The line sweeping the guide — a still line under reduced motion */
 .scan-line {
   animation: scan-sweep 1.6s ease-in-out infinite alternate;
-  box-shadow: 0 0 12px var(--ui-primary);
 }
 
 @keyframes scan-sweep {

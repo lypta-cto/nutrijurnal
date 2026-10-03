@@ -235,17 +235,17 @@ const dictationNote = computed(() => {
       <div class="flex flex-col items-center gap-4 py-3 text-center">
         <button
           type="button"
-          class="flex size-24 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-fab ring-8 ring-primary/10 outline-none transition-transform duration-120 ease-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary enabled:active:scale-95 disabled:opacity-50 motion-reduce:transition-none dark:from-primary-400 dark:to-primary-600"
+          class="flex size-20 items-center justify-center rounded-full bg-primary text-inverted outline-none transition-transform duration-120 ease-soft focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary enabled:active:scale-95 disabled:opacity-50 motion-reduce:transition-none"
           :disabled="!supported"
           aria-label="Start recording"
           @click="begin"
         >
           <UIcon
             name="i-lucide-mic"
-            class="size-10"
+            class="size-9"
           />
         </button>
-        <p class="max-w-xs text-sm text-muted">
+        <p class="max-w-xs text-subheadline text-muted">
           <template v-if="!supported">
             This browser can't record audio. Type what you ate instead.
           </template>
@@ -280,15 +280,13 @@ const dictationNote = computed(() => {
       class="flex flex-col items-center gap-5 py-3 text-center"
       role="status"
     >
-      <div class="relative flex size-24 items-center justify-center">
+      <!-- Voice Memos' way: a red dot and the time running -->
+      <div class="flex items-center gap-2.5">
         <span
-          class="absolute inset-0 rounded-full bg-error/15 motion-safe:animate-ping"
+          class="size-3 rounded-full bg-error motion-safe:animate-pulse"
           aria-hidden="true"
         />
-        <span class="relative flex size-24 flex-col items-center justify-center rounded-full bg-error/10 ring-1 ring-error/25">
-          <span class="size-2.5 rounded-full bg-error motion-safe:animate-pulse" />
-          <span class="mt-1 text-xl font-bold text-error tabular-nums">{{ clockOf(seconds) }}</span>
-        </span>
+        <span class="font-rounded text-title text-highlighted tabular-nums">{{ clockOf(seconds) }}</span>
       </div>
       <p
         class="min-h-10 max-w-xs text-body"
@@ -328,7 +326,7 @@ const dictationNote = computed(() => {
 
       <div
         v-if="take"
-        class="flex items-center gap-2 self-start rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary tabular-nums"
+        class="flex items-center gap-1.5 self-start text-footnote text-muted tabular-nums"
       >
         <UIcon
           name="i-lucide-audio-lines"
@@ -353,9 +351,9 @@ const dictationNote = computed(() => {
       </UFormField>
       <UButton
         label="Read it again"
-        icon="i-lucide-wand-sparkles"
+        icon="i-lucide-refresh-cw"
         size="sm"
-        variant="soft"
+        variant="ghost"
         class="self-end"
         :loading="reading"
         :disabled="!words.trim()"
@@ -371,7 +369,7 @@ const dictationNote = computed(() => {
 
       <div
         v-if="items.length"
-        class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+        class="app-card app-divide flex flex-col overflow-hidden"
       >
         <div
           v-for="item in items"
@@ -385,12 +383,12 @@ const dictationNote = computed(() => {
             :aria-label="`Amount of ${item.label}`"
           />
           <span class="flex min-w-0 flex-col">
-            <span class="truncate text-body font-semibold text-highlighted">{{ item.label }}</span>
-            <span class="text-caption text-muted tabular-nums">{{ amountLabel(Number(item.quantity) || 0, item.unit) }}</span>
+            <span class="truncate text-body text-highlighted">{{ item.label }}</span>
+            <span class="text-footnote text-muted tabular-nums">{{ amountLabel(Number(item.quantity) || 0, item.unit) }}</span>
           </span>
           <span class="flex flex-col items-end leading-tight tabular-nums">
-            <span class="text-sm font-semibold text-highlighted">{{ formatKcal(macrosOfItem(item).kcal) }}</span>
-            <span class="text-caption text-muted">kcal</span>
+            <span class="text-subheadline font-medium text-highlighted">{{ formatKcal(macrosOfItem(item).kcal) }}</span>
+            <span class="text-caption2 text-muted">kcal</span>
           </span>
           <UButton
             icon="i-lucide-x"
@@ -403,36 +401,41 @@ const dictationNote = computed(() => {
             @click="drop(item)"
           />
         </div>
-        <div class="flex items-baseline justify-between bg-elevated/50 px-3 py-2.5">
-          <span class="text-sm font-semibold text-default">Total</span>
-          <span class="text-sm font-bold text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }} kcal</span>
+        <div class="flex items-baseline justify-between px-3 py-2.5">
+          <span class="text-subheadline font-semibold text-default">Total</span>
+          <span class="text-subheadline font-semibold text-highlighted tabular-nums">{{ formatKcal(totals.kcal) }} kcal</span>
         </div>
       </div>
 
       <div
         v-if="unknown.length"
-        class="flex flex-col gap-1 rounded-tile bg-warning/10 px-3.5 py-3"
+        class="flex flex-col"
       >
-        <span class="app-eyebrow text-warning">Not recognised</span>
-        <div
-          v-for="chunk in unknown"
-          :key="chunk"
-          class="flex items-center gap-2"
-        >
-          <span class="min-w-0 flex-1 truncate text-sm text-default">{{ chunk }}</span>
-          <UButton
-            label="Keep as written"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            @click="keepAsWritten(chunk)"
-          />
+        <span class="app-group-title px-4 pb-1.5">Not recognised</span>
+        <div class="app-card app-divide flex flex-col overflow-hidden">
+          <div
+            v-for="chunk in unknown"
+            :key="chunk"
+            class="flex min-h-11 items-center gap-2 py-1 pr-2 pl-4"
+          >
+            <UIcon
+              name="i-lucide-circle-help"
+              class="size-4.5 shrink-0 text-warning"
+            />
+            <span class="min-w-0 flex-1 truncate text-body text-default">{{ chunk }}</span>
+            <UButton
+              label="Keep as written"
+              size="sm"
+              variant="ghost"
+              @click="keepAsWritten(chunk)"
+            />
+          </div>
         </div>
       </div>
 
       <p
         v-if="!items.length && !unknown.length && !reading && words.trim()"
-        class="text-sm text-muted"
+        class="text-footnote text-muted"
       >
         Tap “Read it again” to find the foods — or save the words as they are and count them later.
       </p>

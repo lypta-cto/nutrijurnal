@@ -93,19 +93,19 @@ function submit() {
   >
     <div class="flex items-center gap-1">
       <UButton
-        icon="i-lucide-arrow-left"
-        color="neutral"
+        icon="i-lucide-chevron-left"
         variant="ghost"
         square
-        class="-ml-2.5"
+        class="-ml-3"
+        :ui="{ leadingIcon: 'size-6' }"
         aria-label="Back to the list"
         @click="emit('back')"
       />
       <div class="min-w-0 flex-1">
-        <p class="truncate text-headline font-semibold text-highlighted">
+        <p class="truncate text-headline text-highlighted">
           {{ food.name }}
         </p>
-        <p class="truncate text-xs text-muted tabular-nums">
+        <p class="truncate text-footnote text-muted tabular-nums">
           <template v-if="food.brand">
             {{ food.brand }} ·
           </template>{{ formatKcal(food.kcal) }} kcal per 100 {{ food.base_unit }}
@@ -137,7 +137,7 @@ function submit() {
           v-model="quantity"
           size="lg"
           class="w-full"
-          :ui="{ base: 'tabular-nums text-lg font-semibold' }"
+          :ui="{ base: 'tabular-nums text-lg font-medium' }"
         />
       </UFormField>
       <UFormField label="Unit">
@@ -153,12 +153,12 @@ function submit() {
 
     <!-- What that comes to, live, before anything is written down -->
     <div
-      class="flex items-center gap-4 rounded-tile bg-elevated/70 px-4 py-3.5"
+      class="app-card flex items-center gap-4 px-4 py-3.5"
       aria-live="polite"
     >
       <div class="flex shrink-0 flex-col">
-        <span class="text-[1.75rem] leading-none font-bold tracking-tight text-highlighted tabular-nums">{{ macros ? formatKcal(macros.kcal) : '—' }}</span>
-        <span class="mt-1 text-caption text-muted tabular-nums">kcal<template v-if="grams !== null && unit !== 'g' && unit !== 'ml'"> · {{ formatMacro(grams) }} g</template></span>
+        <span class="font-rounded text-title leading-none text-highlighted tabular-nums">{{ macros ? formatKcal(macros.kcal) : '—' }}</span>
+        <span class="mt-1 text-footnote text-muted tabular-nums">kcal<template v-if="grams !== null && unit !== 'g' && unit !== 'ml'"> · {{ formatMacro(grams) }} g</template></span>
       </div>
       <div class="ml-auto grid grid-cols-3 gap-3">
         <span
@@ -166,14 +166,14 @@ function submit() {
           :key="bar.key"
           class="flex flex-col"
         >
-          <span class="flex items-center gap-1 text-caption font-semibold text-muted">
+          <span class="flex items-center gap-1 text-caption text-muted">
             <span
               class="size-1.5 rounded-full"
               :class="bar.dot"
             />
             {{ bar.label }}
           </span>
-          <span class="text-sm font-semibold text-highlighted tabular-nums">{{ macros ? formatMacro(macros[bar.key]) : '—' }} g</span>
+          <span class="text-subheadline font-medium text-highlighted tabular-nums">{{ macros ? formatMacro(macros[bar.key]) : '—' }} g</span>
         </span>
       </div>
     </div>

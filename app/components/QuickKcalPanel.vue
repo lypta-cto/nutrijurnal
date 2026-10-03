@@ -56,19 +56,19 @@ function submit() {
   >
     <div class="flex items-center gap-1">
       <UButton
-        icon="i-lucide-arrow-left"
-        color="neutral"
+        icon="i-lucide-chevron-left"
         variant="ghost"
         square
-        class="-ml-2.5"
+        class="-ml-3"
+        :ui="{ leadingIcon: 'size-6' }"
         aria-label="Back to the list"
         @click="emit('back')"
       />
       <div class="min-w-0 flex-1">
-        <p class="text-headline font-semibold text-highlighted">
+        <p class="text-headline text-highlighted">
           Quick kcal
         </p>
-        <p class="text-xs text-muted">
+        <p class="text-footnote text-muted">
           For a plate nobody can weigh — counted as one serving.
         </p>
       </div>
@@ -87,10 +87,10 @@ function submit() {
         autofocus
         :placeholder="fromMacros ? String(fromMacros) : '350'"
         class="w-full"
-        :ui="{ base: 'tabular-nums text-2xl font-bold', trailing: 'pointer-events-none' }"
+        :ui="{ base: 'font-rounded tabular-nums text-2xl font-semibold', trailing: 'pointer-events-none' }"
       >
         <template #trailing>
-          <span class="text-sm font-semibold text-dimmed">kcal</span>
+          <span class="text-subheadline text-muted">kcal</span>
         </template>
       </UInput>
     </UFormField>
@@ -119,7 +119,7 @@ function submit() {
           :ui="{ base: 'tabular-nums', trailing: 'pointer-events-none' }"
         >
           <template #trailing>
-            <span class="text-xs text-dimmed">g</span>
+            <span class="text-footnote text-muted">g</span>
           </template>
         </DecimalInput>
       </UFormField>

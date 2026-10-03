@@ -454,7 +454,7 @@ const description = computed(() => {
     v-model:open="sheetOpen"
     :title="panel === 'voice' ? 'Say what you ate' : `Add to ${slotLabel(slot)}`"
     :description="description"
-    :ui="{ ...SHEET_UI, body: 'overflow-y-auto app-safe-bottom' }"
+    :ui="{ ...SHEET_UI, body: 'pb-[max(1.25rem,env(safe-area-inset-bottom))]' }"
   >
     <template #body>
       <Transition
@@ -495,15 +495,15 @@ const description = computed(() => {
         >
           <div class="flex items-center gap-1">
             <UButton
-              icon="i-lucide-arrow-left"
-              color="neutral"
+              icon="i-lucide-chevron-left"
               variant="ghost"
               square
-              class="-ml-2.5"
+              class="-ml-3"
+              :ui="{ leadingIcon: 'size-6' }"
               aria-label="Back to the list"
               @click="panel = 'list'"
             />
-            <p class="text-headline font-semibold text-highlighted">
+            <p class="text-headline text-highlighted">
               Scan a barcode
             </p>
           </div>
@@ -512,13 +512,14 @@ const description = computed(() => {
             v-if="scanMiss"
             class="flex flex-col gap-3"
           >
-            <UAlert
-              color="warning"
-              variant="subtle"
-              icon="i-lucide-circle-help"
-              :title="scanMiss.barcode ? `No food for ${scanMiss.barcode} yet` : 'No barcode found'"
-              :description="scanMiss.message ?? undefined"
-            />
+            <div class="app-card">
+              <ShellEmpty
+                compact
+                icon="i-lucide-circle-help"
+                :title="scanMiss.barcode ? `No food for ${scanMiss.barcode} yet` : 'No barcode found'"
+                :description="scanMiss.message ?? undefined"
+              />
+            </div>
             <UButton
               v-if="scanMiss.barcode"
               label="Add it from the label"
@@ -602,7 +603,7 @@ const description = computed(() => {
           <template v-if="query.trim()">
             <div
               v-if="results.length"
-              class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+              class="app-card app-divide flex flex-col overflow-hidden"
             >
               <FoodRow
                 v-for="food in results"
@@ -616,7 +617,7 @@ const description = computed(() => {
               v-else-if="searching"
               variant="rows"
               :count="3"
-              class="overflow-hidden rounded-tile border border-default"
+              class="app-card overflow-hidden"
             />
             <ShellEmpty
               v-else-if="searchFailed"
@@ -656,21 +657,20 @@ const description = computed(() => {
           </template>
 
           <template v-else>
-            <!-- Every other way in -->
-            <div class="grid grid-cols-6 gap-1">
+            <!-- Every other way in — a row of equal buttons, the way a contact
+                 card offers message, call and mail -->
+            <div class="grid grid-cols-6 gap-1.5">
               <button
                 v-for="way in WAYS"
                 :key="way.label"
                 type="button"
-                class="app-press flex min-w-0 flex-col items-center gap-1.5 rounded-tile py-1.5 text-caption font-semibold text-toned outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-elevated/70"
+                class="app-card flex h-14 min-w-0 flex-col items-center justify-center gap-1 text-caption2 font-medium text-primary outline-none transition-colors duration-120 ease-soft focus-visible:ring-2 focus-visible:ring-primary active:bg-accented motion-reduce:transition-none"
                 @click="chooseWay(way)"
               >
-                <span class="flex size-11 items-center justify-center rounded-tile bg-primary/10 text-primary">
-                  <UIcon
-                    :name="way.icon"
-                    class="size-5"
-                  />
-                </span>
+                <UIcon
+                  :name="way.icon"
+                  class="size-5.5"
+                />
                 {{ way.label }}
               </button>
             </div>
@@ -679,24 +679,22 @@ const description = computed(() => {
             <button
               v-if="repeatable.length"
               type="button"
-              class="app-press flex items-center gap-3 rounded-tile bg-primary/8 px-3.5 py-3 text-left border border-primary/15 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset disabled:opacity-60"
+              class="app-card flex min-h-14 items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-120 ease-soft focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset active:bg-accented disabled:opacity-60 motion-reduce:transition-none"
               :disabled="repeating"
               @click="repeatYesterday"
             >
-              <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
-                <UIcon
-                  :name="repeating ? 'i-lucide-loader-circle' : 'i-lucide-repeat'"
-                  class="size-5"
-                  :class="repeating && 'animate-spin'"
-                />
+              <UIcon
+                :name="repeating ? 'i-lucide-loader-circle' : 'i-lucide-repeat'"
+                class="size-5.5 shrink-0 text-primary"
+                :class="repeating && 'animate-spin'"
+              />
+              <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span class="text-body text-primary">Repeat yesterday's {{ slotLabel(slot).toLowerCase() }}</span>
+                <span class="truncate text-footnote text-muted">{{ repeatable.map(meal => meal.title).join(', ') }}</span>
               </span>
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="text-body font-semibold text-highlighted">Repeat yesterday's {{ slotLabel(slot).toLowerCase() }}</span>
-                <span class="truncate text-xs text-muted">{{ repeatable.map(meal => meal.title).join(', ') }}</span>
-              </span>
-              <span class="flex shrink-0 flex-col items-end leading-tight tabular-nums">
-                <span class="text-body font-semibold text-highlighted">{{ formatKcal(repeatKcal) }}</span>
-                <span class="text-caption text-muted">kcal</span>
+              <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
+                <span class="text-body font-medium text-highlighted">{{ formatKcal(repeatKcal) }}</span>
+                <span class="text-caption2 text-muted">kcal</span>
               </span>
             </button>
 
@@ -704,28 +702,24 @@ const description = computed(() => {
               v-if="listsLoading && !favourites.length && !recent.length"
               variant="rows"
               :count="4"
-              class="overflow-hidden rounded-tile border border-default"
+              class="app-card overflow-hidden"
             />
 
             <section
               v-if="favourites.length"
-              class="flex flex-col gap-2"
+              class="flex flex-col"
               aria-labelledby="quick-add-starred"
             >
               <h3
                 id="quick-add-starred"
-                class="app-eyebrow flex items-center gap-1.5 px-1"
+                class="app-group-title px-4 pb-1.5"
               >
-                <UIcon
-                  name="i-lucide-star"
-                  class="size-3.5"
-                />
                 Starred
               </h3>
               <TransitionGroup
                 tag="div"
                 name="list"
-                class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+                class="app-card app-divide flex flex-col overflow-hidden"
               >
                 <FoodRow
                   v-for="food in favourites"
@@ -742,23 +736,19 @@ const description = computed(() => {
 
             <section
               v-if="recent.length"
-              class="flex flex-col gap-2"
+              class="flex flex-col"
               aria-labelledby="quick-add-recent"
             >
               <h3
                 id="quick-add-recent"
-                class="app-eyebrow flex items-center gap-1.5 px-1"
+                class="app-group-title px-4 pb-1.5"
               >
-                <UIcon
-                  name="i-lucide-history"
-                  class="size-3.5"
-                />
                 Recent
               </h3>
               <TransitionGroup
                 tag="div"
                 name="list"
-                class="flex flex-col divide-y divide-default overflow-hidden rounded-tile border border-default"
+                class="app-card app-divide flex flex-col overflow-hidden"
               >
                 <FoodRow
                   v-for="food in recent"

@@ -28,28 +28,27 @@ const last = computed(() => {
 </script>
 
 <template>
-  <div class="flex min-h-16 items-center gap-1 pr-3">
+  <div class="flex min-h-14 items-center gap-1 pr-3">
     <button
       type="button"
-      class="flex min-w-0 flex-1 items-center gap-3 self-stretch py-2.5 pr-1 pl-4 text-left outline-none focus-visible:bg-elevated/60 active:bg-elevated/70"
+      class="flex min-w-0 flex-1 items-center gap-3 self-stretch py-2.5 pr-1 pl-4 text-left outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none"
       @click="emit('pick', food)"
     >
       <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span class="flex min-w-0 items-center gap-2">
-          <span class="truncate text-body font-semibold text-highlighted">{{ food.name }}</span>
-          <span
-            v-if="food.mine"
-            class="shrink-0 rounded-full bg-elevated px-2 py-0.5 text-micro font-semibold tracking-wide text-muted uppercase"
-          >Mine</span>
-        </span>
-        <span class="flex min-w-0 items-baseline gap-2">
+        <span class="line-clamp-2 text-body break-words text-highlighted">{{ food.name }}</span>
+        <span class="flex min-w-0 items-baseline gap-2 text-footnote text-muted">
+          <!-- The amount the "+" adds again, then whose it is and the brand -->
           <span
             v-if="last"
-            class="shrink-0 rounded-md bg-primary/10 px-1.5 text-caption font-semibold text-primary tabular-nums"
+            class="shrink-0 font-medium text-default tabular-nums"
           >{{ amountLabel(last.quantity, last.unit) }}</span>
           <span
-            v-else-if="food.brand"
-            class="min-w-0 truncate text-caption text-muted"
+            v-if="food.mine"
+            class="shrink-0"
+          >Mine</span>
+          <span
+            v-if="!last && food.brand"
+            class="min-w-0 truncate"
           >{{ food.brand }}</span>
           <ShellMacroLine
             :macros="food"
@@ -59,8 +58,8 @@ const last = computed(() => {
         </span>
       </span>
       <span class="flex w-14 shrink-0 flex-col items-end leading-tight tabular-nums">
-        <span class="text-body font-semibold text-highlighted">{{ formatKcal(food.kcal) }}</span>
-        <span class="text-caption text-muted">/100 {{ food.base_unit }}</span>
+        <span class="text-body font-medium text-highlighted">{{ formatKcal(food.kcal) }}</span>
+        <span class="text-caption2 text-muted">/100 {{ food.base_unit }}</span>
       </span>
     </button>
 
@@ -68,7 +67,7 @@ const last = computed(() => {
       icon="i-lucide-star"
       size="sm"
       :color="food.favourite ? 'primary' : 'neutral'"
-      :variant="food.favourite ? 'soft' : 'ghost'"
+      variant="ghost"
       square
       class="app-hit"
       :class="food.favourite ? '' : 'text-dimmed'"
