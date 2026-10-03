@@ -54,7 +54,7 @@ export function useSaveFile() {
         description: name,
         icon: 'i-lucide-file-check',
         color: 'success',
-        actions: [{ label: 'Save', color: 'neutral', variant: 'outline', onClick: () => void save(blob, name) }]
+        actions: [{ label: 'Save', color: 'primary', variant: 'ghost', onClick: () => void save(blob, name) }]
       })
     }
     return outcome

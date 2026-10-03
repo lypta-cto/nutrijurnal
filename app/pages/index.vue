@@ -318,8 +318,8 @@ async function dropItem(meal: Meal, item: MealItem) {
       color: 'neutral',
       actions: [{
         label: 'Undo',
-        color: 'neutral',
-        variant: 'outline',
+        color: 'primary',
+        variant: 'ghost',
         onClick: async () => {
           try {
             // Back in its place, with the numbers it had (a quick-kcal line
@@ -423,8 +423,8 @@ async function duplicate(meal: Meal) {
       color: 'success',
       actions: [{
         label: 'Undo',
-        color: 'neutral',
-        variant: 'outline',
+        color: 'primary',
+        variant: 'ghost',
         onClick: async () => {
           try {
             await removeMeal(copy.id)
@@ -457,8 +457,8 @@ async function deleteMeal(meal: Meal) {
       color: 'neutral',
       actions: [{
         label: 'Undo',
-        color: 'neutral',
-        variant: 'outline',
+        color: 'primary',
+        variant: 'ghost',
         onClick: async () => {
           try {
             await restoreMeal(meal.id)

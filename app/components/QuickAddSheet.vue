@@ -171,7 +171,7 @@ async function repeatYesterday() {
       title: `Yesterday's ${slotLabel(slot.value).toLowerCase()} copied`,
       icon: 'i-lucide-repeat',
       color: 'success',
-      actions: [{ label: 'Undo', color: 'neutral', variant: 'outline', onClick: () => void undoMeals(copies) }]
+      actions: [{ label: 'Undo', color: 'primary', variant: 'ghost', onClick: () => void undoMeals(copies) }]
     })
     quickAdd.close()
   } catch (error) {
@@ -345,8 +345,8 @@ function confirmAdded(what: string, result: { meal: Meal, itemId: string | null,
     color: 'success',
     actions: [{
       label: 'Undo',
-      color: 'neutral',
-      variant: 'outline',
+      color: 'primary',
+      variant: 'ghost',
       onClick: () => void undoAdd(result)
     }]
   })
@@ -427,7 +427,7 @@ function onCopied(meals: Meal[]) {
     title: `${meals.length} ${meals.length === 1 ? 'meal' : 'meals'} copied to ${dayLabel(day.value).toLowerCase() === 'today' ? 'today' : dayLabel(day.value)}`,
     icon: 'i-lucide-copy-check',
     color: 'success',
-    actions: [{ label: 'Undo', color: 'neutral', variant: 'outline', onClick: () => void undoMeals(meals) }]
+    actions: [{ label: 'Undo', color: 'primary', variant: 'ghost', onClick: () => void undoMeals(meals) }]
   })
   quickAdd.close()
 }

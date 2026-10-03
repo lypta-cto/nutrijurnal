@@ -153,8 +153,8 @@ async function remove() {
       color: 'neutral',
       actions: [{
         label: 'Undo',
-        color: 'neutral',
-        variant: 'outline',
+        color: 'primary',
+        variant: 'ghost',
         onClick: async () => {
           try {
             emit('saved', await updateFood(food.id, { archived: false }))

@@ -128,8 +128,8 @@ async function drop(reminder: Reminder) {
       color: 'neutral',
       actions: [{
         label: 'Undo',
-        color: 'neutral',
-        variant: 'outline',
+        color: 'primary',
+        variant: 'ghost',
         onClick: () => void add({
           kind: reminder.kind,
           slot: reminder.slot,

@@ -302,14 +302,20 @@ export default defineAppConfig({
       }
     },
 
-    // A glass banner under the notch. The time left on a toast (the Undo
-    // window) is a hint, not a headline, so its line stays faint
+    // A glass banner under the notch. Its action (Undo) is accent text lined
+    // up with the words, as iOS sets a banner's button. The time left (the
+    // Undo window) is a hint, not a headline: a 2 px line with no track
     toast: {
       slots: {
-        root: `rounded-2xl ring-0 border border-(--app-glass-border) shadow-overlay p-3.5 ${GLASS}`,
+        root: `rounded-[1.375rem] ring-0 border-[length:var(--app-hairline)] border-(--app-glass-border) shadow-overlay p-3.5 ${GLASS}`,
         title: 'text-subheadline font-semibold',
         description: 'text-footnote text-muted',
-        progress: 'opacity-40'
+        progress: 'opacity-35 [&_[data-slot=base]]:h-0.5 [&_[data-slot=base]]:bg-transparent'
+      },
+      variants: {
+        orientation: {
+          vertical: { actions: '-ms-2 mt-1' }
+        }
       }
     },
 
