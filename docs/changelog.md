@@ -4,6 +4,13 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Import, calendar exports, the new mark.** Settings → Import a diary takes a Nutrijurnal
+  backup (.json) or a diary CSV — this app's or the CTO app's, same columns — and adds
+  nothing twice. The export's presets are now Today, This week, Last week (Monday to
+  Sunday) and This month, counted from today, plus Pick the dates. CSV downloads work: every
+  file download asks for a blob (ofetch read text/csv as a string). The mark is Luka's logo,
+  an apple whose corner folds like a page, traced into a vector; `scripts/make-icons.py`
+  writes the icons from `scripts/logo-source.png`.
 - **Redesign, part 3 — a visual pass.** The four rings on Today are 180 px with 8 px
   strokes 2 px apart, so a four-digit "kcal left" no longer runs into the fat ring; a
   meal's mic and chevron stay on its name's last line instead of wrapping alone; the

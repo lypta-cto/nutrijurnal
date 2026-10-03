@@ -65,7 +65,10 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
   Decimal fields are `<DecimalInput>` (comma or point), never `type="number"`.
 - A failed load says so with Try again (a `ShellEmpty` "… didn't load"), never an empty
   state; searches and loads that can overlap are numbered so only the newest lands.
-  Files leave through `useSaveFile()` (the share sheet on iOS, a download elsewhere).
+  Files leave through `useSaveFile()` (the share sheet on iOS, a download elsewhere);
+  every file download asks `useApi` for `responseType: 'blob'` (left alone, ofetch reads
+  a CSV as a string). Files come in through `useImportDiary()` (Settings → Import a
+  diary): a Nutrijurnal backup or a diary CSV, this app's or the CTO app's.
 
 ## Ownership (parallel agents)
 
@@ -89,8 +92,9 @@ see `.env.example`. Only the lead runs `npm run build` / `nuxt build` / `nuxt ge
   width on a desktop. No hover-only actions; touch has no hover.
 - No cookbook or meal-plan content, ever — people build their own recipes.
 - Never read, print or copy any `.env`. Never configure production hosting or secrets.
-- Never sign in through a browser or mint sessions to drive the UI; verify with
-  typecheck, lint and vitest.
+- Never sign in with a password or mint sessions or tokens to drive the UI. To see the
+  signed-in screens locally, press "Try the demo" on the local login page (:3400) — it
+  needs no credentials and makes a throwaway demo account in the local database.
 - Never `git push`. Commit only your own paths (`git add <paths>`), imperative subject,
   a body that says why, ending with the `Co-Authored-By` line.
 - Comments say why, not what. No dead code, no TODO litter.
