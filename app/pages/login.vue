@@ -80,7 +80,7 @@ async function tryDemo() {
     toast.add({
       title: 'Welcome to the demo',
       description: 'Two weeks are already in it — add a meal, scan something, look at Progress.',
-      icon: 'i-lucide-sparkles',
+      icon: 'i-lucide-notebook-pen',
       color: 'success'
     })
     await navigateTo('/')
@@ -146,35 +146,27 @@ async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
       </template>
     </UAuthForm>
 
-    <!-- The whole app without signing up -->
-    <div class="mt-8 flex flex-col gap-3 rounded-card bg-primary/8 p-4 ring-1 ring-primary/15">
-      <div class="flex items-start gap-3">
-        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-default text-primary shadow-card">
-          <UIcon
-            name="i-lucide-sparkles"
-            class="size-5"
-          />
-        </span>
-        <div class="min-w-0">
-          <p class="text-body font-semibold text-highlighted">
-            Just looking?
-          </p>
-          <p class="text-sm text-muted">
-            Open a diary with two weeks already in it.
-          </p>
-        </div>
+    <!-- The whole app without signing up: a plain second way in, under a rule -->
+    <div class="app-rule-t mt-10 flex flex-col gap-3 pt-8 [--app-divide-inset:0]">
+      <div class="text-center">
+        <p class="text-headline text-highlighted">
+          Just looking?
+        </p>
+        <p class="mt-0.5 text-subheadline text-muted">
+          Open a diary with two weeks already in it.
+        </p>
       </div>
       <UButton
         label="Try the demo"
         color="neutral"
-        variant="outline"
+        variant="soft"
         size="lg"
         block
         :loading="demoLoading"
         :disabled="loading"
         @click="tryDemo"
       />
-      <p class="text-center text-caption text-muted">
+      <p class="text-center text-footnote text-muted">
         No email needed. Deleted after a few days unless you keep it.
       </p>
     </div>

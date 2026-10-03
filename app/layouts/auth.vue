@@ -9,7 +9,7 @@ const { app } = useAppConfig()
 </script>
 
 <template>
-  <div class="flex min-h-svh flex-col bg-plain">
+  <div class="app-on-plain flex min-h-svh flex-col bg-plain">
     <div class="mx-auto flex w-full max-w-md flex-1 flex-col px-6">
       <header class="app-safe-top flex items-center justify-between gap-3 pt-3">
         <ShellLogo size="sm" />

@@ -68,10 +68,10 @@ async function finish(patch: { targets?: Targets, profile?: GoalProfile }) {
       <p class="app-eyebrow">
         {{ greeting }}
       </p>
-      <h1 class="font-display text-title font-semibold text-highlighted">
+      <h1 class="text-large-title text-highlighted">
         Let's set your day
       </h1>
-      <p class="text-sm text-muted">
+      <p class="text-callout text-muted">
         A few questions give you a daily kcal and macro target, so every meal you log has
         something to count towards.
       </p>

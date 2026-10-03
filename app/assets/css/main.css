@@ -385,13 +385,20 @@
     border-radius: var(--radius-card);
   }
 
-  /* Inside a sheet a group steps one layer up, as iOS's do */
-  .app-sheet {
+  /* Inside a sheet, or on a plain white screen (sign-in, onboarding), a
+     group steps one layer up, as iOS's do — white on white would vanish.
+     A plain screen in dark mode is black, where the usual #1c1c1e reads */
+  .app-sheet,
+  .app-on-plain {
     --app-cell: var(--color-graphite-100);
   }
 
   .dark .app-sheet {
     --app-cell: var(--color-graphite-800);
+  }
+
+  .dark .app-on-plain {
+    --app-cell: var(--color-graphite-900);
   }
 
   /*

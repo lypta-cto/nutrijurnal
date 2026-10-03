@@ -256,10 +256,8 @@ const fatSlider = computed({
   }
 })
 
-/** A tile among a few to choose from — the chosen one picked out in the brand */
-const CHOICE = 'app-press flex w-full items-center gap-3 rounded-tile border px-3.5 py-3 text-left outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary'
-const CHOSEN = 'border-primary/50 bg-primary/8'
-const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
+/** One row of a list to choose from, iOS's way: the chosen one carries the checkmark */
+const CHOICE = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-120 ease-soft focus-visible:bg-elevated active:bg-accented motion-reduce:transition-none'
 </script>
 
 <template>
@@ -282,10 +280,10 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
         />
         <span class="ml-1.5 text-caption font-semibold text-muted tabular-nums">{{ stepIndex + 1 }} of {{ STEPS.length }}</span>
       </div>
-      <h2 class="text-xl font-semibold text-highlighted">
+      <h2 class="text-title2 text-highlighted">
         {{ current.title }}
       </h2>
-      <p class="-mt-1 text-sm text-muted">
+      <p class="-mt-1 text-callout text-muted">
         {{ current.hint }}
       </p>
     </div>
@@ -377,38 +375,36 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
       <ul
         v-else-if="step === 'activity'"
         key="activity"
-        class="flex flex-col gap-2"
+        class="app-card app-divide flex flex-col overflow-hidden"
         role="radiogroup"
         aria-label="Activity level"
       >
         <li
           v-for="option in ACTIVITIES"
           :key="option.value"
+          :style="{ '--app-divide-inset': '3.25rem' }"
         >
           <button
             type="button"
             role="radio"
             :aria-checked="form.activity === option.value"
-            :class="[CHOICE, form.activity === option.value ? CHOSEN : UNCHOSEN]"
+            :class="CHOICE"
             @click="form.activity = option.value"
           >
-            <span
-              class="flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ease-soft"
-              :class="form.activity === option.value ? 'bg-primary text-inverted' : 'bg-primary/10 text-primary'"
-            >
+            <span class="flex w-6 shrink-0 justify-center text-muted">
               <UIcon
                 :name="option.icon"
-                class="size-5"
+                class="size-5.5"
               />
             </span>
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="text-body font-semibold text-highlighted">{{ option.label }}</span>
-              <span class="text-xs text-muted">{{ option.hint }}</span>
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="text-body text-highlighted">{{ option.label }}</span>
+              <span class="text-footnote text-muted">{{ option.hint }}</span>
             </span>
             <UIcon
-              :name="form.activity === option.value ? 'i-lucide-circle-check' : 'i-lucide-circle'"
-              class="size-5 shrink-0"
-              :class="form.activity === option.value ? 'text-primary' : 'text-dimmed'"
+              v-if="form.activity === option.value"
+              name="i-lucide-check"
+              class="size-5 shrink-0 text-primary"
             />
           </button>
         </li>
@@ -421,7 +417,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
         class="flex flex-col gap-4"
       >
         <div
-          class="grid grid-cols-3 gap-2"
+          class="app-card app-divide flex flex-col overflow-hidden"
           role="radiogroup"
           aria-label="Goal"
         >
@@ -431,20 +427,22 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
             type="button"
             role="radio"
             :aria-checked="form.goal === option.value"
-            class="app-press flex flex-col items-center gap-2.5 rounded-tile border px-2 py-4 text-center outline-none transition-colors duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-primary"
-            :class="form.goal === option.value ? CHOSEN : UNCHOSEN"
+            :class="CHOICE"
+            :style="{ '--app-divide-inset': '3.25rem' }"
             @click="pickGoal(option.value)"
           >
-            <span
-              class="flex size-11 items-center justify-center rounded-full transition-colors duration-200 ease-soft"
-              :class="form.goal === option.value ? 'bg-primary text-inverted' : 'bg-primary/10 text-primary'"
-            >
+            <span class="flex w-6 shrink-0 justify-center text-muted">
               <UIcon
                 :name="option.icon"
-                class="size-6"
+                class="size-5.5"
               />
             </span>
-            <span class="text-sm font-semibold text-highlighted">{{ option.label }}</span>
+            <span class="min-w-0 flex-1 text-body text-highlighted">{{ option.label }}</span>
+            <UIcon
+              v-if="form.goal === option.value"
+              name="i-lucide-check"
+              class="size-5 shrink-0 text-primary"
+            />
           </button>
         </div>
 
@@ -461,7 +459,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
         </UFormField>
         <p
           v-if="form.goal === 'lose' && form.pace >= 1"
-          class="flex items-start gap-2 rounded-tile bg-warning/10 px-3.5 py-3 text-sm text-default"
+          class="flex items-start gap-2 px-4 text-footnote text-muted"
         >
           <UIcon
             name="i-lucide-info"
@@ -489,7 +487,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
           v-if="!estimate"
           class="flex flex-col gap-3"
         >
-          <span class="app-shimmer h-12 w-48 rounded-xl" />
+          <span class="app-shimmer h-12 w-48 rounded-tile" />
           <ShellSkeleton
             variant="text"
             :count="2"
@@ -502,16 +500,16 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
 
         <template v-else>
           <!-- The answer, big: the day it all comes to -->
-          <div class="flex flex-col gap-1.5 rounded-card bg-linear-to-br from-primary-50 via-default to-default p-4 ring-1 ring-primary-100 dark:from-primary-950/60 dark:ring-primary-900/60">
-            <span class="app-eyebrow">Your day</span>
+          <div class="app-card flex flex-col gap-1.5 p-4">
+            <span class="text-footnote text-muted">Your day</span>
             <span class="flex items-baseline gap-2">
               <span
-                class="text-hero text-highlighted tabular-nums transition-opacity duration-200 ease-soft"
+                class="font-rounded text-hero text-highlighted tabular-nums transition-opacity duration-200 ease-soft motion-reduce:transition-none"
                 :class="estimating && 'opacity-60'"
               >{{ formatKcal(targets.target_kcal ?? estimate.kcal) }}</span>
-              <span class="text-sm font-semibold text-muted">kcal</span>
+              <span class="text-subheadline text-muted">kcal</span>
             </span>
-            <span class="text-xs text-muted tabular-nums">
+            <span class="text-footnote text-muted tabular-nums">
               About {{ formatKcal(estimate.bmr) }} at rest · {{ formatKcal(estimate.maintenance) }} on a usual day<template v-if="estimate.daily_change">
                 · {{ estimate.daily_change > 0 ? '+' : '−' }}{{ formatKcal(Math.abs(estimate.daily_change)) }} for your goal
               </template>
@@ -536,11 +534,10 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
               :value="row.grams"
               unit="g"
               :hint="`${row.share}% of kcal`"
-              tone="well"
             />
           </div>
 
-          <div class="flex flex-col gap-4 rounded-tile border border-default p-4">
+          <div class="app-card flex flex-col gap-4 p-4">
             <UFormField
               label="Protein"
               :hint="`${proteinSlider.toFixed(1)} g per kg`"
@@ -604,7 +601,7 @@ const UNCHOSEN = 'border-default bg-default active:bg-elevated/70'
             </template>
           </div>
 
-          <p class="text-caption text-dimmed">
+          <p class="px-4 text-footnote text-muted">
             Estimated with the Mifflin–St Jeor formula. It is a starting point, not medical advice —
             see how your weight moves over a few weeks and adjust.
           </p>
