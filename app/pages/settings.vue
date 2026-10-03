@@ -85,7 +85,7 @@ async function storeWater() {
   savingWater.value = true
   try {
     await saveSettings({ water_goal_ml: goal, water_glass_ml: glass })
-    toast.add({ title: 'Water goal saved', icon: 'i-lucide-droplet', color: 'success' })
+    toast.add({ title: 'Water goal saved', icon: 'i-lucide-glass-water', color: 'success' })
   } catch (error) {
     fail(error)
   } finally {
@@ -252,7 +252,7 @@ async function confirmDelete() {
       <div>
         <h2 class="flex items-center gap-2 font-semibold text-highlighted">
           <UIcon
-            name="i-lucide-droplet"
+            name="i-lucide-glass-water"
             class="size-4 text-muted"
           />
           Water

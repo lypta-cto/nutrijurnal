@@ -107,7 +107,7 @@ const moreItems = computed(() => [OTHER_AMOUNTS.map(ml => ({
   >
     <header class="flex items-center gap-2">
       <UIcon
-        name="i-lucide-droplet"
+        name="i-lucide-glass-water"
         class="size-4 shrink-0 text-info"
       />
       <h2 class="text-sm font-semibold text-highlighted">

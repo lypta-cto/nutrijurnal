@@ -39,6 +39,39 @@ export function formatWeight(kg: number): string {
   return `${kg.toFixed(1)} kg`
 }
 
+export interface ProgressDay {
+  day: string
+  meals: number
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  water_ml: number
+  weight_kg: number | null
+}
+
+export interface Progress {
+  /** Every day of the period, the empty ones included */
+  days: ProgressDay[]
+  target_kcal: number | null
+  target_protein: number | null
+  target_carbs: number | null
+  target_fat: number | null
+  water_goal_ml: number
+  streak: { current: number, longest: number, logged_today: boolean }
+  /** Over the days with meals (water: with water) — an empty day is unknown, not zero */
+  averages: {
+    kcal: number | null
+    protein: number | null
+    carbs: number | null
+    fat: number | null
+    water_ml: number | null
+    logged_days: number
+    days: number
+  }
+  weight: { first: WeightEntry | null, last: WeightEntry | null, change: number | null }
+}
+
 export function useBody() {
   const api = useApi()
 
@@ -50,6 +83,9 @@ export function useBody() {
     putWeight: (day: string, kg: number) => api.request<WeightEntry>(`/eating/weight/${day}`, { method: 'PUT', body: { kg } }),
     removeWeight: (day: string) => api.del(`/eating/weight/${day}`),
     weightRange: (from: string, to: string) => api.get<WeightEntry[]>('/eating/weight', { query: { from, to } }),
-    latestWeight: () => api.get<WeightEntry | null>('/eating/weight/latest')
+    latestWeight: () => api.get<WeightEntry | null>('/eating/weight/latest'),
+    /** A period in one answer; `today` is the viewer's own, for the streak */
+    loadProgress: (from: string, to: string, today: string) =>
+      api.get<Progress>('/eating/progress', { query: { from, to, today } })
   }
 }

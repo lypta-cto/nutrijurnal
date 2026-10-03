@@ -541,12 +541,21 @@ export function dayShort(day: string): string {
   return new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-/** The three bars under the kcal headline — one colour per macro, everywhere */
-export const MACRO_BARS: { key: 'protein' | 'carbs' | 'fat', label: string, letter: string, bar: string, text: string, dot: string }[] = [
-  { key: 'protein', label: 'Protein', letter: 'P', bar: 'bg-sky-500', text: 'text-sky-500', dot: 'bg-sky-500' },
-  { key: 'carbs', label: 'Carbs', letter: 'C', bar: 'bg-violet-500', text: 'text-violet-500', dot: 'bg-violet-500' },
-  { key: 'fat', label: 'Fat', letter: 'F', bar: 'bg-amber-500', text: 'text-amber-500', dot: 'bg-amber-500' }
+/** The three bars under the kcal headline — one colour per macro, everywhere.
+ *  `fill` is the same colour as a CSS value, for SVG and inline styles: the
+ *  design tokens, with the palette step as the fallback. */
+export const MACRO_BARS: { key: 'protein' | 'carbs' | 'fat', label: string, letter: string, bar: string, text: string, dot: string, fill: string }[] = [
+  { key: 'protein', label: 'Protein', letter: 'P', bar: 'bg-sky-500', text: 'text-sky-500', dot: 'bg-sky-500', fill: 'var(--app-protein, #0ea5e9)' },
+  { key: 'carbs', label: 'Carbs', letter: 'C', bar: 'bg-violet-500', text: 'text-violet-500', dot: 'bg-violet-500', fill: 'var(--app-carbs, #8b5cf6)' },
+  { key: 'fat', label: 'Fat', letter: 'F', bar: 'bg-amber-500', text: 'text-amber-500', dot: 'bg-amber-500', fill: 'var(--app-fat, #f59e0b)' }
 ]
+
+/** Chart colours for what is not a macro — tokens with a fallback, like `fill` above */
+export const CHART_COLORS = {
+  kcal: 'var(--app-kcal, var(--ui-primary))',
+  water: 'var(--ui-info)',
+  weight: 'var(--ui-text-highlighted)'
+}
 
 /**
  * The grids the diary is read on — phone-width, always: the app is one
