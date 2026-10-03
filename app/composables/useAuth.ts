@@ -84,6 +84,19 @@ export function useAuthState() {
   return { accessToken, user, ready, setSession, clearSession, refresh }
 }
 
+/**
+ * The service worker keeps the diary's last answers for reading offline
+ * (nuxt.config.ts → pwa.workbox.runtimeCaching). They are one person's; the
+ * next person on this browser must never be served them.
+ */
+async function forgetOfflineDiary() {
+  try {
+    await window.caches?.delete('nutrijurnal-api')
+  } catch {
+    // No Cache Storage here (an old browser, a locked-down profile) — nothing kept
+  }
+}
+
 export function useAuth() {
   const api = useApi()
   const mediaUrl = useMediaUrl()
@@ -135,6 +148,7 @@ export function useAuth() {
     } finally {
       // Clear locally even if the call failed — the user asked to be signed out
       clearSession()
+      await forgetOfflineDiary()
       await navigateTo('/login')
     }
   }
@@ -149,6 +163,7 @@ export function useAuth() {
   async function deleteAccount() {
     await api.del('/auth/me')
     clearSession()
+    await forgetOfflineDiary()
     await navigateTo('/register')
   }
 

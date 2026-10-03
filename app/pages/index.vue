@@ -12,6 +12,7 @@ import {
   formatMacro,
   itemPayload,
   shiftDay,
+  slotForNow,
   targetsOf,
   timeLabel,
   unitItemsFor
@@ -115,9 +116,10 @@ async function repeat(slot: Slot) {
 const route = useRoute()
 
 onMounted(async () => {
-  // A meal reminder opens the app on "/?add=lunch": straight into adding it
+  // A meal reminder opens the app on "/?add=lunch", the home-screen shortcut
+  // on "/?add=now": straight into adding food, on that slot or the clock's
   const asked = route.query.add
-  const slot = SLOTS.find(entry => entry.value === asked)?.value
+  const slot = asked === 'now' ? slotForNow() : SLOTS.find(entry => entry.value === asked)?.value
   if (slot) {
     day.value = today.value
     quickAdd.open(undefined, { slot })
@@ -898,6 +900,8 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
     <WaterCard :day="day" />
 
     <WeightCard :day="day" />
+
+    <InstallPrompt />
 
     <!-- Onto another day -->
     <UModal

@@ -302,6 +302,8 @@ async function confirmDelete() {
 
     <ReminderSettings />
 
+    <InstallPrompt variant="settings" />
+
     <UDrawer
       v-model:open="calculatorOpen"
       title="Goal calculator"
