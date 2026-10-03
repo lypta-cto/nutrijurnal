@@ -171,6 +171,8 @@ async function confirmDelete() {
 
 <template>
   <AppPage title="Settings">
+    <DemoBanner />
+
     <!-- Profile -->
     <section class="app-card px-4">
       <h2 class="flex items-center gap-2 pt-4 font-semibold text-highlighted">

@@ -708,6 +708,8 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
       </div>
     </template>
 
+    <DemoBanner />
+
     <!-- The day itself: swiped sideways to the day before or after, and
          sliding in from the side it came from -->
     <div

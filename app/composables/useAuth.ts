@@ -14,6 +14,9 @@ export interface AuthUser {
   /** Null until the first-run questions are answered or skipped — the
    *  middleware sends the person to /onboarding until then */
   onboarded_at: string | null
+  /** A throwaway demo account, deleted at `demo_expires_at` unless kept */
+  is_demo: boolean
+  demo_expires_at: string | null
 }
 
 interface AuthResponse {
@@ -142,6 +145,20 @@ export function useAuth() {
     return response.user
   }
 
+  /** One tap into a demo diary with two weeks already in it */
+  async function startDemo() {
+    const response = await api.post<AuthResponse>('/auth/demo', { today: localIsoDay() })
+    setSession(response)
+    ready.value = true
+    return response.user
+  }
+
+  /** The demo becomes an ordinary account, diary and all */
+  async function keepDemo(payload: { email: string, password: string, full_name: string }) {
+    user.value = await api.post<AuthUser>('/auth/demo/claim', payload)
+    return user.value
+  }
+
   async function logout() {
     try {
       await api.post('/auth/logout')
@@ -177,6 +194,8 @@ export function useAuth() {
     restore,
     login,
     register,
+    startDemo,
+    keepDemo,
     logout,
     fetchMe,
     deleteAccount

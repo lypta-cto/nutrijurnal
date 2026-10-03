@@ -7,7 +7,7 @@ useHead({ title: 'Sign in' })
 
 const toast = useToast()
 const route = useRoute()
-const { login } = useAuth()
+const { login, startDemo } = useAuth()
 const { providers, load: loadProviders } = useSignInProviders()
 
 const loading = ref(false)
@@ -65,6 +65,28 @@ function validate(state: Record<string, unknown>): FormError[] {
   return errors
 }
 
+// The whole app, without signing up: a demo diary with two weeks in it
+const demoLoading = ref(false)
+
+async function tryDemo() {
+  demoLoading.value = true
+  serverError.value = null
+  try {
+    await startDemo()
+    toast.add({
+      title: 'Welcome to the demo',
+      description: 'Two weeks are already in it — add a meal, scan something, look at Progress.',
+      icon: 'i-lucide-sparkles',
+      color: 'success'
+    })
+    await navigateTo('/')
+  } catch (error) {
+    serverError.value = apiErrorMessage(error, 'The demo could not start. Please try again.')
+  } finally {
+    demoLoading.value = false
+  }
+}
+
 async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
   loading.value = true
   serverError.value = null
@@ -88,35 +110,57 @@ async function onSubmit(event: FormSubmitEvent<Record<string, unknown>>) {
 </script>
 
 <template>
-  <UAuthForm
-    :fields="fields"
-    :providers="providers"
-    :validate="validate"
-    :loading="loading"
-    title="Welcome back"
-    description="Sign in to your food diary."
-    :submit="{ label: 'Sign in', size: 'lg', block: true }"
-    :ui="{ title: 'text-2xl', description: 'text-sm' }"
-    @submit="onSubmit"
-  >
-    <template #validation>
-      <UAlert
-        v-if="serverError"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-circle-alert"
-        :title="serverError"
-      />
-    </template>
+  <div>
+    <UAuthForm
+      :fields="fields"
+      :providers="providers"
+      :validate="validate"
+      :loading="loading"
+      title="Welcome back"
+      description="Sign in to your food diary."
+      :submit="{ label: 'Sign in', size: 'lg', block: true }"
+      :ui="{ title: 'text-2xl', description: 'text-sm' }"
+      @submit="onSubmit"
+    >
+      <template #validation>
+        <UAlert
+          v-if="serverError"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :title="serverError"
+        />
+      </template>
 
-    <template #footer>
-      New here?
-      <ULink
-        to="/register"
-        class="text-primary font-medium"
-      >
-        Create an account
-      </ULink>
-    </template>
-  </UAuthForm>
+      <template #footer>
+        New here?
+        <ULink
+          to="/register"
+          class="text-primary font-medium"
+        >
+          Create an account
+        </ULink>
+      </template>
+    </UAuthForm>
+
+    <div class="mt-6 flex flex-col items-center gap-2 border-t border-default pt-6 text-center">
+      <p class="text-sm text-muted">
+        Just looking? See a diary with two weeks already in it.
+      </p>
+      <UButton
+        label="Try the demo"
+        icon="i-lucide-sparkles"
+        color="neutral"
+        variant="subtle"
+        size="lg"
+        block
+        :loading="demoLoading"
+        :disabled="loading"
+        @click="tryDemo"
+      />
+      <p class="text-[11px] text-dimmed">
+        No email needed. The demo is deleted after a few days unless you keep it.
+      </p>
+    </div>
+  </div>
 </template>
