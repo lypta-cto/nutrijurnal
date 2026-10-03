@@ -109,7 +109,12 @@ export default defineNuxtConfig({
           handler: 'NetworkFirst',
           options: {
             cacheName: 'nutrijurnal-api',
-            networkTimeoutSeconds: 4,
+            // Offline fails at once and reads the cache at once; this only
+            // decides how long a slow answer is waited for. The day is
+            // re-read right after every meal is written, so a short wait
+            // served the copy from before the write — the new meal looked
+            // lost on a slow connection, and people logged it twice.
+            networkTimeoutSeconds: 10,
             expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 14 },
             cacheableResponse: { statuses: [200] }
           }
