@@ -4,6 +4,18 @@ Newest first. One line per piece of work that landed, in either repo.
 
 ## 2026-10-03
 
+- **Design round 2 — the QA pass.** Every function on the list was used, not looked
+  at, in a fresh demo at 375 px: sign-in validation, register, the Google button and
+  its error messages, the demo and Keep it, onboarding and the calculator; Today's day
+  navigation, inline amounts with a comma, copy, move, delete and swipe with Undo,
+  Repeat, water, weight, the install card; every way into the "+" sheet; recipes
+  (paste, pieces, stated-only, steps, delete) and foods (own version, edit, Undo,
+  stars); Progress at all three periods; Settings end to end, including a CSV and a
+  PDF arriving as blobs, the backup, an import run twice, and Back closing each sheet.
+  No regressions. Two forms the polish pass missed now match it: a recipe's "Put it on
+  a day" uses the meal's day and time pill rows, and a recipe picked in the meal form
+  groups with how much of it was eaten, so "Servings eaten" no longer wraps beside
+  "of 1".
 - **Design round 2 — the polish pass.** The last controls in their web defaults are
   iOS's now: menus are context menus (body-size rows, hairlines, the glyph after the
   words, a shaded band between groups — new `--app-menu-gap`), checkboxes the selection

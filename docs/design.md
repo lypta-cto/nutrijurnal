@@ -441,9 +441,11 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
   filled when starred — and a tinted round "+"). A panel one level down (scan, quick
   kcal, copy) only names the day under the title; there is no slot to pick there.
 - **Form sheets** — meal (day and time as pill rows, the slot and the name in the same
-  group; the five ways as one segmented control, the plate as a group headed "On the
-  plate · n" with its total as the last row, the note a group headed "Note"), recipe (the kcal in `font-rounded` on a
-  well, its title, subtitle, minutes and makes as field rows, ingredients and plain
+  group; the five ways as one segmented control, a picked recipe and how much of it was
+  eaten as one group, the plate as a group headed "On the plate · n" with its total as
+  the last row, the note a group headed "Note"), recipe (the kcal in `font-rounded` on a
+  well, "Put it on a day" as the meal's day and time pill rows plus how many, its title,
+  subtitle, minutes and makes as field rows, ingredients and plain
   numbered steps and the note as groups), food (name and brand, the four numbers per 100 g, the
   portions with what each means — all field rows), export (a checkmark list), move,
   targets (`ShellFieldRow`s), keep the demo.
