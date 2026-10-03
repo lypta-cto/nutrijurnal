@@ -5,6 +5,7 @@ import {
   ITEM_COLUMNS,
   MEAL_COLUMNS,
   SLOTS,
+  changedTargets,
   dayLabel,
   formatGrams,
   formatKcal,
@@ -490,7 +491,7 @@ function openTargets() {
 async function storeTargets() {
   savingTargets.value = true
   try {
-    await saveSettings({ ...targets.value })
+    await saveSettings(changedTargets(targets.value, targetsOf(settings.value)))
     await loadDay().catch(() => {})
     targetsOpen.value = false
     toast.add({ title: 'Targets saved', icon: 'i-lucide-target', color: 'success' })

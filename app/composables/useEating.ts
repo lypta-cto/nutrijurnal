@@ -219,6 +219,16 @@ export function splitTargets(kcal: number): Targets {
   }
 }
 
+/**
+ * Only the targets that were actually changed. Sending all four would write
+ * back whatever the form happened to hold — and a form that never loaded
+ * holds four nulls, which would wipe three targets to set one.
+ */
+export function changedTargets(next: Targets, before: Targets): Partial<Targets> {
+  const keys = Object.keys(next) as (keyof Targets)[]
+  return Object.fromEntries(keys.filter(key => next[key] !== before[key]).map(key => [key, next[key]]))
+}
+
 export function targetsOf(settings: EatingSettings | null): Targets {
   return {
     target_kcal: settings?.target_kcal ?? null,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { GoalProfile, Targets } from '~/composables/useEating'
-import { targetsOf } from '~/composables/useEating'
+import { changedTargets, targetsOf } from '~/composables/useEating'
 
 const { app } = useAppConfig()
 const colorMode = useColorMode()
@@ -42,19 +42,38 @@ async function saveProfile() {
 
 const targets = ref<Targets>(targetsOf(settings.value))
 const savingTargets = ref(false)
+/** The settings could not be read: the fields below are blank, not the account's */
+const settingsFailed = ref(false)
+const retryingSettings = ref(false)
 
-onMounted(async () => {
-  await loadSettings().catch(() => {})
+async function readSettings() {
+  try {
+    await loadSettings()
+    settingsFailed.value = false
+  } catch {
+    settingsFailed.value = true
+  }
   targets.value = targetsOf(settings.value)
-})
+}
+
+onMounted(() => void readSettings())
+
+async function retrySettings() {
+  retryingSettings.value = true
+  try {
+    await readSettings()
+  } finally {
+    retryingSettings.value = false
+  }
+}
 
 const targetsChanged = computed(() =>
-  JSON.stringify(targets.value) !== JSON.stringify(targetsOf(settings.value)))
+  Object.keys(changedTargets(targets.value, targetsOf(settings.value))).length > 0)
 
 async function storeTargets() {
   savingTargets.value = true
   try {
-    await saveSettings({ ...targets.value })
+    await saveSettings(changedTargets(targets.value, targetsOf(settings.value)))
     targets.value = targetsOf(settings.value)
     toast.add({ title: 'Targets saved', icon: 'i-lucide-target', color: 'success' })
   } catch (error) {
@@ -211,6 +230,16 @@ async function confirmDelete() {
     eyebrow="Account and preferences"
   >
     <DemoBanner />
+
+    <UAlert
+      v-if="settingsFailed"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-wifi-off"
+      title="Your settings didn't load"
+      description="The targets and water goal below are blank until they do — nothing has been changed."
+      :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', color: 'warning', variant: 'outline', loading: retryingSettings, onClick: () => void retrySettings() }]"
+    />
 
     <!-- Profile -->
     <ShellCard flush>

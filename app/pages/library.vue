@@ -37,16 +37,29 @@ function fail(error: unknown) {
 
 const recipes = ref<Recipe[]>([])
 const recipesLoading = ref(false)
+/** The shelf could not be read — said as such, never as "your cookbook starts here" */
+const recipesFailed = ref(false)
 const recipeQuery = ref('')
+// Each fetch is numbered: typing on, an older answer must not land over a newer one
+let recipesAsked = 0
 
 async function fetchRecipes() {
+  const ask = (recipesAsked += 1)
   recipesLoading.value = true
   try {
-    recipes.value = await loadRecipes({ q: recipeQuery.value })
+    const found = await loadRecipes({ q: recipeQuery.value })
+    if (ask === recipesAsked) {
+      recipes.value = found
+      recipesFailed.value = false
+    }
   } catch {
-    recipes.value = []
+    if (ask === recipesAsked) {
+      recipesFailed.value = true
+    }
   } finally {
-    recipesLoading.value = false
+    if (ask === recipesAsked) {
+      recipesLoading.value = false
+    }
   }
 }
 
@@ -142,17 +155,28 @@ async function create() {
 
 const foods = ref<Food[]>([])
 const foodsLoading = ref(false)
+const foodsFailed = ref(false)
 const foodQuery = ref('')
 const onlyMine = ref(false)
+let foodsAsked = 0
 
 async function fetchFoods() {
+  const ask = (foodsAsked += 1)
   foodsLoading.value = true
   try {
-    foods.value = await searchFoods(foodQuery.value, 200, onlyMine.value)
+    const found = await searchFoods(foodQuery.value, 200, onlyMine.value)
+    if (ask === foodsAsked) {
+      foods.value = found
+      foodsFailed.value = false
+    }
   } catch {
-    foods.value = []
+    if (ask === foodsAsked) {
+      foodsFailed.value = true
+    }
   } finally {
-    foodsLoading.value = false
+    if (ask === foodsAsked) {
+      foodsLoading.value = false
+    }
   }
 }
 
@@ -281,11 +305,26 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
       :count="recipes.length || null"
       hint="the whole dish"
       :loading="recipesLoading"
-      :is-empty="!recipes.length"
+      :is-empty="!recipes.length || recipesFailed"
     >
       <template #empty>
         <ShellEmpty
-          v-if="recipeQuery"
+          v-if="recipesFailed"
+          compact
+          icon="i-lucide-wifi-off"
+          title="Your recipes didn't load"
+          description="Nothing is lost — check the connection and try again."
+        >
+          <UButton
+            label="Try again"
+            size="sm"
+            variant="soft"
+            :loading="recipesLoading"
+            @click="fetchRecipes"
+          />
+        </ShellEmpty>
+        <ShellEmpty
+          v-else-if="recipeQuery"
           compact
           icon="i-lucide-search-x"
           title="No recipe by that name"
@@ -360,11 +399,26 @@ const TABS: { value: Tab, label: string, icon: string }[] = [
       :count="foods.length || null"
       hint="per 100 g or ml"
       :loading="foodsLoading"
-      :is-empty="!foods.length"
+      :is-empty="!foods.length || foodsFailed"
     >
       <template #empty>
         <ShellEmpty
-          v-if="onlyMine"
+          v-if="foodsFailed"
+          compact
+          icon="i-lucide-wifi-off"
+          title="The foods didn't load"
+          description="Nothing is lost — check the connection and try again."
+        >
+          <UButton
+            label="Try again"
+            size="sm"
+            variant="soft"
+            :loading="foodsLoading"
+            @click="fetchFoods"
+          />
+        </ShellEmpty>
+        <ShellEmpty
+          v-else-if="onlyMine"
           icon="i-lucide-scan-barcode"
           title="None of your own yet"
           description="Scan a packet from the + button, or add a food by hand — it is yours from then on."
