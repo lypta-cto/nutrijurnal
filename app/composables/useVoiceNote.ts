@@ -17,7 +17,7 @@
 
 /** The languages the parser reads amounts and meal words in */
 export const DICTATION_LANGUAGES: { value: string, label: string }[] = [
-  { value: 'sr-RS', label: 'Srpski' },
+  { value: 'sr-RS', label: 'Serbian' },
   { value: 'en-US', label: 'English' }
 ]
 
@@ -162,16 +162,34 @@ export function useVoiceNote() {
       error.value = 'This browser cannot record audio.'
       return false
     }
+    // Browsers only hand the microphone to a secure page: on plain http (a
+    // phone trying the app over the LAN) `mediaDevices` is simply missing,
+    // which is not the person's permission to fix
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      error.value = 'The microphone needs a secure connection — open the app over https.'
+      return false
+    }
 
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      error.value = 'No microphone — check the permission the browser asked for.'
+    } catch (failure) {
+      error.value = (failure as { name?: string })?.name === 'NotFoundError'
+        ? 'No microphone found on this device.'
+        : 'No microphone — check the permission the browser asked for.'
       return false
     }
 
     const type = format()
-    recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined)
+    try {
+      recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined)
+    } catch {
+      // The microphone is open by now; a recorder that won't start must not
+      // leave its light on
+      stream.getTracks().forEach(track => track.stop())
+      stream = null
+      error.value = 'This browser cannot record audio.'
+      return false
+    }
     chunks = []
     recorder.ondataavailable = (event) => {
       if (event.data.size) {
