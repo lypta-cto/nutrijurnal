@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { DayTotals, Meal, MealItem, Targets } from '~/composables/useEating'
+import type { DayTotals, Meal, MealItem, Slot, Targets } from '~/composables/useEating'
 import {
   ITEM_COLUMNS,
   MEAL_COLUMNS,
+  SLOTS,
   dayLabel,
   dayShort,
   formatGrams,
   formatKcal,
   formatMacro,
-  itemPayload,
   shiftDay,
   targetsOf,
   timeLabel,
@@ -41,7 +41,9 @@ const {
   removeItem,
   updateMeal,
   removeMeal,
-  addMeal,
+  copyMeal,
+  copyDay,
+  peekDay,
   parseText,
   exportFile
 } = useEating()
@@ -52,6 +54,8 @@ const { confirm } = useConfirm()
 
 const today = computed(() => localIsoDay())
 const strip = ref<DayTotals[]>([])
+/** The day before the one on screen — what "repeat" copies from */
+const before = ref<Meal[]>([])
 /** Which meals stand open; a new day folds them all back up */
 const expanded = ref(new Set<string>())
 
@@ -59,11 +63,52 @@ async function refreshWeek() {
   strip.value = await loadWeek(day.value)
 }
 
+async function refreshBefore() {
+  const which = shiftDay(day.value, -1)
+  const view = await peekDay(which).catch(() => null)
+  // The page may have moved on while this was loading
+  if (shiftDay(day.value, -1) === which) {
+    before.value = view?.meals ?? []
+  }
+}
+
 async function refreshAll() {
   await Promise.all([
     loadDay().catch(() => {}),
-    refreshWeek().catch(() => {})
+    refreshWeek().catch(() => {}),
+    refreshBefore()
   ])
+}
+
+/** The four slots in the order a day is eaten, each with its meals */
+const slotGroups = computed(() =>
+  SLOTS.map(entry => ({
+    ...entry,
+    meals: meals.value.filter(meal => meal.slot === entry.value),
+    kcal: meals.value.filter(meal => meal.slot === entry.value).reduce((sum, meal) => sum + meal.kcal, 0),
+    yesterday: before.value.filter(meal => meal.slot === entry.value)
+  })))
+
+const repeating = ref<Slot | null>(null)
+
+async function repeat(slot: Slot) {
+  if (repeating.value) {
+    return
+  }
+  repeating.value = slot
+  try {
+    const copies = await copyDay(day.value, { from_day: shiftDay(day.value, -1), slot })
+    toast.add({
+      title: `${copies.length === 1 ? copies[0]?.title ?? 'Meal' : `${copies.length} meals`} copied`,
+      icon: 'i-lucide-repeat',
+      color: 'success'
+    })
+    void refreshWeek()
+  } catch (error) {
+    fail(error)
+  } finally {
+    repeating.value = null
+  }
 }
 
 onMounted(async () => {
@@ -263,13 +308,7 @@ async function doMove() {
 /** The same plate again, on today — written as a new meal, not a link */
 async function duplicate(meal: Meal) {
   try {
-    const copy = await addMeal({
-      day: today.value,
-      at: meal.at,
-      title: meal.title,
-      note: meal.note,
-      items: meal.items.map(itemPayload)
-    })
+    const copy = await copyMeal(meal.id, { day: today.value })
     toast.add({ title: `${copy.title} copied to today`, icon: 'i-lucide-copy-check', color: 'success' })
     if (day.value !== today.value) {
       day.value = today.value
@@ -570,207 +609,248 @@ const PERIOD_BUTTON = 'rounded-md px-2 py-2 text-center text-xs font-medium tran
       @targets="openTargets"
     />
 
-    <SheetCard
-      title="Meals"
-      icon="i-lucide-utensils"
-      :count="meals.length || null"
-      :loading="loading"
-      :is-empty="!meals.length"
-      empty="Nothing written down for this day yet."
+    <!-- The day by meal: breakfast, lunch, dinner, snacks — each with what
+         it came to, its own "+", and yesterday's once more when it is empty -->
+    <section
+      v-for="group in slotGroups"
+      :key="group.value"
+      class="app-card flex flex-col overflow-hidden"
+      :aria-label="group.plural"
     >
-      <template #actions>
+      <header class="flex items-center gap-2 px-4 py-2.5">
+        <UIcon
+          :name="group.icon"
+          class="size-4 shrink-0 text-muted"
+        />
+        <h2 class="text-sm font-semibold text-highlighted">
+          {{ group.plural }}
+        </h2>
+        <span
+          v-if="group.meals.length"
+          class="text-xs tabular-nums text-muted"
+        >{{ formatKcal(group.kcal) }} kcal</span>
         <UButton
-          label="Add"
           icon="i-lucide-plus"
           size="xs"
           variant="soft"
-          @click="quickAdd.open()"
+          class="ml-auto"
+          :aria-label="`Add to ${group.label}`"
+          @click="quickAdd.open(undefined, { slot: group.value })"
         />
-      </template>
+      </header>
 
       <div
-        v-for="meal in meals"
-        :key="meal.id"
+        v-if="loading && !meals.length"
+        class="border-t border-default px-4 py-3"
       >
-        <div :class="MEAL_ROW">
-          <span class="rounded-md bg-elevated px-1 py-1 text-center text-xs font-semibold tabular-nums text-highlighted">{{ timeLabel(meal.at) }}</span>
-          <button
-            type="button"
-            class="flex min-w-0 flex-col text-left"
-            :aria-expanded="isOpen(meal)"
-            @click="toggle(meal)"
-          >
-            <span class="truncate text-sm font-medium text-highlighted">{{ meal.title }}</span>
-            <span class="flex gap-x-2 text-[11px] tabular-nums">
-              <span class="text-sky-500">P {{ formatMacro(meal.protein) }}</span>
-              <span class="text-violet-500">C {{ formatMacro(meal.carbs) }}</span>
-              <span class="text-amber-500">F {{ formatMacro(meal.fat) }}</span>
-              <span class="font-medium text-highlighted">{{ formatKcal(meal.kcal) }} kcal</span>
-            </span>
-          </button>
-          <!-- Counted, or the invitation to count it -->
-          <button
-            type="button"
-            class="inline-flex h-7 w-full items-center justify-center gap-1 rounded-md text-[11px] font-medium tabular-nums transition-colors"
-            :class="mealState(meal).tone"
-            :aria-label="mealState(meal).title"
-            @click.stop="mealState(meal).counted ? toggle(meal) : fillIn(meal)"
-          >
-            <UIcon
-              :name="mealState(meal).icon"
-              class="size-3 shrink-0"
-            />
-            {{ mealState(meal).label }}
-          </button>
-          <UDropdownMenu
-            :items="mealMenu(meal)"
-            :content="{ align: 'end' }"
-          >
+        <USkeleton class="h-4 w-2/3" />
+      </div>
+
+      <div
+        v-else-if="!group.meals.length"
+        class="flex items-center gap-2 border-t border-default px-4 py-2.5"
+      >
+        <span class="min-w-0 flex-1 truncate text-xs text-muted">Nothing yet</span>
+        <UButton
+          v-if="group.yesterday.length"
+          :label="`Repeat ${dayLabel(shiftDay(day, -1)).toLowerCase() === 'yesterday' ? 'yesterday' : 'the day before'}`"
+          icon="i-lucide-repeat"
+          size="xs"
+          color="neutral"
+          variant="subtle"
+          :loading="repeating === group.value"
+          @click="repeat(group.value)"
+        />
+      </div>
+
+      <div
+        v-else
+        class="divide-y divide-default border-t border-default"
+      >
+        <div
+          v-for="meal in group.meals"
+          :key="meal.id"
+        >
+          <div :class="MEAL_ROW">
+            <span class="rounded-md bg-elevated px-1 py-1 text-center text-xs font-semibold tabular-nums text-highlighted">{{ timeLabel(meal.at) }}</span>
+            <button
+              type="button"
+              class="flex min-w-0 flex-col text-left"
+              :aria-expanded="isOpen(meal)"
+              @click="toggle(meal)"
+            >
+              <span class="truncate text-sm font-medium text-highlighted">{{ meal.title }}</span>
+              <span class="flex gap-x-2 text-[11px] tabular-nums">
+                <span class="text-sky-500">P {{ formatMacro(meal.protein) }}</span>
+                <span class="text-violet-500">C {{ formatMacro(meal.carbs) }}</span>
+                <span class="text-amber-500">F {{ formatMacro(meal.fat) }}</span>
+                <span class="font-medium text-highlighted">{{ formatKcal(meal.kcal) }} kcal</span>
+              </span>
+            </button>
+            <!-- Counted, or the invitation to count it -->
+            <button
+              type="button"
+              class="inline-flex h-7 w-full items-center justify-center gap-1 rounded-md text-[11px] font-medium tabular-nums transition-colors"
+              :class="mealState(meal).tone"
+              :aria-label="mealState(meal).title"
+              @click.stop="mealState(meal).counted ? toggle(meal) : fillIn(meal)"
+            >
+              <UIcon
+                :name="mealState(meal).icon"
+                class="size-3 shrink-0"
+              />
+              {{ mealState(meal).label }}
+            </button>
+            <UDropdownMenu
+              :items="mealMenu(meal)"
+              :content="{ align: 'end' }"
+            >
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                square
+                class="text-dimmed"
+                :aria-label="`More for ${meal.title}`"
+              />
+            </UDropdownMenu>
             <UButton
-              icon="i-lucide-ellipsis-vertical"
+              :icon="isOpen(meal) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
               size="xs"
               color="neutral"
               variant="ghost"
               square
               class="text-dimmed"
-              :aria-label="`More for ${meal.title}`"
+              :aria-label="isOpen(meal) ? `Close ${meal.title}` : `Open ${meal.title}`"
+              @click="toggle(meal)"
             />
-          </UDropdownMenu>
-          <UButton
-            :icon="isOpen(meal) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-            size="xs"
-            color="neutral"
-            variant="ghost"
-            square
-            class="text-dimmed"
-            :aria-label="isOpen(meal) ? `Close ${meal.title}` : `Open ${meal.title}`"
-            @click="toggle(meal)"
-          />
-        </div>
+          </div>
 
-        <!-- What the meal was made of — each line corrected where it stands -->
-        <div
-          class="grid transition-all duration-300 ease-out"
-          :class="isOpen(meal) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
-        >
+          <!-- What the meal was made of — each line corrected where it stands -->
           <div
-            class="overflow-hidden"
-            :inert="!isOpen(meal)"
+            class="grid transition-all duration-300 ease-out"
+            :class="isOpen(meal) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
           >
-            <div class="border-t border-default bg-elevated/30 py-1">
-              <div
-                v-for="item in meal.items"
-                :key="item.id"
-                :class="ITEM_ROW"
-              >
-                <UInput
-                  v-model.number="item.quantity"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  step="0.1"
-                  size="xs"
-                  class="w-full"
-                  :ui="{ base: 'tabular-nums px-1.5 text-right' }"
-                  :aria-label="`Amount of ${item.label}`"
-                  @focus="remember(item)"
-                  @blur="commitItem(meal, item)"
-                />
-                <USelect
-                  v-model="item.unit"
-                  :items="unitItemsFor(item.unit)"
-                  value-key="value"
-                  size="xs"
-                  class="w-full"
-                  :ui="{ base: 'px-1.5' }"
-                  :aria-label="`Unit for ${item.label}`"
-                  @update:model-value="commitItem(meal, item, true)"
-                />
-                <span class="flex min-w-0 flex-col">
+            <div
+              class="overflow-hidden"
+              :inert="!isOpen(meal)"
+            >
+              <div class="border-t border-default bg-elevated/30 py-1">
+                <div
+                  v-for="item in meal.items"
+                  :key="item.id"
+                  :class="ITEM_ROW"
+                >
                   <UInput
-                    v-model="item.label"
+                    v-model.number="item.quantity"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="0.1"
                     size="xs"
-                    variant="none"
                     class="w-full"
-                    :ui="{ root: 'w-full', base: 'px-0 text-sm text-default' }"
-                    :aria-label="`Name of ${item.label}`"
+                    :ui="{ base: 'tabular-nums px-1.5 text-right' }"
+                    :aria-label="`Amount of ${item.label}`"
                     @focus="remember(item)"
                     @blur="commitItem(meal, item)"
                   />
-                  <span class="flex gap-x-2 text-[11px] tabular-nums">
-                    <span class="text-sky-500">P {{ formatMacro(item.protein) }}</span>
-                    <span class="text-violet-500">C {{ formatMacro(item.carbs) }}</span>
-                    <span class="text-amber-500">F {{ formatMacro(item.fat) }}</span>
-                    <span class="text-highlighted">{{ formatKcal(item.kcal) }}</span>
-                    <span
-                      v-if="item.unit !== 'serving'"
-                      class="text-dimmed"
-                    >{{ formatGrams(item.grams) }}</span>
+                  <USelect
+                    v-model="item.unit"
+                    :items="unitItemsFor(item.unit)"
+                    value-key="value"
+                    size="xs"
+                    class="w-full"
+                    :ui="{ base: 'px-1.5' }"
+                    :aria-label="`Unit for ${item.label}`"
+                    @update:model-value="commitItem(meal, item, true)"
+                  />
+                  <span class="flex min-w-0 flex-col">
+                    <UInput
+                      v-model="item.label"
+                      size="xs"
+                      variant="none"
+                      class="w-full"
+                      :ui="{ root: 'w-full', base: 'px-0 text-sm text-default' }"
+                      :aria-label="`Name of ${item.label}`"
+                      @focus="remember(item)"
+                      @blur="commitItem(meal, item)"
+                    />
+                    <span class="flex gap-x-2 text-[11px] tabular-nums">
+                      <span class="text-sky-500">P {{ formatMacro(item.protein) }}</span>
+                      <span class="text-violet-500">C {{ formatMacro(item.carbs) }}</span>
+                      <span class="text-amber-500">F {{ formatMacro(item.fat) }}</span>
+                      <span class="text-highlighted">{{ formatKcal(item.kcal) }}</span>
+                      <span
+                        v-if="item.unit !== 'serving'"
+                        class="text-dimmed"
+                      >{{ formatGrams(item.grams) }}</span>
+                    </span>
                   </span>
-                </span>
-                <UButton
-                  icon="i-lucide-x"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  square
-                  class="text-dimmed hover:text-error"
-                  :aria-label="`Remove ${item.label}`"
-                  @click="dropItem(meal, item)"
-                />
+                  <UButton
+                    icon="i-lucide-x"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    square
+                    class="text-dimmed hover:text-error"
+                    :aria-label="`Remove ${item.label}`"
+                    @click="dropItem(meal, item)"
+                  />
+                </div>
+
+                <!-- One more line onto the plate, typed the way the meal was -->
+                <form
+                  class="flex items-center gap-2 px-4 pt-1.5"
+                  @submit.prevent="addLine(meal)"
+                >
+                  <UInput
+                    v-model="addText[meal.id]"
+                    icon="i-lucide-plus"
+                    size="sm"
+                    class="min-w-0 flex-1"
+                    placeholder="Add an item — “30 g almonds”"
+                    :disabled="addingTo === meal.id"
+                  />
+                  <UButton
+                    type="submit"
+                    label="Add"
+                    size="sm"
+                    color="neutral"
+                    variant="subtle"
+                    :loading="addingTo === meal.id"
+                    :disabled="!(addText[meal.id] ?? '').trim()"
+                  />
+                </form>
+
+                <p
+                  v-if="meal.note || meal.has_voice"
+                  class="flex flex-wrap items-start gap-1.5 px-4 pt-1.5 text-xs text-muted"
+                >
+                  <UIcon
+                    :name="meal.has_voice ? 'i-lucide-mic' : 'i-lucide-sticky-note'"
+                    class="mt-0.5 size-3 shrink-0 text-dimmed"
+                  />
+                  <span
+                    v-if="meal.note"
+                    class="min-w-0"
+                  >{{ meal.note }}</span>
+                  <span
+                    v-else
+                    class="text-dimmed"
+                  >said out loud, not written down</span>
+                  <MealVoice
+                    v-if="meal.has_voice"
+                    :meal="meal"
+                    @changed="afterSaved"
+                  />
+                </p>
               </div>
-
-              <!-- One more line onto the plate, typed the way the meal was -->
-              <form
-                class="flex items-center gap-2 px-4 pt-1.5"
-                @submit.prevent="addLine(meal)"
-              >
-                <UInput
-                  v-model="addText[meal.id]"
-                  icon="i-lucide-plus"
-                  size="sm"
-                  class="min-w-0 flex-1"
-                  placeholder="Add an item — “30 g almonds”"
-                  :disabled="addingTo === meal.id"
-                />
-                <UButton
-                  type="submit"
-                  label="Add"
-                  size="sm"
-                  color="neutral"
-                  variant="subtle"
-                  :loading="addingTo === meal.id"
-                  :disabled="!(addText[meal.id] ?? '').trim()"
-                />
-              </form>
-
-              <p
-                v-if="meal.note || meal.has_voice"
-                class="flex flex-wrap items-start gap-1.5 px-4 pt-1.5 text-xs text-muted"
-              >
-                <UIcon
-                  :name="meal.has_voice ? 'i-lucide-mic' : 'i-lucide-sticky-note'"
-                  class="mt-0.5 size-3 shrink-0 text-dimmed"
-                />
-                <span
-                  v-if="meal.note"
-                  class="min-w-0"
-                >{{ meal.note }}</span>
-                <span
-                  v-else
-                  class="text-dimmed"
-                >said out loud, not written down</span>
-                <MealVoice
-                  v-if="meal.has_voice"
-                  :meal="meal"
-                  @changed="afterSaved"
-                />
-              </p>
             </div>
           </div>
         </div>
       </div>
-    </SheetCard>
+    </section>
 
     <!-- Onto another day -->
     <UModal

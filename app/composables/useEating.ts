@@ -4,6 +4,34 @@
  * alone (quick kcal, or a recipe with no ingredients) is counted in servings. */
 export type Unit = 'g' | 'ml' | 'piece' | 'scoop' | 'tbsp' | 'tsp' | 'cup' | 'handful' | 'pinch' | 'slice' | 'serving'
 
+/** Where a meal sits in the day — the diary is grouped by these four */
+export type Slot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+
+export const SLOTS: { value: Slot, label: string, plural: string, icon: string }[] = [
+  { value: 'breakfast', label: 'Breakfast', plural: 'Breakfast', icon: 'i-lucide-coffee' },
+  { value: 'lunch', label: 'Lunch', plural: 'Lunch', icon: 'i-lucide-salad' },
+  { value: 'dinner', label: 'Dinner', plural: 'Dinner', icon: 'i-lucide-utensils' },
+  { value: 'snack', label: 'Snack', plural: 'Snacks', icon: 'i-lucide-apple' }
+]
+
+export function slotLabel(slot: Slot): string {
+  return SLOTS.find(entry => entry.value === slot)?.label ?? 'Snack'
+}
+
+/** The slot the clock suggests — the same hours the API uses for a timed meal */
+export function slotForNow(date = new Date()): Slot {
+  const hour = date.getHours()
+  if (hour < 11) return 'breakfast'
+  if (hour < 16) return 'lunch'
+  if (hour < 21) return 'dinner'
+  return 'snack'
+}
+
+/** "08:30" in the viewer's own clock — what a meal written down now is timed at */
+export function clockNow(date = new Date()): string {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
 export interface Macros {
   kcal: number
   protein: number
@@ -25,6 +53,20 @@ export interface Food extends Macros {
   /** Your own food; the shared staples are read-only */
   mine: boolean
   archived: boolean
+  /** Starred, so it comes first when adding food */
+  favourite: boolean
+}
+
+/** A food offered for a quick add, with the amount it was last eaten in */
+export interface FoodPick extends Food {
+  last_quantity: number | null
+  last_unit: Unit | null
+  last_day: string | null
+}
+
+export interface QuickFoods {
+  favourites: FoodPick[]
+  recent: FoodPick[]
 }
 
 export interface MealItem extends Macros {
@@ -43,6 +85,7 @@ export interface Meal extends Macros {
   /** "08:30", or null when the time wasn't worth writing down */
   at: string | null
   title: string
+  slot: Slot
   recipe_id: string | null
   recipe_title: string | null
   servings: number
@@ -219,7 +262,10 @@ export interface MealItemPayload {
 export interface MealPayload {
   day: string
   at?: string | null
-  title: string
+  /** Left out: the one food's name, or the slot's */
+  title?: string
+  /** Left out: taken from the time, then from the title */
+  slot?: Slot
   note?: string | null
   items: MealItemPayload[]
 }
@@ -609,6 +655,11 @@ export function useEating() {
     }
   }
 
+  /** Another day's meals, read without moving the diary there */
+  async function peekDay(which: string) {
+    return api.get<DayView>(`/eating/days/${which}`)
+  }
+
   async function loadDays(from: string, to: string) {
     return api.get<DayTotals[]>('/eating/days', { query: { from, to } })
   }
@@ -671,7 +722,7 @@ export function useEating() {
     return put(await api.post<Meal>('/eating/meals', { ...payload }))
   }
 
-  async function updateMeal(id: string, patch: Partial<Pick<Meal, 'day' | 'at' | 'title' | 'note'>>) {
+  async function updateMeal(id: string, patch: Partial<Pick<Meal, 'day' | 'at' | 'title' | 'note' | 'slot'>>) {
     const updated = await api.patch<Meal>(`/eating/meals/${id}`, { ...patch })
     // Moved to another day: it leaves this one
     if (dayView.value && updated.day !== dayView.value.day) {
@@ -731,14 +782,36 @@ export function useEating() {
   }
 
   /** A recipe copied onto a day, scaled by servings; the copy is then ours to edit */
-  async function mealFromRecipe(payload: { recipe_id: string, day: string, at?: string | null, servings: number }) {
+  async function mealFromRecipe(payload: { recipe_id: string, day: string, at?: string | null, slot?: Slot, servings: number }) {
     return put(await api.post<Meal>('/eating/meals/from-recipe', { ...payload }))
+  }
+
+  /** The same plate again — the copy keeps the numbers it was eaten at */
+  async function copyMeal(id: string, target: { day: string, slot?: Slot, at?: string | null }) {
+    return put(await api.post<Meal>(`/eating/meals/${id}/copy`, { ...target }))
+  }
+
+  /** Another day's meals onto this one — all of them, or one slot's */
+  async function copyDay(target: string, source: { from_day: string, slot?: Slot }) {
+    const copies = await api.post<Meal[]>(`/eating/days/${target}/copy`, { ...source })
+    copies.forEach(put)
+    return copies
   }
 
   // --- Foods ----------------------------------------------------------------
 
   async function searchFoods(q = '', limit = 30, mine = false) {
     return api.get<Food[]>('/eating/foods', { query: { q: q || undefined, limit, mine: mine || undefined } })
+  }
+
+  /** What adding food opens on: starred foods, then the ones eaten lately */
+  async function quickFoods(limit = 12) {
+    return api.get<QuickFoods>('/eating/foods/quick', { query: { limit } })
+  }
+
+  async function setFavourite(id: string, favourite: boolean) {
+    const path = `/eating/foods/${id}/favourite`
+    return favourite ? api.request<Food>(path, { method: 'PUT' }) : api.del<Food>(path)
   }
 
   async function createFood(payload: FoodPayload) {
@@ -800,6 +873,7 @@ export function useEating() {
     saveSettings,
     estimateGoals,
     loadDay,
+    peekDay,
     loadRange,
     loadWeek,
     addMeal,
@@ -813,6 +887,10 @@ export function useEating() {
     loadVoice,
     dropVoice,
     mealFromRecipe,
+    copyMeal,
+    copyDay,
+    quickFoods,
+    setFavourite,
     searchFoods,
     createFood,
     updateFood,

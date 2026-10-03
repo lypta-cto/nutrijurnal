@@ -15,7 +15,7 @@ import {
  *
  * Food names stay exactly as the data holds them; the app's own words are English.
  */
-const { loadRecipes, createRecipe, updateRecipe, parseText, searchFoods } = useEating()
+const { loadRecipes, createRecipe, updateRecipe, parseText, searchFoods, setFavourite } = useEating()
 const toast = useToast()
 const route = useRoute()
 
@@ -188,6 +188,18 @@ function onFoodRemoved(removed: Food) {
   foods.value = foods.value.filter(row => row.id !== removed.id)
 }
 
+/** Starred foods come first whenever food is added */
+async function toggleStar(food: Food) {
+  const next = !food.favourite
+  food.favourite = next
+  try {
+    await setFavourite(food.id, next)
+  } catch (error) {
+    food.favourite = !next
+    fail(error)
+  }
+}
+
 const SEGMENT = 'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
 const SEGMENT_ON = 'bg-default text-highlighted shadow-sm'
 const SEGMENT_OFF = 'text-muted hover:text-default'
@@ -329,41 +341,13 @@ const SEGMENT_OFF = 'text-muted hover:text-default'
       :is-empty="!foods.length"
       :empty="onlyMine ? 'You haven\'t added any foods yet — scan a packet or add one by hand.' : 'No foods match — add one and it is yours from then on.'"
     >
-      <button
+      <FoodRow
         v-for="food in foods"
         :key="food.id"
-        type="button"
-        class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-elevated/60"
-        @click="openFood(food)"
-      >
-        <span class="flex min-w-0 flex-1 flex-col">
-          <span class="flex min-w-0 items-baseline gap-x-2">
-            <span class="truncate text-sm font-medium text-highlighted">{{ food.name }}</span>
-            <span
-              v-if="food.mine"
-              class="shrink-0 rounded-md bg-elevated px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-dimmed"
-            >Mine</span>
-          </span>
-          <span class="flex gap-x-2 text-[11px] tabular-nums">
-            <span
-              v-if="food.brand"
-              class="truncate text-muted"
-            >{{ food.brand }}</span>
-            <span class="text-sky-500">P {{ formatMacro(food.protein) }}</span>
-            <span class="text-violet-500">C {{ formatMacro(food.carbs) }}</span>
-            <span class="text-amber-500">F {{ formatMacro(food.fat) }}</span>
-          </span>
-        </span>
-        <span class="shrink-0 text-right tabular-nums">
-          <span class="block text-sm font-medium text-highlighted">{{ formatKcal(food.kcal) }}</span>
-          <span class="block text-[10px] text-dimmed">/100 {{ food.base_unit }}</span>
-        </span>
-        <UIcon
-          :name="food.mine ? 'i-lucide-pencil' : 'i-lucide-copy-plus'"
-          class="size-4 shrink-0 text-dimmed"
-          :aria-label="food.mine ? `Edit ${food.name}` : `Make your own version of ${food.name}`"
-        />
-      </button>
+        :food="food"
+        @pick="openFood"
+        @star="toggleStar"
+      />
     </SheetCard>
 
     <!-- A recipe of one's own: a name, or a dish copied off a label -->

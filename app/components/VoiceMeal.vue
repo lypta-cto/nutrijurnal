@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Meal } from '~/composables/useEating'
+import type { Meal, Slot } from '~/composables/useEating'
 import { clockOf } from '~/composables/useVoiceNote'
 
 /**
@@ -13,6 +13,7 @@ import { clockOf } from '~/composables/useVoiceNote'
 const props = defineProps<{
   /** The day the diary is showing */
   day: string
+  mealSlot: Slot
 }>()
 
 const emit = defineEmits<{ saved: [Meal] }>()
@@ -52,6 +53,7 @@ async function finish() {
     // safe on the day rather than lost with the recording.
     const meal = await addMeal({
       day: props.day,
+      slot: props.mealSlot,
       title: titleOf(take.transcript),
       note: take.transcript || null,
       items: []

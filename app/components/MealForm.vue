@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { Food, Macros, Meal, MealItemPayload, MealTab, Recipe, ScanResult, Unit } from '~/composables/useEating'
+import type { Food, Macros, Meal, MealItemPayload, MealTab, Recipe, ScanResult, Slot, Unit } from '~/composables/useEating'
 import {
   DRAFT_COLUMNS,
+  SLOTS,
   DRAFT_MACRO_COLUMNS,
   UNIT_ITEMS,
   amountLabel,
@@ -13,6 +14,8 @@ import {
   macrosOf,
   scaleMacros,
   servingsLabel,
+  slotForNow,
+  slotLabel,
   unitLabel,
   unitsOf
 } from '~/composables/useEating'
@@ -38,9 +41,12 @@ const props = withDefaults(defineProps<{
   meal?: Meal | null
   /** The tab a new meal opens on */
   start?: MealTab
+  /** The slot a new meal goes into; the clock decides when nobody says */
+  mealSlot?: Slot | null
 }>(), {
   meal: null,
-  start: 'search'
+  start: 'search',
+  mealSlot: null
 })
 
 const emit = defineEmits<{ saved: [Meal] }>()
@@ -69,21 +75,11 @@ const saving = ref(false)
 const form = reactive({
   day: props.day,
   at: '',
+  /** Optional: left empty, the API names it after its one food or its slot */
   title: '',
+  slot: slotForNow() as Slot,
   note: ''
 })
-
-/** What a meal gets called: by the hour, or simply by its number for
- * anyone who eats to a plan rather than to a clock */
-const MEAL_TITLES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Meal 1', 'Meal 2', 'Meal 3']
-
-function titleForNow(): string {
-  const hour = new Date().getHours()
-  if (hour < 11) return 'Breakfast'
-  if (hour < 16) return 'Lunch'
-  if (hour < 21) return 'Dinner'
-  return 'Snack'
-}
 
 function fail(error: unknown) {
   toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
@@ -149,9 +145,6 @@ function addFoodDraft(food: Food, quantity: number, unit: Unit) {
     base: macros && grams !== null ? { quantity, unit, macros, grams } : null,
     direct: null
   }]
-  if (!form.title.trim()) {
-    form.title = titleForNow()
-  }
 }
 
 /** The amount a food opens on: 100 of its base unit, or one of its portions */
@@ -259,9 +252,6 @@ async function parseQuick() {
     ]
     unresolved.value = [...unresolved.value, ...result.unknown]
     quickText.value = ''
-    if (!form.title.trim()) {
-      form.title = titleForNow()
-    }
   } catch (error) {
     fail(error)
   } finally {
@@ -323,9 +313,6 @@ function addDirect() {
     direct: macros
   }]
   Object.assign(direct, { label: '', kcal: undefined, protein: undefined, carbs: undefined, fat: undefined })
-  if (!form.title.trim()) {
-    form.title = titleForNow()
-  }
 }
 
 // --- A food that doesn't exist yet -------------------------------------------------
@@ -412,9 +399,6 @@ function pickRecipe(recipe: Recipe) {
     grams: item.grams,
     optional: item.optional
   }))
-  if (!form.title.trim()) {
-    form.title = recipe.title
-  }
 }
 
 /** The list as it will be saved: the recipe's amounts times the servings */
@@ -498,8 +482,9 @@ function reset() {
   if (meal) {
     Object.assign(form, {
       day: meal.day,
-      at: meal.at ?? '',
+      at: meal.at?.slice(0, 5) ?? '',
       title: meal.title,
+      slot: meal.slot,
       note: meal.note ?? ''
     })
     // A meal written down in words opens with those words ready to be read;
@@ -508,7 +493,7 @@ function reset() {
     tab.value = meal.items.length ? 'search' : 'type'
     return
   }
-  Object.assign(form, { day: props.day, at: '', title: '', note: '' })
+  Object.assign(form, { day: props.day, at: '', title: '', slot: props.mealSlot ?? slotForNow(), note: '' })
   quickText.value = ''
   tab.value = props.start
 }
@@ -659,6 +644,7 @@ async function save() {
         recipe_id: picked.value.id,
         day: form.day,
         at: form.at || null,
+        slot: form.slot,
         servings: servings.value
       })
       meal = await applyRecipeEdits(meal)
@@ -678,9 +664,10 @@ async function save() {
       const title = form.title.trim() || meal.title
       const note = form.note.trim() || null
       const at = form.at || null
-      // The day is on the form too: editing is also how a meal moves
-      if (title !== meal.title || note !== meal.note || at !== meal.at || form.day !== meal.day) {
-        meal = await updateMeal(meal.id, { title, note, at, day: form.day })
+      const timeMoved = (at ?? '') !== (meal.at?.slice(0, 5) ?? '')
+      // The day and the slot are on the form too: editing is also how a meal moves
+      if (title !== meal.title || note !== meal.note || timeMoved || form.day !== meal.day || form.slot !== meal.slot) {
+        meal = await updateMeal(meal.id, { title, note, at, day: form.day, slot: form.slot })
       }
     } else {
       // Nothing recognised and nothing typed into the rows: keep the words
@@ -689,7 +676,8 @@ async function save() {
       meal = await addMeal({
         day: form.day,
         at: form.at || null,
-        title: form.title.trim() || titleForNow(),
+        title: form.title.trim() || undefined,
+        slot: form.slot,
         note: [form.note.trim(), noteOnly.value ? written : ''].filter(Boolean).join(' · ') || null,
         items: payloadItems()
       })
@@ -757,27 +745,36 @@ const UNIT_UI = { base: 'px-1.5' }
         label="Meal"
         class="col-span-2"
       >
+        <div
+          class="grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1"
+          role="radiogroup"
+          aria-label="Meal"
+        >
+          <UButton
+            v-for="entry in SLOTS"
+            :key="entry.value"
+            :label="entry.label"
+            size="sm"
+            role="radio"
+            :aria-checked="form.slot === entry.value"
+            class="justify-center rounded-lg"
+            :color="form.slot === entry.value ? 'primary' : 'neutral'"
+            :variant="form.slot === entry.value ? 'solid' : 'ghost'"
+            @click="form.slot = entry.value"
+          />
+        </div>
+      </UFormField>
+      <UFormField
+        label="Name"
+        hint="optional"
+        class="col-span-2"
+      >
         <UInput
           v-model="form.title"
-          :placeholder="titleForNow()"
+          :placeholder="items.length === 1 ? items[0]?.label : slotLabel(form.slot)"
           class="w-full"
         />
       </UFormField>
-    </div>
-
-    <div class="flex flex-wrap gap-1.5">
-      <button
-        v-for="preset in MEAL_TITLES"
-        :key="preset"
-        type="button"
-        class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
-        :class="form.title === preset
-          ? 'border-primary bg-primary/10 text-highlighted'
-          : 'border-default text-muted hover:text-default'"
-        @click="form.title = preset"
-      >
-        {{ preset }}
-      </button>
     </div>
 
     <!-- Five ways in -->
