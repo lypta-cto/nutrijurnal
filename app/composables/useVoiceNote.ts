@@ -116,6 +116,12 @@ export function useVoiceNote() {
     return FORMATS.find(type => MediaRecorder.isTypeSupported(type)) ?? ''
   }
 
+  /** The microphone's light goes out with this */
+  function releaseMicrophone() {
+    stream?.getTracks().forEach(track => track.stop())
+    stream = null
+  }
+
   function listen(language: string) {
     heard = recogniser()
     if (!heard) {
@@ -185,8 +191,7 @@ export function useVoiceNote() {
     } catch {
       // The microphone is open by now; a recorder that won't start must not
       // leave its light on
-      stream.getTracks().forEach(track => track.stop())
-      stream = null
+      releaseMicrophone()
       error.value = 'This browser cannot record audio.'
       return false
     }
@@ -196,7 +201,16 @@ export function useVoiceNote() {
         chunks.push(event.data)
       }
     }
-    recorder.start()
+    try {
+      recorder.start()
+    } catch {
+      // A recorder can be made and still refuse to start (a format it named
+      // but can't encode, the microphone taken by a call) — same light
+      releaseMicrophone()
+      recorder = null
+      error.value = 'The recording couldn\'t start — try again, or type what you ate.'
+      return false
+    }
     recording.value = true
 
     const began = Date.now()
@@ -219,8 +233,7 @@ export function useVoiceNote() {
       const taken = recorder
       taken.onstop = () => {
         const blob = new Blob(chunks, { type: taken.mimeType || 'audio/webm' })
-        stream?.getTracks().forEach(track => track.stop())
-        stream = null
+        releaseMicrophone()
         recorder = null
         recording.value = false
         resolve({ blob, seconds: seconds.value, transcript: transcript.value.trim() })
@@ -256,8 +269,7 @@ export function useVoiceNote() {
       recorder.onstop = null
       recorder.stop()
     }
-    stream?.getTracks().forEach(track => track.stop())
-    stream = null
+    releaseMicrophone()
     recorder = null
     chunks = []
     recording.value = false

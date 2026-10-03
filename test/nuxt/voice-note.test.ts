@@ -74,6 +74,31 @@ describe('recording a meal out loud', () => {
     expect(voice.recording.value).toBe(false)
   })
 
+  it('turns the microphone off and says why when the recording will not begin', async () => {
+    const stop = vi.fn()
+    vi.stubGlobal('MediaRecorder', Object.assign(function () {
+      return {
+        start: () => {
+          throw new DOMException('the device is busy', 'NotSupportedError')
+        }
+      }
+    }, { isTypeSupported: () => true }))
+    secure(true)
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop }] }) }
+    })
+    const voice = await recorder()
+
+    expect(await voice.start()).toBe(false)
+
+    expect(stop).toHaveBeenCalled()
+    expect(voice.recording.value).toBe(false)
+    expect(voice.error.value).toBe('The recording couldn\'t start — try again, or type what you ate.')
+    // Nothing half-started is left for a later stop to trip over
+    expect(await voice.stop()).toBeNull()
+  })
+
   it('names its languages in English', () => {
     expect(DICTATION_LANGUAGES.map(entry => entry.label)).toEqual(['Serbian', 'English'])
   })
