@@ -160,8 +160,8 @@ const tooltip = computed(() => {
             :x2="LEFT + plotWidth"
             :y1="y(tick)"
             :y2="y(tick)"
-            stroke="var(--ui-border)"
-            stroke-width="1"
+            stroke="var(--app-separator)"
+            class="[stroke-width:var(--app-hairline)]"
           />
           <text
             v-if="tick >= domain.low && tick <= domain.high"
@@ -217,7 +217,7 @@ const tooltip = computed(() => {
         :cy="y(entry.value)"
         :r="active === entry.index ? 5.5 : 4"
         :fill="color"
-        stroke="var(--ui-bg)"
+        stroke="var(--app-cell)"
         stroke-width="2"
         class="transition-[r] duration-200 ease-soft motion-reduce:transition-none"
       />
@@ -234,14 +234,14 @@ const tooltip = computed(() => {
 
     <div
       v-if="tooltip"
-      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-inverted px-3 py-2 text-center shadow-overlay"
+      class="app-glass pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-[0.625rem] border-[length:var(--app-hairline)] border-(--app-glass-border) px-3 py-1.5 text-center shadow-overlay"
       :style="{ left: `${tooltip.left}px` }"
       role="status"
     >
-      <p class="text-sm font-semibold tabular-nums text-inverted">
+      <p class="font-rounded text-subheadline font-semibold text-highlighted tabular-nums">
         {{ format(tooltip.value) }}
       </p>
-      <p class="text-[11px] whitespace-nowrap text-inverted opacity-70">
+      <p class="text-caption2 whitespace-nowrap text-muted">
         {{ tooltip.point.title }}
       </p>
     </div>

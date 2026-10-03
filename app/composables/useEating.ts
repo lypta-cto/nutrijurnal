@@ -571,7 +571,7 @@ export const MACRO_BARS: { key: 'protein' | 'carbs' | 'fat', label: string, lett
 /** Chart colours for what is not a macro — water is teal (info), weight has none */
 export const CHART_COLORS = {
   kcal: 'var(--app-kcal)',
-  water: 'var(--ui-info)',
+  water: 'var(--app-water)',
   weight: 'var(--ui-text-highlighted)'
 }
 

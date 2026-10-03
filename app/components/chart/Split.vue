@@ -47,15 +47,15 @@ onMounted(() => requestAnimationFrame(() => {
         :key="row.key"
         class="flex flex-col"
       >
-        <dt class="flex items-center gap-1.5 text-caption font-semibold text-muted">
+        <dt class="flex items-center gap-1.5 text-footnote text-muted">
           <span
             class="size-2 shrink-0 rounded-full"
             :style="{ backgroundColor: row.color }"
           />
           {{ row.label }}
         </dt>
-        <dd class="text-xl font-bold text-highlighted tabular-nums">
-          {{ row.share }}<span class="text-sm font-semibold text-muted">%</span>
+        <dd class="font-rounded text-title3 text-highlighted tabular-nums">
+          {{ row.share }}<span class="text-subheadline font-medium text-muted">%</span>
         </dd>
         <dd class="text-caption text-muted tabular-nums">
           {{ Math.round(row.grams) }} g<template v-if="row.goalShare !== null">

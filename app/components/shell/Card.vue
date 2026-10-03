@@ -102,9 +102,10 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
           class="size-5 shrink-0"
           :class="iconClass"
         />
+        <!-- The title keeps its width; the quiet hint gives way first -->
         <h2
           v-if="title"
-          class="truncate text-headline text-highlighted"
+          class="max-w-full shrink-0 truncate text-headline text-highlighted"
         >
           {{ title }}
         </h2>
@@ -114,7 +115,7 @@ const hasCount = computed(() => props.count !== null && props.count !== undefine
         >{{ count }}</span>
         <span
           v-if="hint"
-          class="truncate text-subheadline text-muted"
+          class="min-w-0 truncate text-subheadline text-muted"
         >{{ hint }}</span>
       </slot>
 

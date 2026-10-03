@@ -180,7 +180,7 @@ const rows = computed(() => {
         <span
           v-for="index in 4"
           :key="index"
-          class="app-shimmer h-24 rounded-tile"
+          class="app-shimmer h-24 rounded-card"
         />
       </div>
       <ShellSkeleton
@@ -207,7 +207,6 @@ const rows = computed(() => {
           :value="averages?.kcal ?? null"
           unit="kcal"
           :hint="kcalAgainstTarget ?? 'on the days you logged'"
-          tone="brand"
         >
           <template #value>
             <CountUp
@@ -271,7 +270,7 @@ const rows = computed(() => {
           />
           <p
             v-if="kcalTarget"
-            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted"
+            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-footnote text-muted"
           >
             <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-kcal" />within target</span>
             <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-warning" />over</span>
@@ -348,66 +347,70 @@ const rows = computed(() => {
       </ShellCard>
 
       <!-- The same numbers, day by day: every chart's twin -->
-      <ShellCard
-        flush
+      <ShellSection
         title="Day by day"
-        icon="i-lucide-list"
-        :hint="kcalTarget ? 'kcal against the target' : 'kcal'"
-        :count="averages?.logged_days ? `${averages.logged_days}/${averages.days}` : null"
-        :is-empty="!rows.length"
-        empty="No days in this period."
+        class="pt-2"
       >
-        <div
-          v-for="entry in rows"
-          :key="entry.day"
-          class="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem] items-center gap-x-3 gap-y-1 px-4 py-3"
+        <template #actions>
+          <span class="app-group-title">{{ kcalTarget ? 'kcal against the target' : 'kcal' }}</span>
+        </template>
+        <ShellCard
+          flush
+          :is-empty="!rows.length"
+          empty="No days in this period."
         >
-          <span
-            class="truncate text-sm font-semibold"
-            :class="entry.meals ? 'text-highlighted' : 'text-muted'"
-          >{{ dayLabel(entry.day) }}</span>
-          <span
-            class="h-1.5 overflow-hidden rounded-full bg-elevated"
-            aria-hidden="true"
+          <div
+            v-for="entry in rows"
+            :key="entry.day"
+            class="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem] items-center gap-x-3 gap-y-1 px-4 py-2.5"
           >
             <span
-              class="block h-full rounded-full"
-              :class="entry.over ? 'bg-warning' : 'bg-kcal'"
-              :style="{ width: `${entry.share}%` }"
-            />
-          </span>
-          <span
-            class="text-right text-sm tabular-nums"
-            :class="entry.meals ? (entry.over ? 'font-semibold text-warning' : 'font-semibold text-highlighted') : 'text-dimmed'"
-          >{{ entry.meals ? formatKcal(entry.kcal) : '—' }}</span>
-          <span class="col-span-3 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-caption text-muted tabular-nums">
-            <ShellMacroLine
-              v-if="entry.meals"
-              :macros="entry"
-              :kcal="false"
-            />
-            <span v-else>nothing written down</span>
+              class="truncate text-body"
+              :class="entry.meals ? 'text-highlighted' : 'text-muted'"
+            >{{ dayLabel(entry.day) }}</span>
             <span
-              v-if="entry.water_ml"
-              class="flex items-center gap-1"
+              class="h-1.5 overflow-hidden rounded-full bg-elevated"
+              aria-hidden="true"
             >
-              <UIcon
-                name="i-lucide-glass-water"
-                class="size-3 text-info"
-              />{{ formatWater(entry.water_ml) }}
+              <span
+                class="block h-full rounded-full"
+                :class="entry.over ? 'bg-warning' : 'bg-kcal'"
+                :style="{ width: `${entry.share}%` }"
+              />
             </span>
             <span
-              v-if="entry.weight_kg !== null"
-              class="flex items-center gap-1"
-            >
-              <UIcon
-                name="i-lucide-scale"
-                class="size-3"
-              />{{ formatWeight(entry.weight_kg) }}
+              class="text-right text-body tabular-nums"
+              :class="entry.meals ? (entry.over ? 'font-medium text-warning' : 'font-medium text-highlighted') : 'text-dimmed'"
+            >{{ entry.meals ? formatKcal(entry.kcal) : '—' }}</span>
+            <span class="col-span-3 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-footnote text-muted tabular-nums">
+              <ShellMacroLine
+                v-if="entry.meals"
+                :macros="entry"
+                :kcal="false"
+              />
+              <span v-else>nothing written down</span>
+              <span
+                v-if="entry.water_ml"
+                class="flex items-center gap-1"
+              >
+                <UIcon
+                  name="i-lucide-glass-water"
+                  class="size-3 text-info"
+                />{{ formatWater(entry.water_ml) }}
+              </span>
+              <span
+                v-if="entry.weight_kg !== null"
+                class="flex items-center gap-1"
+              >
+                <UIcon
+                  name="i-lucide-scale"
+                  class="size-3"
+                />{{ formatWeight(entry.weight_kg) }}
+              </span>
             </span>
-          </span>
-        </div>
-      </ShellCard>
+          </div>
+        </ShellCard>
+      </ShellSection>
     </div>
   </AppPage>
 </template>

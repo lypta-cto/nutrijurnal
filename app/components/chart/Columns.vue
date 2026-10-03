@@ -131,8 +131,8 @@ onMounted(() => requestAnimationFrame(() => {
             :x2="LEFT + plotWidth"
             :y1="y(tick)"
             :y2="y(tick)"
-            stroke="var(--ui-border)"
-            stroke-width="1"
+            stroke="var(--app-separator)"
+            class="[stroke-width:var(--app-hairline)]"
           />
           <text
             :x="LEFT - 6"
@@ -183,7 +183,7 @@ onMounted(() => requestAnimationFrame(() => {
           :y="y(reference.value) - 4"
           text-anchor="end"
           paint-order="stroke"
-          stroke="var(--ui-bg)"
+          stroke="var(--app-cell)"
           stroke-width="3"
           stroke-linejoin="round"
           class="fill-(--ui-text-muted) text-[10px] font-medium"
@@ -226,14 +226,14 @@ onMounted(() => requestAnimationFrame(() => {
 
     <div
       v-if="tooltip"
-      class="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-inverted px-3 py-2 text-center shadow-overlay"
+      class="app-glass pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-[0.625rem] border-[length:var(--app-hairline)] border-(--app-glass-border) px-3 py-1.5 text-center shadow-overlay"
       :style="{ left: `${tooltip.left}px` }"
       role="status"
     >
-      <p class="text-sm font-semibold tabular-nums text-inverted">
+      <p class="font-rounded text-subheadline font-semibold text-highlighted tabular-nums">
         {{ tooltip.point.value === null ? '—' : format(tooltip.point.value) }}
       </p>
-      <p class="text-[11px] whitespace-nowrap text-inverted opacity-70">
+      <p class="text-caption2 whitespace-nowrap text-muted">
         {{ tooltip.point.title }}<template v-if="tooltip.point.detail">
           · {{ tooltip.point.detail }}
         </template>

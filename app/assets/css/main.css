@@ -221,6 +221,9 @@
   --app-carbs-ink: #6a55d4;
   --app-fat: #e9a23b;
   --app-fat-ink: #9c5c00;
+  /* Water's fill (columns): a lighter teal than its ink, so a chart of it
+     weighs no more than the kcal chart above it */
+  --app-water: #14a89a;
 
   /* Almost no elevation: surfaces are told apart by their grey */
   --app-shadow-card: 0 0 #0000;
@@ -285,6 +288,7 @@
   --app-carbs-ink: #b1a6f7;
   --app-fat: #f2b65a;
   --app-fat-ink: #f2be6b;
+  --app-water: #2dd4bf;
 
   --app-shadow-raised: 0 8px 24px -6px rgb(0 0 0 / 60%);
   --app-shadow-overlay: 0 12px 32px -8px rgb(0 0 0 / 70%);
