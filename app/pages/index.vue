@@ -10,6 +10,7 @@ import {
   formatGrams,
   formatKcal,
   formatMacro,
+  itemPayload,
   shiftDay,
   targetsOf,
   timeLabel,
@@ -41,6 +42,7 @@ const {
   removeItem,
   updateMeal,
   removeMeal,
+  restoreMeal,
   copyMeal,
   copyDay,
   peekDay,
@@ -50,7 +52,6 @@ const {
 
 const quickAdd = useQuickAdd()
 const toast = useToast()
-const { confirm } = useConfirm()
 
 const today = computed(() => localIsoDay())
 const strip = ref<DayTotals[]>([])
@@ -111,7 +112,17 @@ async function repeat(slot: Slot) {
   }
 }
 
+const route = useRoute()
+
 onMounted(async () => {
+  // A meal reminder opens the app on "/?add=lunch": straight into adding it
+  const asked = route.query.add
+  const slot = SLOTS.find(entry => entry.value === asked)?.value
+  if (slot) {
+    day.value = today.value
+    quickAdd.open(undefined, { slot })
+    void navigateTo({ query: {} }, { replace: true })
+  }
   await loadSettings().catch(() => {})
   await refreshAll()
 })
@@ -228,9 +239,30 @@ async function commitItem(meal: Meal, item: MealItem, force = false) {
 }
 
 async function dropItem(meal: Meal, item: MealItem) {
+  const position = meal.items.findIndex(row => row.id === item.id)
   try {
     await removeItem(meal.id, item.id)
     void refreshWeek()
+    toast.add({
+      title: `${item.label} removed`,
+      icon: 'i-lucide-trash-2',
+      color: 'neutral',
+      actions: [{
+        label: 'Undo',
+        color: 'neutral',
+        variant: 'outline',
+        onClick: async () => {
+          try {
+            // Back in its place, with the numbers it had (a quick-kcal line
+            // carries its own)
+            await addItem(meal.id, { ...itemPayload(item), position: Math.max(0, position) })
+            void refreshWeek()
+          } catch (error) {
+            fail(error)
+          }
+        }
+      }]
+    })
   } catch (error) {
     fail(error)
   }
@@ -320,19 +352,30 @@ async function duplicate(meal: Meal) {
   }
 }
 
-async function confirmDelete(meal: Meal) {
-  const confirmed = await confirm({
-    title: 'Delete this meal?',
-    description: `“${meal.title}” and its ${meal.items.length} ${meal.items.length === 1 ? 'item' : 'items'} leave the day.`,
-    confirmLabel: 'Delete',
-    color: 'error'
-  })
-  if (!confirmed) {
-    return
-  }
+/** Deleted at once — the toast's Undo is the safety net, not a dialog first */
+async function deleteMeal(meal: Meal) {
   try {
     await removeMeal(meal.id)
     void refreshWeek()
+    toast.add({
+      title: `${meal.title} deleted`,
+      description: `${formatKcal(meal.kcal)} kcal left ${dayLabel(meal.day).toLowerCase() === 'today' ? 'today' : dayLabel(meal.day)}`,
+      icon: 'i-lucide-trash-2',
+      color: 'neutral',
+      actions: [{
+        label: 'Undo',
+        color: 'neutral',
+        variant: 'outline',
+        onClick: async () => {
+          try {
+            await restoreMeal(meal.id)
+            void refreshWeek()
+          } catch (error) {
+            fail(error)
+          }
+        }
+      }]
+    })
   } catch (error) {
     fail(error)
   }
@@ -344,7 +387,7 @@ function mealMenu(meal: Meal): DropdownMenuItem[][] {
     { label: 'Copy to today', icon: 'i-lucide-copy', onSelect: () => void duplicate(meal) },
     { label: 'Move to another day…', icon: 'i-lucide-calendar-days', onSelect: () => askMove(meal) }
   ], [
-    { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => void confirmDelete(meal) }
+    { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => void deleteMeal(meal) }
   ]]
 }
 

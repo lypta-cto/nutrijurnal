@@ -300,6 +300,8 @@ async function confirmDelete() {
       />
     </section>
 
+    <ReminderSettings />
+
     <UDrawer
       v-model:open="calculatorOpen"
       title="Goal calculator"

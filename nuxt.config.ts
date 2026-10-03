@@ -15,7 +15,8 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  css: ['~/assets/css/main.css'],
+  // main.css is the design's tokens and base; motion.css the features' transitions
+  css: ['~/assets/css/main.css', '~/assets/css/motion.css'],
 
   colorMode: {
     preference: 'system',

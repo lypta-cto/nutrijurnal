@@ -135,6 +135,8 @@ export interface EatingSettings extends Targets {
   water_goal_ml: number
   /** What one tap of the water "+" adds */
   water_glass_ml: number
+  /** IANA name the reminders run in; null until the browser said */
+  timezone: string | null
   /** The shared pantry plus your own foods */
   foods: number
   recipes: number
@@ -155,6 +157,8 @@ export interface SettingsPatch extends Partial<Targets> {
   profile?: GoalProfile
   water_goal_ml?: number
   water_glass_ml?: number
+  /** IANA name the reminders run in */
+  timezone?: string
 }
 
 export type Sex = 'female' | 'male' | 'other'
@@ -268,6 +272,8 @@ export interface MealItemPayload {
   unit: Unit
   /** Numbers for one serving of a plate with no food behind it */
   macros?: Macros
+  /** Where in the meal it goes — an Undo puts a removed line back in its place */
+  position?: number
 }
 
 export interface MealPayload {
@@ -757,6 +763,11 @@ export function useEating() {
     drop(id)
   }
 
+  /** The Undo of a delete — the very same meal back, items and recording */
+  async function restoreMeal(id: string) {
+    return put(await api.post<Meal>(`/eating/meals/${id}/restore`))
+  }
+
   async function addItem(mealId: string, payload: MealItemPayload) {
     return put(await api.post<Meal>(`/eating/meals/${mealId}/items`, { ...payload }))
   }
@@ -904,6 +915,7 @@ export function useEating() {
     addMeal,
     updateMeal,
     removeMeal,
+    restoreMeal,
     addItem,
     updateItem,
     removeItem,

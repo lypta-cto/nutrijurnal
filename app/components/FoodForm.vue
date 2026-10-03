@@ -30,7 +30,6 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { createFood, updateFood } = useEating()
 const toast = useToast()
-const { confirm } = useConfirm()
 
 /** The portions worth naming by hand — the rest are typed as grams anyway */
 const PORTIONS: { unit: Unit, label: string, hint: string }[] = [
@@ -130,24 +129,34 @@ async function save() {
   }
 }
 
-/** Put away, not destroyed: past meals and recipes still point at it */
+/** Put away, not destroyed: past meals and recipes still point at it, and
+ *  the toast's Undo takes it out again */
 async function remove() {
   const food = props.food
   if (!food) {
     return
   }
-  const sure = await confirm({
-    title: `Remove ${food.name}?`,
-    description: 'It leaves your foods and searches. Meals already eaten keep their numbers.',
-    confirmLabel: 'Remove',
-    color: 'error'
-  })
-  if (!sure) {
-    return
-  }
   try {
     emit('removed', await updateFood(food.id, { archived: true }))
     open.value = false
+    toast.add({
+      title: `${food.name} removed`,
+      description: 'Meals already eaten keep their numbers.',
+      icon: 'i-lucide-trash-2',
+      color: 'neutral',
+      actions: [{
+        label: 'Undo',
+        color: 'neutral',
+        variant: 'outline',
+        onClick: async () => {
+          try {
+            emit('saved', await updateFood(food.id, { archived: false }))
+          } catch (error) {
+            toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
+          }
+        }
+      }]
+    })
   } catch (error) {
     toast.add({ title: apiErrorMessage(error), icon: 'i-lucide-circle-alert', color: 'error' })
   }
