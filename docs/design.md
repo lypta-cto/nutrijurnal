@@ -87,8 +87,9 @@ them on one screen don't shout.
 | `carbs` | `#8e7ce8` / `#a598f5` | `#6a55d4` / `#b1a6f7` |
 | `fat` | `#e9a23b` / `#f2b65a` | `#9c5c00` / `#f2be6b` |
 
-Utilities: `bg-protein`, `text-protein-ink`, `stroke-protein`, `bg-protein/15` (tracks),
-and the same for `kcal`, `carbs`, `fat`. Raw values for SVG or inline styles:
+Utilities: `bg-protein`, `text-protein-ink`, `stroke-protein`, `bg-protein/15` (tracks;
+`/25` in dark mode, where 15 % all but disappears on black — Fitness's tracks are the
+same), and the same for `kcal`, `carbs`, `fat`. Raw values for SVG or inline styles:
 `var(--app-protein)`, `var(--app-protein-ink)`.
 
 - A value **within** its target keeps its own colour. **Over** the target, the fill
@@ -168,6 +169,13 @@ under them, **toasts** and **menus**. Nothing else — cards and lists are opaqu
 | `--app-material` (`bg-glass`) | `rgb(250 250 252 / 72%)` | `rgb(30 30 32 / 70%)` |
 | `--app-blur` | `blur(20px) saturate(180%)` | same |
 | `--app-glass-border` | `rgb(0 0 0 / 7%)` | `rgb(255 255 255 / 9%)` |
+| `--app-menu-gap` | `rgb(0 0 0 / 6%)` | `rgb(0 0 0 / 28%)` |
+
+`--app-menu-gap` is the band of shade between a menu's groups. A sheet's header and
+footer are glass only while something scrolls under them (a scroll-driven animation);
+their base is no glass at all, so a sheet too short to scroll — whose timeline is
+inactive — is one clean surface. Browsers without scroll-driven animations keep the
+solid bars.
 
 `.app-glass` is the whole recipe (tint + `backdrop-filter`); in Nuxt UI slots it is
 `bg-glass backdrop-blur-glass backdrop-saturate-180`. **Fallbacks:** where
@@ -299,7 +307,7 @@ Each file documents its props at the top. Auto-imported with the `Shell` prefix.
 | `ShellMacroLine` | "P 24 · C 30 · F 8 · 320 kcal" — the letters in the macro inks, the numbers muted | `macros`, `kcal?: boolean`, `size?` |
 | `ShellStatTile` | one number with its label and context, the number in `font-rounded` | `label`, `value`, `unit?`, `hint?`, `macro?`, `icon?`, `tone?: 'card' \| 'well' \| 'warning'` (`brand` looks like `card`), `size?`; `#value` |
 | `ShellSegmented` | iOS segmented control with a sliding thumb | `v-model`, `options: { value, label, icon? }[]`, `label?`, `size?: 'sm' \| 'md'` |
-| `ShellFieldRow` | one value edited inline in a group, Health's way: label left, the number right-aligned against its unit; the whole row focuses the field | `label`, `unit?`, `dot?` (a macro's colour class), `wide?` (text, such as a name); default slot = a `UInput variant="none"` with `:ui="FIELD_ROW_INPUT"` |
+| `ShellFieldRow` | one value edited inline in a group, Health's way: label left, the number right-aligned against its unit; the whole row focuses the field | `label`, `unit?`, `dot?` (a macro's colour class), `wide?` (text, such as a name), `hint?` (a footnote under the label); default slot = a `UInput` or `DecimalInput` with `variant="none"` and `:ui="FIELD_ROW_INPUT"` |
 | `ShellEmpty` | an empty state: a glyph, a title, one sentence, the button that does it | `icon?`, `title`, `description?`, `compact?`; default slot = actions |
 | `ShellSkeleton` | placeholders shaped like the content, gently pulsing | `variant: 'rows' \| 'card' \| 'ring' \| 'tiles' \| 'text'`, `count?` |
 | `ShellLogoMark` / `ShellLogo` | the mark (one colour, follows the theme) / mark + wordmark | `ShellLogo`: `size?`, `to?` |
@@ -340,7 +348,13 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
 - **A value in a list** — a target, the water goal, a name — is a `ShellFieldRow`: edited
   where it stands, right-aligned against its unit. A form that saves explicitly shows its
   Save button only once something has changed (Settings); a quick action that belongs to
-  the group is an accent text row in it ("Split the kcal into macros").
+  the group is an accent text row in it ("Split the kcal into macros", "Add the usual
+  set"). **Forms are built the same way**, not as labels over boxes: a food's name, its
+  numbers per 100 g and its portions; a recipe's title, minutes and how many it makes;
+  the calculator's year, height and weight. What is wrong with a value is said under the
+  group, naming its row.
+- **A day and a time** in a form are rows with a grey pill on the right — the native
+  picker dressed as `.app-field` at `h-9 w-auto` — the way Calendar sets a new event.
 - **One of a few** — a period, an activity level, a goal — is a grouped list with a
   plain glyph and a checkmark (`i-lucide-check`, accent) on the chosen row,
   `role="radio"` on each.
@@ -380,11 +394,26 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
   column is a phone everywhere, so app.config undoes that, and a field set large on
   purpose (the amount, the quick kcal) says `fixed`.
 - **Toasts** are glass banners at the top, under the notch; anything undoable carries
-  Undo and a faint timer line.
+  Undo — accent text lined up with the title, never an outlined pill — and a faint timer
+  line (2 px, no track).
+- **Menus** are iOS's context menus: rows edge to edge in body type with hairlines
+  between them, the glyph after the words (in the text's colour, red for a destructive
+  row), a band of `--app-menu-gap` between groups. A row's "more" is the horizontal
+  `i-lucide-ellipsis`, the same glyph as the bar's — never the vertical one.
+- **Picking rows out of a list** (copying meals) is a `UCheckbox`, drawn as iOS's
+  selection circle: a grey ring, the accent filled with a white tick when chosen.
+- **A slider** is a thin grey track with the accent up to a white thumb with a soft
+  shadow — the switch's thumb.
+- **A star that is on is filled** (the Lucide outline, filled), a star that is off is
+  the dimmed outline.
 - **Counts and states** are plain text (`text-muted tabular-nums`), not pills. A badge is
   for the rare state that must stand out (a demo account), never for a number.
 - **Dark mode** is its own design, not an inversion: black canvas, `#1c1c1e` groups,
-  `#2c2c2e` groups in sheets, lighter accent and inks; the segmented thumb is `#636366`.
+  `#2c2c2e` groups in sheets, lighter accent and inks; the segmented thumb is `#636366`;
+  ring and bar tracks a step stronger (25 %).
+- **Charts label their axis by the room a label needs** — a weekday's letter far less
+  than a two-digit date — so a week labels all seven days and a weighing never falls
+  between two letters.
 
 ## Screens
 
@@ -397,36 +426,49 @@ whose header carries buttons — is a `ShellCard`. Several cards under one headi
   strokes 2 px apart, which leaves a 104 px hole a four-digit number at 34 px clears
   (172 / 9 / 3 left 82 px, and "1 572" ran into the fat ring) — then one card per meal slot: a header
   (glyph, name, kcal, an accent "Repeat" and "+"), and rows of time (footnote) · name
-  (regular, two lines) over its macro line · kcal · ⋯. "Fill in" is accent text. A meal
+  (regular, two lines) over its macro line · kcal · ⋯ (horizontal, as in the bar). "Fill
+  in" is accent text. A meal
   opens onto its items on a faint well. Swipe actions are solid (red delete, accent copy).
   Water: the glasses as plain glyphs (44 px targets, no tiles) — teal when drunk,
   dimmed when not — over one row of grey buttons; "Goal reached" as plain teal words. Weight: the number in `font-rounded`, the week's change as plain muted
-  text. A day that didn't load is a compact `ShellEmpty` with Try again.
+  text. A day that didn't load is a compact `ShellEmpty` with Try again. The install card
+  shows the PWA's own icon (`/icons/apple-touch-icon.png`, green on cream) with iOS's
+  corner — exactly what the home screen will show.
 - **The "+" sheet** — the slot as a small segmented control, the search field, the six
   ways in as a row of equal accent buttons (a contact card's message · call · mail),
   "Repeat yesterday's …" as one accent row, then Starred and Recent as grouped lists of
-  food rows (name, the amount the "+" adds again, the macro line, kcal per 100, a star
-  and a tinted round "+").
-- **Form sheets** — meal (the five ways as one segmented control, the plate as a group
-  headed "On the plate · n" with its total as the last row), recipe (the kcal in
-  `font-rounded` on a well, ingredients and plain numbered steps as groups), food,
-  export (a checkmark list), move, targets (`ShellFieldRow`s), keep the demo.
+  food rows (name, the amount the "+" adds again, the macro line, kcal per 100, a star —
+  filled when starred — and a tinted round "+"). A panel one level down (scan, quick
+  kcal, copy) only names the day under the title; there is no slot to pick there.
+- **Form sheets** — meal (day and time as pill rows, the slot and the name in the same
+  group; the five ways as one segmented control, the plate as a group headed "On the
+  plate · n" with its total as the last row), recipe (the kcal in `font-rounded` on a
+  well, its title, subtitle, minutes and makes as field rows, ingredients and plain
+  numbered steps as groups), food (name and brand, the four numbers per 100 g, the
+  portions with what each means — all field rows), export (a checkmark list), move,
+  targets (`ShellFieldRow`s), keep the demo.
 - **Library** — Recipes / Foods as a segmented control and the search field in the
   toolbar, pinned under the compact bar; the "+" is an accent glyph in the bar; one
   grouped list per shelf under a header with the count and what the kcal column means.
 - **Progress** — Week / 30 / 90 days in the toolbar; four stat tiles; one card per
   chart (hairline gridlines in the separator grey, muted 10 px axis labels, a dashed
-  target, a glass callout on touch); "Day by day" as a section of rows with a kcal bar.
+  target, a glass callout on touch); the macro split's legend gives grams and the
+  target's share a line each; "Day by day" as a section of rows with a kcal bar, the
+  date in a 7rem column that holds "Wed 30 Sept" whole.
 - **Settings** — iOS Settings: the profile group first (avatar, name, email, the name
   inline), then grouped lists with small-caps headers and footnotes — daily targets (with
   the calculator as a row), water, reminders, appearance (the theme as a segmented
   control), your data, account; delete account is the one red row. No eyebrow. A
   reminder is a muted glyph, its name, the time and a switch, with its weekdays as
-  quiet chips under them; the switch is the only accent in the row.
+  quiet chips under them; the switch is the only accent in the row. What stands in the way
+  of notifications is a row of the group (its glyph coloured), not a box in it, and with
+  nothing set "Add the usual set" is an accent row. The photo's camera badge is the
+  accent.
 - **Sign-in, sign-up, onboarding** — the auth layout: a large title, grey fields, one
   accent button; the demo is a plain secondary button under a rule. The goal calculator
-  (onboarding and Settings) is checkmark lists for activity and goal, the day as one big
-  `font-rounded` number on a well, and the macros as stat tiles.
+  (onboarding and Settings) is the body's numbers as field rows, checkmark lists for
+  activity and goal, the day as one big `font-rounded` number on a well, the macros as
+  stat tiles and iOS sliders.
 
 ## The mark and the icons
 
