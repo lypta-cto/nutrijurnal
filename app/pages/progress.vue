@@ -50,8 +50,9 @@ async function load() {
 }
 
 onMounted(() => void load())
-// A new day (the app was left open overnight) is a new period
-watch([span, today], () => void load())
+// A new day (the app was left open overnight) is a new period, and a meal
+// written down through the "+" from this screen belongs in it at once
+watch([span, today, useQuickAdd().savedAt], () => void load())
 
 const days = computed(() => data.value?.days ?? [])
 const averages = computed(() => data.value?.averages ?? null)
