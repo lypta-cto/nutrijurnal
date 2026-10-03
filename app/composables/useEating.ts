@@ -823,6 +823,11 @@ export function useEating() {
     return api.patch<Food>(`/eating/foods/${id}`, { ...payload })
   }
 
+  /** Digits the live scanner read (or someone typed off the packet) into a food */
+  async function lookupBarcode(code: string) {
+    return api.get<ScanResult>(`/eating/foods/barcode/${encodeURIComponent(code)}`)
+  }
+
   /** A photo of the barcode — the server reads it and looks the food up */
   async function scanFood(photo: File) {
     const body = new FormData()
@@ -895,6 +900,7 @@ export function useEating() {
     createFood,
     updateFood,
     scanFood,
+    lookupBarcode,
     loadRecipes,
     getRecipe,
     createRecipe,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Food, FoodPick, Macros, Meal, MealItemPayload, MealTab, Slot, Unit } from '~/composables/useEating'
+import type { Food, FoodPick, Macros, Meal, MealItemPayload, MealTab, ScanResult, Slot, Unit } from '~/composables/useEating'
 import { SLOTS, amountLabel, dayLabel, formatKcal, shiftDay, slotLabel } from '~/composables/useEating'
 import type { QuickAddKind } from '~/composables/useQuickAdd'
 
@@ -9,9 +9,9 @@ import type { QuickAddKind } from '~/composables/useQuickAdd'
  *
  * It opens on the slot the clock suggests, a search box, and the foods this
  * person stars and eats — each with the amount it was last eaten in, so the
- * usual breakfast is a few "+" taps. Search, quick kcal, copying another
- * day and voice all happen in the sheet; a recipe, a typed-out plate and a
- * barcode open the full meal form on its own tab.
+ * usual breakfast is a few "+" taps. Search, the live barcode scanner,
+ * quick kcal, copying another day and voice all happen in the sheet; a
+ * recipe and a typed-out plate open the full meal form on its own tab.
  *
  * Foods added one after another in one sitting land on one meal, so a
  * breakfast of three foods is one row in the diary, not three.
@@ -20,11 +20,10 @@ const quickAdd = useQuickAdd()
 const { day, peekDay, quickFoods, searchFoods, setFavourite, addMeal, addItem, updateMeal, removeMeal, removeItem, copyDay } = useEating()
 const toast = useToast()
 
-type Panel = 'list' | 'amount' | 'kcal' | 'copy' | 'voice'
+type Panel = 'list' | 'amount' | 'kcal' | 'copy' | 'voice' | 'scan'
 
 /** Which tab of the meal form each of the other ways opens on */
 const FORM_TAB: Partial<Record<QuickAddKind, MealTab>> = {
-  scan: 'scan',
   recipe: 'recipe'
 }
 
@@ -69,7 +68,11 @@ watch([quickAdd.isOpen, quickAdd.kind], ([isOpen, kind]) => {
     openForm(tab)
     return
   }
-  panel.value = kind === 'voice' ? 'voice' : kind === 'quick' ? 'kcal' : 'list'
+  panel.value = kind === 'voice' ? 'voice' : kind === 'quick' ? 'kcal' : kind === 'scan' ? 'scan' : 'list'
+  if (kind === 'scan') {
+    scanMiss.value = null
+    scannerKey.value += 1
+  }
   if (kind === 'search') {
     nextTick(() => searchInput.value?.inputRef?.focus())
   }
@@ -227,6 +230,34 @@ async function toggleStar(food: Food) {
     flip(results.value)
     fail(error)
   }
+}
+
+// --- Scanning ---------------------------------------------------------------------
+
+/** A barcode with no food behind it yet — offered to be added from the label */
+const scanMiss = ref<ScanResult | null>(null)
+/** Bumped to start a fresh camera after a miss */
+const scannerKey = ref(0)
+const labelFormOpen = ref(false)
+
+function onScan(result: ScanResult) {
+  if (result.food) {
+    scanMiss.value = null
+    pick(result.food)
+    return
+  }
+  scanMiss.value = result
+}
+
+function scanAgain() {
+  scanMiss.value = null
+  scannerKey.value += 1
+}
+
+/** Added once from the label: from now on the barcode finds it */
+function onLabelFood(food: Food) {
+  scanMiss.value = null
+  pick(food)
 }
 
 // --- Adding -----------------------------------------------------------------------
@@ -418,6 +449,65 @@ const description = computed(() => {
         @back="panel = 'list'"
       />
 
+      <div
+        v-else-if="panel === 'scan'"
+        class="flex flex-col gap-3"
+      >
+        <div class="flex items-center gap-2">
+          <UButton
+            icon="i-lucide-arrow-left"
+            color="neutral"
+            variant="ghost"
+            square
+            aria-label="Back to the list"
+            @click="panel = 'list'"
+          />
+          <p class="font-semibold text-highlighted">
+            Scan a barcode
+          </p>
+        </div>
+
+        <div
+          v-if="scanMiss"
+          class="flex flex-col gap-3"
+        >
+          <UAlert
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-circle-help"
+            :title="scanMiss.barcode ? `No food for ${scanMiss.barcode} yet` : 'No barcode found'"
+            :description="scanMiss.message ?? undefined"
+          />
+          <UButton
+            v-if="scanMiss.barcode"
+            label="Add it from the label"
+            icon="i-lucide-plus"
+            size="lg"
+            block
+            @click="labelFormOpen = true"
+          />
+          <UButton
+            label="Scan another"
+            icon="i-lucide-scan-barcode"
+            color="neutral"
+            variant="subtle"
+            block
+            @click="scanAgain"
+          />
+        </div>
+        <BarcodeScanner
+          v-else
+          :key="scannerKey"
+          @result="onScan"
+        />
+
+        <FoodForm
+          v-model:open="labelFormOpen"
+          :barcode="scanMiss?.barcode ?? null"
+          @saved="onLabelFood"
+        />
+      </div>
+
       <CopyMealsPanel
         v-else-if="panel === 'copy'"
         :day="day"
@@ -497,7 +587,7 @@ const description = computed(() => {
             size="sm"
             :actions="[
               { label: 'Just the kcal', icon: 'i-lucide-flame', color: 'neutral', variant: 'subtle', onClick: () => { panel = 'kcal' } },
-              { label: 'Scan it', icon: 'i-lucide-scan-barcode', color: 'neutral', variant: 'subtle', onClick: () => quickAdd.open('scan') }
+              { label: 'Scan it', icon: 'i-lucide-scan-barcode', color: 'neutral', variant: 'subtle', onClick: () => { scanMiss = null; panel = 'scan' } }
             ]"
           />
         </template>

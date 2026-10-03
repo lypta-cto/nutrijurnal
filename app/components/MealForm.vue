@@ -54,7 +54,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const {
   addMeal, addItem, updateItem, removeItem, updateMeal,
-  parseText, mealFromRecipe, loadRecipes, scanFood, searchFoods
+  parseText, mealFromRecipe, loadRecipes, searchFoods
 } = useEating()
 
 /** Filling in a meal that was only written down, rather than adding one */
@@ -431,31 +431,21 @@ function clearRecipe() {
 
 // --- Scan: the barcode ---------------------------------------------------------------
 
-const photoInput = ref<HTMLInputElement | null>(null)
-const scanning = ref(false)
 const scan = ref<ScanResult | null>(null)
+/** Bumped to open a fresh camera after a miss */
+const scanKey = ref(0)
 
-async function onPhoto(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file) {
-    return
-  }
-  scanning.value = true
-  scan.value = null
+function onScanned(result: ScanResult) {
+  scan.value = result
   pending.value = null
-  try {
-    const result = await scanFood(file)
-    scan.value = result
-    if (result.food) {
-      choose(result.food)
-    }
-  } catch (error) {
-    fail(error)
-  } finally {
-    scanning.value = false
+  if (result.food) {
+    choose(result.food)
   }
+}
+
+function rescan() {
+  scan.value = null
+  scanKey.value += 1
 }
 
 function createScannedFood() {
@@ -1008,30 +998,20 @@ const UNIT_UI = { base: 'px-1.5' }
       v-else-if="tab === 'scan'"
       class="flex flex-col gap-2"
     >
-      <input
-        ref="photoInput"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        class="hidden"
-        @change="onPhoto"
-      >
-      <button
-        type="button"
-        class="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accented bg-elevated/40 px-4 py-6 text-center transition-colors hover:border-primary hover:bg-primary/5 disabled:opacity-60"
-        :disabled="scanning"
-        @click="photoInput?.click()"
-      >
-        <UIcon
-          :name="scanning ? 'i-lucide-loader-circle' : 'i-lucide-barcode'"
-          class="size-8 text-primary"
-          :class="scanning && 'animate-spin'"
-        />
-        <span class="text-sm font-semibold text-highlighted">
-          {{ scanning ? 'Reading the barcode…' : 'Photograph the barcode' }}
-        </span>
-        <span class="text-xs text-muted">Get close enough that the bars fill the frame</span>
-      </button>
+      <BarcodeScanner
+        v-if="!scan || scan.food"
+        :key="scanKey"
+        @result="onScanned"
+      />
+      <UButton
+        v-else
+        label="Scan another"
+        icon="i-lucide-scan-barcode"
+        color="neutral"
+        variant="subtle"
+        block
+        @click="rescan"
+      />
 
       <!-- No food behind the barcode: say so, and offer to add it once -->
       <div
