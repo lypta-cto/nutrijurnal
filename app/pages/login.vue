@@ -19,6 +19,7 @@ const fields: AuthFormField[] = [
     type: 'email',
     label: 'Email',
     placeholder: 'you@example.com',
+    autocomplete: 'email',
     required: true
   },
   {
@@ -26,6 +27,8 @@ const fields: AuthFormField[] = [
     type: 'password',
     label: 'Password',
     placeholder: '••••••••',
+    // A password manager fills the saved one in
+    autocomplete: 'current-password',
     required: true
   }
 ]

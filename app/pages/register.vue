@@ -22,6 +22,7 @@ const fields: AuthFormField[] = [
     type: 'text',
     label: 'Name',
     placeholder: 'What should we call you?',
+    autocomplete: 'name',
     required: true
   },
   {
@@ -29,6 +30,7 @@ const fields: AuthFormField[] = [
     type: 'email',
     label: 'Email',
     placeholder: 'you@example.com',
+    autocomplete: 'email',
     required: true
   },
   {
@@ -36,6 +38,8 @@ const fields: AuthFormField[] = [
     type: 'password',
     label: 'Password',
     placeholder: 'At least 8 characters',
+    // A password manager offers to make one up, and saves it
+    autocomplete: 'new-password',
     required: true
   }
 ]
