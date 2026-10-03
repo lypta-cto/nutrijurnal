@@ -368,19 +368,32 @@ function onFoodSaved(food: Food) {
 const recipeQuery = ref('')
 const recipes = ref<Recipe[]>([])
 const recipesLoading = ref(false)
+/** The recipes could not be read — never shown as "No recipes yet" */
+const recipesFailed = ref(false)
 const picked = ref<Recipe | null>(null)
 const servings = ref<number | null>(1)
 
 let recipeTimer: ReturnType<typeof setTimeout> | null = null
+let recipesAsked = 0
 
 async function searchRecipes() {
+  const ask = (recipesAsked += 1)
   recipesLoading.value = true
   try {
-    recipes.value = await loadRecipes({ q: recipeQuery.value })
+    const found = await loadRecipes({ q: recipeQuery.value })
+    if (ask === recipesAsked) {
+      recipes.value = found
+      recipesFailed.value = false
+    }
   } catch {
-    recipes.value = []
+    if (ask === recipesAsked) {
+      recipes.value = []
+      recipesFailed.value = true
+    }
   } finally {
-    recipesLoading.value = false
+    if (ask === recipesAsked) {
+      recipesLoading.value = false
+    }
   }
 }
 
@@ -979,6 +992,21 @@ const GROUP = 'flex flex-col divide-y divide-default overflow-hidden rounded-til
           :count="2"
           :class="GROUP"
         />
+        <ShellEmpty
+          v-else-if="recipesFailed"
+          compact
+          icon="i-lucide-wifi-off"
+          title="Your recipes didn't load"
+          description="Nothing is lost — check the connection and try again."
+          class="rounded-tile bg-elevated/60"
+        >
+          <UButton
+            label="Try again"
+            size="sm"
+            variant="soft"
+            @click="searchRecipes"
+          />
+        </ShellEmpty>
         <ShellEmpty
           v-else-if="!recipes.length"
           compact

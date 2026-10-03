@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { readBody } from 'h3'
-import type { Food, Meal, MealPayload, ParseResult } from '~/composables/useEating'
+import type { Food, Meal, MealPayload, ParseResult, Recipe } from '~/composables/useEating'
 import { shiftDay } from '~/composables/useEating'
 import MealForm from '~/components/MealForm.vue'
 
@@ -239,5 +239,56 @@ describe('the meal form on a phone', () => {
     retry!.click()
     await vi.waitFor(() => expect(document.body.textContent).toContain('Pileći file'))
     expect(document.body.textContent).not.toContain('The search didn\'t load')
+  })
+})
+
+describe('the meal form’s recipes', () => {
+  function recipe(id: string, title: string): Recipe {
+    return { id, title, subtitle: null, servings: 1, serving_unit: 'serving', minutes: null, steps: [], note: null, items: [], stated: null, kcal: 300, protein: 10, carbs: 30, fat: 10 }
+  }
+
+  it('say they didn’t load instead of “No recipes yet”', async () => {
+    let down = true
+    registerEndpoint('/api/v1/eating/recipes', () => {
+      if (down) {
+        throw createError({ statusCode: 503 })
+      }
+      return [recipe('soup', 'Supa')]
+    })
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21', start: 'recipe' } }))
+
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Your recipes didn\'t load'), { timeout: 2000 })
+    expect(document.body.textContent).not.toContain('No recipes yet')
+
+    down = false
+    const retry = [...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Try again')
+    retry!.click()
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Supa'))
+  })
+
+  it('never let a slow answer to an older word land over the newer one', async () => {
+    registerEndpoint('/api/v1/eating/recipes', async (event) => {
+      const q = new URL(event.path, 'http://test').searchParams.get('q')
+      if (q === 'su') {
+        await wait(400)
+        return [recipe('soup', 'Supa')]
+      }
+      return q === 'sal' ? [recipe('salad', 'Salata')] : []
+    })
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21', start: 'recipe' } }))
+    await flushPromises()
+    const field = document.body.querySelector<HTMLInputElement>('input[placeholder^="Search your recipes"]')!
+
+    for (const word of ['su', 'sal']) {
+      field.value = word
+      field.dispatchEvent(new Event('input'))
+      await wait(300)
+    }
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Salata'))
+    await wait(300)
+    await flushPromises()
+
+    expect(document.body.textContent).toContain('Salata')
+    expect(document.body.textContent).not.toContain('Supa')
   })
 })
