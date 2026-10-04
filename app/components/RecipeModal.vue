@@ -3,7 +3,7 @@ import type { Food, Meal, Recipe, RecipeItemPayload, Unit } from '~/composables/
 import {
   MACRO_BARS,
   SERVING_UNITS,
-  dayLabel,
+  dayInSentence,
   formatGrams,
   formatKcal,
   formatMacro,
@@ -488,7 +488,7 @@ async function addToDiary() {
     planning.value = false
     open.value = false
     toast.add({
-      title: `${recipe.title} on ${dayLabel(plan.day, today.value)}`,
+      title: `${recipe.title} written down for ${dayInSentence(plan.day, today.value)}`,
       icon: 'i-lucide-utensils',
       color: 'success'
     })

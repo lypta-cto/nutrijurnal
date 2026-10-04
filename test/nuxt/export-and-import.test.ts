@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { presetRange } from '~/composables/useEating'
+import { dayInSentence, presetRange } from '~/composables/useEating'
 import { importSummary } from '~/composables/useImport'
 
 describe('export periods, named after the calendar', () => {
@@ -42,5 +42,21 @@ describe('what an import did, in one line', () => {
     expect(importSummary({ ...none, meals: 2, skipped: 35 })).toBe('Added 2 meals · 35 already here')
     expect(importSummary({ ...none, skipped: 37 })).toBe('Nothing new — 37 already here')
     expect(importSummary(none)).toBe('Nothing to add in that file')
+  })
+})
+
+describe('a day in the middle of a sentence', () => {
+  const today = '2026-10-04'
+
+  it('keeps today, yesterday and tomorrow lowercase', () => {
+    expect(dayInSentence('2026-10-04', today)).toBe('today')
+    expect(dayInSentence('2026-10-03', today)).toBe('yesterday')
+    expect(dayInSentence('2026-10-05', today)).toBe('tomorrow')
+  })
+
+  it('names any other day by its date, with "on" only when asked', () => {
+    expect(dayInSentence('2026-10-01', today)).toBe('Thu 1 Oct')
+    expect(dayInSentence('2026-10-01', today, { on: true })).toBe('on Thu 1 Oct')
+    expect(dayInSentence('2026-10-03', today, { on: true })).toBe('yesterday')
   })
 })

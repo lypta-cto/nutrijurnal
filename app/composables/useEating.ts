@@ -575,6 +575,20 @@ export function dayLabel(day: string, today = localIsoDay()): string {
   return new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
+/**
+ * A day in the middle of a sentence. "Today", "yesterday" and "tomorrow" are
+ * lowercase there ("copied to yesterday", not "to Yesterday"); any other day
+ * is its date, with "on" in front when the sentence needs it — "kcal left on
+ * Fri 2 Oct", but "moved to Fri 2 Oct".
+ */
+export function dayInSentence(day: string, today = localIsoDay(), { on = false } = {}): string {
+  const label = dayLabel(day, today)
+  if (label === 'Today' || label === 'Yesterday' || label === 'Tomorrow') {
+    return label.toLowerCase()
+  }
+  return on ? `on ${label}` : label
+}
+
 /** "12 Sep" — a day is never shown as the ISO string it arrived as */
 export function dayShort(day: string): string {
   return new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })

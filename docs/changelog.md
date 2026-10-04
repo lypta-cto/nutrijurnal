@@ -2,6 +2,15 @@
 
 Newest first. One line per piece of work that landed, in either repo.
 
+## 2026-10-04
+
+- **Small things the redesign's QA found.** Repeat on Today now carries Undo, as the "+"
+  sheet's always did. A day inside a sentence stays lowercase — "copied to yesterday",
+  "moved to yesterday", "Overnight oats written down for yesterday" — via `dayInSentence`.
+  The Move sheet's day is a grouped row with the refusal under it, like the meal form. A
+  star that fails to save goes back in every list, not only the search results (it left a
+  starred food looking unstarred under Recent).
+
 ## 2026-10-03
 
 - **The printed diary opens with the period at a glance** (backend `eating_report.py`).

@@ -104,3 +104,24 @@ describe('the "+" sheet and the back gesture', () => {
     expect(useRouter().currentRoute.value.fullPath).toBe(page)
   })
 })
+
+describe('starring in the "+" sheet', () => {
+  it('puts a failed star back in the Recent list, not only in search results', async () => {
+    registerEndpoint('/api/v1/eating/foods/quick', () => ({ favourites: [], recent: [food('banana', 'Banana')] }))
+    registerEndpoint('/api/v1/eating/foods/banana/favourite', {
+      method: 'PUT',
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'down' })
+      }
+    })
+    await openSheet()
+    await wait(50)
+
+    document.body.querySelector<HTMLButtonElement>('button[aria-label="Star Banana"]')!.click()
+    await flushPromises()
+    await wait(50)
+
+    expect(document.body.querySelector('button[aria-label="Star Banana"]')).not.toBeNull()
+    expect(document.body.querySelector('button[aria-label="Unstar Banana"]')).toBeNull()
+  })
+})

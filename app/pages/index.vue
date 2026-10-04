@@ -6,6 +6,7 @@ import {
   MEAL_COLUMNS,
   SLOTS,
   changedTargets,
+  dayInSentence,
   dayLabel,
   formatGrams,
   formatKcal,
@@ -105,7 +106,21 @@ async function repeat(slot: Slot) {
     toast.add({
       title: `${copies.length === 1 ? copies[0]?.title ?? 'Meal' : `${copies.length} meals`} copied`,
       icon: 'i-lucide-repeat',
-      color: 'success'
+      color: 'success',
+      // The same safety net as the "+" sheet's Repeat: the copies go again
+      actions: [{
+        label: 'Undo',
+        color: 'primary',
+        variant: 'ghost',
+        onClick: async () => {
+          try {
+            await Promise.all(copies.map(copy => removeMeal(copy.id)))
+            void refreshWeek()
+          } catch (error) {
+            fail(error)
+          }
+        }
+      }]
     })
     void refreshWeek()
   } catch (error) {
@@ -405,7 +420,7 @@ async function doMove() {
   }
   try {
     await updateMeal(meal.id, { day: moveDay.value })
-    toast.add({ title: `Moved to ${dayLabel(moveDay.value, today.value)}`, icon: 'i-lucide-calendar-check', color: 'success' })
+    toast.add({ title: `Moved to ${dayInSentence(moveDay.value, today.value)}`, icon: 'i-lucide-calendar-check', color: 'success' })
     moveOpen.value = false
     void refreshWeek()
   } catch (error) {
@@ -452,7 +467,7 @@ async function deleteMeal(meal: Meal) {
     void refreshWeek()
     toast.add({
       title: `${meal.title} deleted`,
-      description: `${formatKcal(meal.kcal)} kcal left ${dayLabel(meal.day).toLowerCase() === 'today' ? 'today' : dayLabel(meal.day)}`,
+      description: `${formatKcal(meal.kcal)} kcal left ${dayInSentence(meal.day, today.value, { on: true })}`,
       icon: 'i-lucide-trash-2',
       color: 'neutral',
       actions: [{
@@ -987,19 +1002,34 @@ const ITEM_ROW = `${ITEM_COLUMNS} px-4 py-2.5`
       :description="moving ? `“${moving.title}” goes to the day you pick.` : ''"
     >
       <template #body>
-        <UFormField
-          label="Day"
-          :hint="moveError ? undefined : dayLabel(moveDay, today)"
-          :error="moveError ?? false"
-        >
-          <input
-            v-model="moveDay"
-            type="date"
-            :max="today"
-            class="app-field"
-            aria-label="The day to move it to"
+        <div>
+          <div class="app-card app-divide flex flex-col overflow-hidden">
+            <label class="flex min-h-11 items-center gap-3 py-1.5 pr-3 pl-4">
+              <span class="min-w-0 flex-1 text-body text-default">Day</span>
+              <input
+                v-model="moveDay"
+                type="date"
+                :max="today"
+                class="app-field h-9 w-auto shrink-0 px-3"
+                aria-label="The day to move it to"
+                :aria-invalid="Boolean(moveError)"
+              >
+            </label>
+          </div>
+          <p
+            v-if="moveError"
+            class="px-4 pt-1.5 text-footnote text-error"
+            role="alert"
           >
-        </UFormField>
+            {{ moveError }}
+          </p>
+          <p
+            v-else-if="moveDay"
+            class="px-4 pt-1.5 text-footnote text-muted"
+          >
+            {{ dayLabel(moveDay, today) }}
+          </p>
+        </div>
       </template>
       <template #footer>
         <div class="flex w-full gap-2">

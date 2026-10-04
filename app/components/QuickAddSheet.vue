@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Food, FoodPick, Macros, Meal, MealItemPayload, MealTab, ScanResult, Slot, Unit } from '~/composables/useEating'
-import { SLOTS, amountLabel, dayLabel, formatKcal, shiftDay, slotLabel } from '~/composables/useEating'
+import { SLOTS, amountLabel, dayInSentence, dayLabel, formatKcal, shiftDay, slotLabel } from '~/composables/useEating'
 import type { QuickAddKind } from '~/composables/useQuickAdd'
 
 /**
@@ -246,20 +246,20 @@ watch(query, (value) => {
 
 async function toggleStar(food: Food) {
   const next = !food.favourite
-  // The star answers the tap at once; a failure puts it back
-  const flip = (list: Food[]) => list.forEach((row) => {
+  // The star answers the tap at once, in every list that shows the food; a
+  // failure puts it back in all of them — not only in the search results,
+  // which left a starred food showing unstarred under Recent
+  const mark = (starred: boolean) => [results.value, favourites.value, recent.value].forEach(list => list.forEach((row) => {
     if (row.id === food.id) {
-      row.favourite = next
+      row.favourite = starred
     }
-  })
-  flip(results.value)
-  flip(favourites.value)
-  flip(recent.value)
+  }))
+  mark(next)
   try {
     await setFavourite(food.id, next)
     void refreshLists()
   } catch (error) {
-    flip(results.value)
+    mark(!next)
     fail(error)
   }
 }
@@ -424,7 +424,7 @@ async function onKcal(entry: { label: string, macros: Macros }) {
 function onCopied(meals: Meal[]) {
   quickAdd.markSaved()
   toast.add({
-    title: `${meals.length} ${meals.length === 1 ? 'meal' : 'meals'} copied to ${dayLabel(day.value).toLowerCase() === 'today' ? 'today' : dayLabel(day.value)}`,
+    title: `${meals.length} ${meals.length === 1 ? 'meal' : 'meals'} copied to ${dayInSentence(day.value, today.value)}`,
     icon: 'i-lucide-copy-check',
     color: 'success',
     actions: [{ label: 'Undo', color: 'primary', variant: 'ghost', onClick: () => void undoMeals(meals) }]

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Meal } from '~/composables/useEating'
-import { SLOTS, dayLabel, formatKcal, shiftDay } from '~/composables/useEating'
+import { SLOTS, dayInSentence, dayLabel, formatKcal, shiftDay } from '~/composables/useEating'
 
 /**
  * Another day's meals onto this one: pick the day (yesterday to start
@@ -209,7 +209,7 @@ async function copy() {
     </div>
 
     <UButton
-      :label="picked.length ? `Copy ${picked.length} ${picked.length === 1 ? 'meal' : 'meals'} to ${dayLabel(day).toLowerCase() === 'today' ? 'today' : dayLabel(day)}` : 'Pick what to copy'"
+      :label="picked.length ? `Copy ${picked.length} ${picked.length === 1 ? 'meal' : 'meals'} to ${dayInSentence(day)}` : 'Pick what to copy'"
       icon="i-lucide-copy"
       size="lg"
       block
