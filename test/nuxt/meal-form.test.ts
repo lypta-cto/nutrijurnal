@@ -170,6 +170,47 @@ describe('the meal form on a phone', () => {
     expect(sent[0]?.note ?? null).toBeNull()
   })
 
+  it('reads a pasted dish as one serving at its own numbers, not a search', async () => {
+    let parsed = false
+    registerEndpoint('/api/v1/eating/parse', {
+      method: 'POST',
+      handler: () => {
+        parsed = true
+        return { items: [], unknown: [], slot: null }
+      }
+    })
+    const sent: MealPayload[] = []
+    registerEndpoint('/api/v1/eating/meals', {
+      method: 'POST',
+      handler: async (event) => {
+        const payload = await readBody<MealPayload>(event)
+        sent.push(payload)
+        return { ...LUNCH, id: 'meal-3', title: payload.title ?? 'Lunch' }
+      }
+    })
+    mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21', start: 'type' } }))
+    await flushPromises()
+    const line = document.body.querySelector('textarea')!
+    line.value = 'Krompir sa piletinom (1/7 tepsije)\nKcal: 325, P: 26g, UH: 35g, M: 8g'
+    line.dispatchEvent(new Event('input'))
+    await flushPromises()
+
+    ;[...document.body.querySelectorAll('button')].find(button => button.textContent?.trim() === 'Read')!.click()
+    await flushPromises()
+    document.body.querySelector('form#form-sheet')!.dispatchEvent(new Event('submit', { cancelable: true }))
+
+    await vi.waitFor(() => expect(sent).toHaveLength(1))
+    expect(parsed).toBe(false)
+    expect(sent[0]?.title).toBe('Krompir sa piletinom (1/7 tepsije)')
+    expect(sent[0]?.items).toEqual([{
+      food_id: null,
+      label: 'Krompir sa piletinom (1/7 tepsije)',
+      quantity: 1,
+      unit: 'serving',
+      macros: { kcal: 325, protein: 26, carbs: 35, fat: 8 }
+    }])
+  })
+
   it('never lets a slow answer to an older word land over the newer one', async () => {
     pantry('late')
     mounted.push(await mountSuspended(MealForm, { props: { open: true, day: '2026-09-21' } }))

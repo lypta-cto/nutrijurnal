@@ -10,6 +10,7 @@ import {
   gramsFor,
   macrosFromFood,
   macrosOf,
+  readPastedDish,
   scaleMacros,
   servingsLabel,
   slotForNow,
@@ -257,6 +258,27 @@ function parseQuick(): Promise<void> {
 }
 
 async function readSentence(text: string) {
+  // A whole dish pasted with its numbers — a name over "Kcal: 325, P: 26g,
+  // UH: 35g, M: 8g" — is one serving at those numbers, the way the Kcal tab
+  // writes one: not a search for the words in its name
+  const dish = readPastedDish(text)
+  if (dish.stated) {
+    items.value = [...items.value, {
+      key: draftKey(),
+      food_id: null,
+      label: dish.title || 'Dish',
+      quantity: 1,
+      unit: 'serving',
+      grams: null,
+      base: { quantity: 1, unit: 'serving', macros: dish.stated, grams: 100 },
+      direct: dish.stated
+    }]
+    quickText.value = ''
+    if (!form.title.trim() && dish.title) {
+      form.title = dish.title
+    }
+    return
+  }
   parsing.value = true
   try {
     const result = await parseText(text)

@@ -2,6 +2,13 @@
 
 Newest first. One line per piece of work that landed, in either repo.
 
+## 2026-10-05
+
+- **A pasted dish is read in the meal form.** A name over "Kcal: 325, P: 26g, UH: 35g,
+  M: 8g" in the Type box became a search for the first word plus four unrecognised lines;
+  it is now one serving at its own numbers, the meal named after it (the CTO app got the
+  same fix, and its API learned items with their own numbers).
+
 ## 2026-10-04
 
 - **Small things the redesign's QA found.** Repeat on Today now carries Undo, as the "+"
